@@ -30,6 +30,12 @@
 \usepackage{listings}
 \usepackage{dirtytalk}
 \usepackage{amsthm}
+
+\newcommand\blankpage{%
+    \null
+    \thispagestyle{empty}%
+    %\addtocounter{page}{-1}%
+    \newpage}
  
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[section]
@@ -96,9 +102,59 @@
 
 \vspace{1.0cm}
 
+% INTRO
+% - Anatomia di una fixture
+% -- Luci statiche e dinamiche
+% -- Moduli di una luce
+% -- Protocollo DMX
+% - gdtf
+% - Informazioni sul tirocinio
+% - Strutture dati su Unreal Engine
+% - Struttura della tesi
+% DESIGN PIPELINE DI RENDERING
+% - Vecchia implementazione
+% - Idea
+% -- Problemi nei custom/material function
+% - Generazione del codice (+ ricerca di tutorial su come fare)
+% -- Per Beam
+% -- Per MF
+% REDESIGN GERARCHIA COMPONENTI
+% - Vecchia implementazione
+% - Idea
+% -- Spiegazione strutture dati
+% - Implementazione
+% -- Ottenimento valori default
+% RI-IMPLEMENTAZIONE INTERPOLAZIONE
+% - Problemi riscontrati (rapidamente)
+% - Implementazione di partenza (Traffic)
+% - Modifiche all'implementazione
+% -- ((Docs già fatte, vanno tradotte))
+% IMPLEMENTAZIONE NUOVE FUNZIONALITA'
+% - Sagomatori
+% - Iris
+% CONCLUSIONI
+% - Problemi riscontrati
+% - Sviluppi futuri
+% -- Arri
+
 \tableofcontents
+\clearpage
+\newpage
+\blankpage
 \newpage
 \subfile{chapters/01-Introduzione}
 \clearpage
+\subfile{chapters/02-RenderingPipeline}
+\clearpage
+\subfile{chapters/03-GerarchiaFixtureComponent}
+\clearpage
+\subfile{chapters/04-Interpolation}
+\clearpage
+\subfile{chapters/05-NuoveFeatures}
+\clearpage
+\subfile{chapters/06-Conclusioni}
+\clearpage
+\newpage
+\blankpage
 \printbibliography
 \end{document}
