@@ -48,6 +48,7 @@ I moduli che verranno toccati in questo progetto sono i seguenti:
     \item \textbf{Frost}: È un filtro atto a rendere soffusa la luce, smorzando i bordi di eventuali figure che si stanno proiettando
 \end{itemize}
 I moduli solitamente funzionano sottrattivamente: per ogni modulo a partire dalla fonte luminosa, andiamo ad occluderla mano a mano per disegnare la forma che vogliamo ottenere.
+% TODO FOTO E SCHEMA DEI MODULI IN UNA LUCE APERTA
 
 \subsubsection{Protocollo DMX}
 Oggi giorno, quasi tutte le fixture che vengono usate sono intelligenti e, come citato sopra, vengono controllate via DMX. DMX è un protocollo unidirezionale in cui un master (solitamente una console luci) invia 44 volte al secondo agli slave (le varie fixture) un array di 512 byte chiamato \say{Universo DMX}. Le luci hanno memorizzato un offset all'interno di questo array chiamato \say{Indirizzo DMX} che viene impostato manualmente su ognuna dall'operaio che le monta su un palcoscenico. Ogni volta che arriva un nuovo pacchetto DMX la luce inizierà a leggere la sua sezione di dati a partire dall'indirizzo/offset specificato. Ogni byte che legge è chiamato \say{canale} e, solitamente, corrisponde al valore da assegnare ad una diversa funzionalità della luce.
@@ -57,9 +58,11 @@ Oggi giorno, quasi tutte le fixture che vengono usate sono intelligenti e, come 
     \caption{Esempio di canali DMX. Se il canale 1 di questa luce viene portato a FULL (255), la luce si colorerà di azzurro. Se, invece, il canale 6 viene impostato al valore 50, si colorerà di rosa.}
     \label{fig:dmxChannelsExample}
 \end{figure}
-% TODO FOTO E SCHEMA DEI MODULI IN UNA LUCE APERTA
 
-\subsection{GDTF}\label{subsec:gdtf}
+Alcune fixture possono supportare più modalità di controllo, che possono andare ad attivare o disattivare funzionalità della luce stessa, oppure possono permettere il controllo più preciso di alcune funzionalità; introducendo quindi nuovi canali da controllare o riordinando quelli già esistenti. 
+
+
+\subsection{GDTF}\label{subsec:1_gdtf}
 GDTF - \textit{General Device Type Format} - è un formato per descrivere fixture nella maniera più accurata possibile. È stato sviluppato da MAlighting (azienda produttrice del sistema di controllo luci attualmente più usato in show medio-grandi), Robe (altro leader industriale nello sviluppo e realizzazione di luci per l'eventistica) e Vectorworks (Un software di CAD/Deisgn anch'esso molto usato nella progettazione e previsualizzazione di palcoscenici). 
 \newline
 
