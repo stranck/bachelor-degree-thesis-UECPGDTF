@@ -13,15 +13,15 @@ Lo scopo del progetto CPGDTF-Importer è quello di realizzare un Previsualizer o
 \newline
 CPGDTF-Importer è, in particolare, un plugin per l'\say{editor} di UE, ovvero quella sezione che permette la creazione di mondi che, nel nostro caso, consisterebbero in palcoscenici virtuali. Il plugin lavorerà principalmente su 3 livelli:
 \begin{itemize}
-    \item Importazione di luci (chiamate anche \say{fixture}) da un formato standard (GDTF \cite{GDTF}, spiegato nella sezione \ref{subsec:gdtf}), negli \say{Actor} di UE
+    \item Importazione di luci (chiamate anche \say{fixture}) da un formato standard (GDTF \cite{GDTF}, spiegato nella sezione \ref{subsec:1_gdtf}), negli \say{Actor} di UE
     \item Importazione di luci sottoforma di Attori all'interno di mondi e gestione delle loro impostazioni
     \item Simulazione in real-time del comportamento delle fixture il più possibile vicino alla realtà
 \end{itemize}
 
-\subsection{Anatomia di una fixture}\label{subsec:fixtureAnatomy}
+\subsection{Anatomia di una fixture}\label{subsec:1_fixtureAnatomy}
 I fari (Che chiameremo anche \say{luci} o \say{fixture}) utilizzati nel mondo dell'eventistica sono dei macchinari di vario tipo e dimensioni che hanno il compito di generare luce di forme e colori differenti. Le fixture che ci interessano sono quelle utilizzate sia come illuminazione di oggetti (Ad esempio, le luci frontali che illuminano un attore in teatro) che come effettistica (Ovvero le luci che fanno effetti aereografici ai concerti). Storicamente le luci nascono come semplici fari monocolore a cui si potevano applicare a mano dei filtri davanti la sorgente luminosa ed a cui si poteva solamente regolare l'intensità attraverso apparecchiature chiamate \say{dimmer}. Solo a partire dagli anni '90 sono entrate in commercio le prime fixture intelligenti, ovvero con la possibilità di essere controllate da remoto attraverso una console luci sfruttando il protocollo DMX \cite{DMX}. 
 
-\subsubsection{Luci statiche e dinamiche}
+\subsubsection{Luci statiche e dinamiche}\label{subsec:1_1_fixtureTypes}
 Le fixture possono essere classificabili come statiche o dinamiche. Le fixture dette \say{statiche} sono fixture che sono formate da un unico \say{blocco} (Che GDTF chiama \say{geometrie}, mentre Unreal Engine chiama \say{SceneComponents}) e che, fisicamente, non si muovono. Sono quelle più semplici nonché il primo tipo di faro entrato in commercio.
 \begin{figure}[H]
     \centering
@@ -37,7 +37,7 @@ Le fixture dette invece \say{dinamiche} (chiamate anche \say{Teste mobili}) sono
     \label{fig:DynamicFixture}
 \end{figure}
 
-\subsubsection{Moduli di una luce}
+\subsubsection{Moduli di una luce}\label{subsec:1_1_modules}
 All'interno della testa, così come all'interno delle fixture statiche, è presente una sorgente luminosa che può essere sia bianca se il faro utilizza una sintesi colore sottrattiva, che colorata se il faro utilizza una sintesi colore additiva. La luce viene fatta passare attraverso vari moduli che ne alterano il colore, la messa a fuoco e la forma fino ad uscire dalla lente principale collocata ad una estremità della testa. Su praticamente tutti i fari in commercio non è possibile montare moduli custom o invertirli con quelli di un altro faro. Ciò ci permette di avere un unico file per descrivere interamente il comportamento di un determinato faro. \newline
 I moduli che verranno toccati in questo progetto sono i seguenti:
 \begin{itemize}
@@ -50,7 +50,7 @@ I moduli che verranno toccati in questo progetto sono i seguenti:
 I moduli solitamente funzionano sottrattivamente: per ogni modulo a partire dalla fonte luminosa, andiamo ad occluderla mano a mano per disegnare la forma che vogliamo ottenere.
 % TODO FOTO E SCHEMA DEI MODULI IN UNA LUCE APERTA
 
-\subsubsection{Protocollo DMX}
+\subsubsection{Protocollo DMX}\label{subsec:1_1_dmx}
 Oggi giorno, quasi tutte le fixture che vengono usate sono intelligenti e, come citato sopra, vengono controllate via DMX. DMX è un protocollo unidirezionale in cui un master (solitamente una console luci) invia 44 volte al secondo agli slave (le varie fixture) un array di 512 byte chiamato \say{Universo DMX}. Le luci hanno memorizzato un offset all'interno di questo array chiamato \say{Indirizzo DMX} che viene impostato manualmente su ognuna dall'operaio che le monta su un palcoscenico. Ogni volta che arriva un nuovo pacchetto DMX la luce inizierà a leggere la sua sezione di dati a partire dall'indirizzo/offset specificato. Ogni byte che legge è chiamato \say{canale} e, solitamente, corrisponde al valore da assegnare ad una diversa funzionalità della luce.
 \begin{figure}[H]
     \centering
@@ -68,7 +68,11 @@ GDTF - \textit{General Device Type Format} - è un formato per descrivere fixtur
 
 Un file GDTF è essenzialmente un pacchetto contenente all'interno 
 
-\subsection{Informazioni sul tirocinio}\label{subsec:tirocinio}
+\subsection{Informazioni sul tirocinio}\label{subsec:1_tirocinio}
 CPGDTF-Importer è un progetto sviluppato dalla \say{Clay Paky}, azienda italiana leader mondiale nella progettazione e realizzazione di luci per concerti, architettura e teatri, per cui ho svolto il tirocinio curriculare. Lo sviluppo ha avuto inizio nel Maggio 2022 
+
+\subsection{Strutture dati su Unreal Engine}\label{subsec:1_dataStructsUE}
+
+\subsection{Struttura della tesi}\label{subsec:1_thesisInfo}
 
 \end{document}
