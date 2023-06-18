@@ -140,6 +140,21 @@ Il nodo \lstinline{DMXMode} raccoglie tutte le modalità di funzionamento di un 
     \label{fig:1_gdtfDmxExample}
 \end{figure}
 
+\subsection{Terminologia di Unreal Engine}\label{subsec:1_dataStructsUE}
+Qui sotto elencate tutti tutti i termini che si riferiscono a concetti e oggetti di Unreal Engine.
+\begin{itemize}
+    \item \textbf{Actor}: Un attore è un qualsiasi oggetto su Unreal Engine che può essere piazzato in un mondo. Può contenere una gerarchia di Componenti che lo caratterizzano.
+    \item \textbf{Component}: I componenti sono un tipo di oggetto che un attore può possedere.
+    \item \textbf{Material}: Un materiale è un asset che può essere applicato ad un componente e ne va a definire il suo comportamento. Un materiale viene programmato tramite un grafo che ha, come output, una texture.
+    \item \textbf{MaterialInstance}: Istanza di un materiale con un valore impostato staticamente per ogni suo parametro. Utilizzato per avere più oggetti simili, ma con qualche differenza tra loro che non richiede la creazione completa di un nuovo materiale.
+    \item \textbf{MaterialFunction}: Materiali che si comportano come una funzione in un normale linguaggio di programmazione: prendono degli input ed hanno degli output.
+    \item \textbf{MaterialExpression}: Nodi di un grafo di un Material.
+    \item \textbf{MaterialExpressionParameter}: Tipo di MaterialExpression che permettono di controllare i parametri del materiale esternamente.
+    \item \textbf{MaterialExpressionFunctionCall}: Tipo di MaterialExpression che implementa una chiamata ad una MaterialFunction
+    \item \textbf{MaterialExpressionCustom}: Tipo di MaterialExpression che prende degli input e ritorna degli output. Mentre una MaterialExpressionFunctionCall elabora gli output utilizzando una MaterialFunction (E quindi un grafo), una MaterialExpressionCustom esegue codice vero e proprio scritto in HLSL, un linguaggio C-like utilizzato per la scrittura di Shader
+\end{itemize}
+
+
 \subsection{Informazioni sul tirocinio}\label{subsec:1_tirocinio}
 CPGDTF-Importer è un progetto sviluppato dalla \say{Clay Paky}, azienda italiana leader mondiale nella progettazione e realizzazione di luci per concerti, architettura e teatri, per cui ho svolto il tirocinio curriculare. Lo sviluppo ha avuto inizio nel Maggio 2022 da un altro tirocinante che ha forkato il plugin originale sviluppato dalla Epic Games ed ha iniziato ad aggiungere funzioni che, nonostante fossero basilari, mancavano totalmente. Il plugin originale leggeva solamente quali fossero i componenti di una fixture, i suoi canali e poche altre informazioni. Utilizzava sempre modelli 3D e ruote gobo predefinite, non importava i valori di fade e accellerazione per l'interpolazione, mancavano moltissime funzionalità delle fixture, quelle esistenti funzionavano male, e molto altro ancora. Il tirocinante precedente, dopo aver speso quasi tutto il periodo del suo tirocinio a fare ricerca su come funzionasse il plugin originale ha gettato delle basi per iniziare ad estenderlo e per completare l'importazione di tutti i dati e file da un GDTF. Ha infine scritto delle documentazioni abbastanza esaustive dell'intero plugin.\newline
 
@@ -148,8 +163,6 @@ Al mio arrivo in Claypaky mi è stato affidato il progetto con l'obiettivo di im
 Dopo aver speso un primo periodo a prendere conoscenza con la codebase mi sono reso conto di quanto buona parte del codice necessitasse di un refactoring. In particolare ho riscontrato difficoltà nell'implementare nuove features, sia perché il codice che si occupava del rendering dell'illuminazione non fosse in alcun modo modulare e sia perché la gerarchia di classi che le gestisce fosse maldisegnata e con tanto codice duplicato. 
 
 Solamente dopo aver risolto questi grossi problemi strutturali nel codice (e dopo aver fatto funzionare correttamente l'interpolazione) ho potuto dedicarmi all'implementazione effettiva di nuove features. 
-
-%\subsection{Strutture dati su Unreal Engine}\label{subsec:1_dataStructsUE}
 
 \subsection{Struttura della tesi}\label{subsec:1_thesisInfo}
 L'elaborato è articolato come segue. Ogni capitolo rappresenta una milestone del progetto:
