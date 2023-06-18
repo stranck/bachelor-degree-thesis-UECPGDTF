@@ -27,14 +27,14 @@ Le fixture possono essere classificabili come statiche o dinamiche. Le fixture d
     \centering
     \includegraphics[width=0.4\linewidth]{img/introduzione/staticFixtureExample.jpg}
     \caption{Esempio di fixture statica}
-    \label{fig:staticFixture}
+    \label{fig:1_staticFixture}
 \end{figure}
 Le fixture dette invece \say{dinamiche} (chiamate anche \say{Teste mobili}) sono composte da più geometrie collegate tra loro da motori, in modo che quella responsabile di emettere il fascio di luce possa roteare, di solito su due assi. Solitamente la geometria che viene poggiata per terra o appesa viene chiamata \say{base}, quella che emette luce \say{testa}
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.75\linewidth]{img/introduzione/dynamicFixtureAnatomy.jpg}
     \caption{Geometrie di un faro dinamico}
-    \label{fig:DynamicFixture}
+    \label{fig:1_DynamicFixture}
 \end{figure}
 
 \subsubsection{Moduli di una luce}\label{subsec:1_1_modules}
@@ -51,15 +51,15 @@ I moduli solitamente funzionano sottrattivamente: per ogni modulo a partire dall
 % TODO FOTO E SCHEMA DEI MODULI IN UNA LUCE APERTA
 
 \subsubsection{Protocollo DMX}\label{subsec:1_1_dmx}
-Oggi giorno, quasi tutte le fixture che vengono usate sono intelligenti e, come citato sopra, vengono controllate via DMX. DMX è un protocollo unidirezionale in cui un master (solitamente una console luci) invia 44 volte al secondo agli slave (le varie fixture) un array di 512 byte chiamato \say{Universo DMX}. Le luci hanno memorizzato un offset all'interno di questo array chiamato \say{Indirizzo DMX} che viene impostato manualmente su ognuna dall'operaio che le monta su un palcoscenico. Ogni volta che arriva un nuovo pacchetto DMX la luce inizierà a leggere la sua sezione di dati a partire dall'indirizzo/offset specificato. Ogni byte che legge è chiamato \say{canale} e, solitamente, corrisponde al valore da assegnare ad una diversa funzionalità della luce.
+Oggi giorno, quasi tutte le fixture che vengono usate sono intelligenti e, come citato sopra, vengono controllate via DMX. DMX è un protocollo unidirezionale in cui un master (solitamente una console luci) invia 44 volte al secondo agli slave (le varie fixture) un array di 512 byte chiamato \say{Universo DMX}. Le luci hanno memorizzato un offset all'interno di questo array chiamato \say{Indirizzo DMX} che viene impostato manualmente su ognuna dall'operaio che le monta su un palcoscenico. Ogni volta che arriva un nuovo pacchetto DMX la luce inizierà a leggere la sua sezione di dati a partire dall'indirizzo/offset specificato. Ogni byte che legge è chiamato \say{canale} e, solitamente, corrisponde al valore da assegnare ad una diversa \say{funzionalità} (Chiamata anche \say{feature}, o \say{attributo}) della luce.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.65\linewidth]{img/introduzione/dmxChannelDescExample.png}
     \caption{Esempio di canali DMX. Se il canale 1 di questa luce viene portato a FULL (255), la luce si colorerà di azzurro. Se, invece, il canale 6 viene impostato al valore 50, si colorerà di rosa.}
-    \label{fig:dmxChannelsExample}
+    \label{fig:1_dmxChannelsExample}
 \end{figure}
 
-Alcune fixture possono supportare più modalità di controllo, che possono andare ad attivare o disattivare funzionalità della luce stessa, oppure possono permettere il controllo più preciso di alcune funzionalità; introducendo quindi nuovi canali da controllare o riordinando quelli già esistenti. 
+Alcune fixture possono supportare più modalità di controllo, che possono andare ad attivare o disattivare funzionalità della luce stessa, oppure possono permettere il controllo più preciso di alcuni attributi; introducendo quindi nuovi canali da controllare o riordinando quelli già esistenti. 
 
 
 \subsection{GDTF}\label{subsec:1_gdtf}
@@ -86,17 +86,59 @@ I prismi vengono comunque classificati come ruote, dove ogni slot rappresenta un
     \centering
     \includegraphics[width=1\linewidth]{img/introduzione/GDTFwheelExample.jpg}
     \caption{Nodo \lstinline{Wheels} in un file GDTF}
-    \label{fig:dmxChannelsExample}
+    \label{fig:1_gdtfWheelExample}
 \end{figure}
 
 \subsubsection{Geometrie}\label{subsec:1_2_geometries}
 Il nodo \lstinline{Models} viene utilizzato per definire una lista di modelli da importare. Per ciascuno può essere assegnato un nome e delle dimensioni per effettuare dello scaling al modello stesso. 
 
-I vari modelli che vengono importati vengono poi usati all'interno del nodo \lstinline{Geometries}, che va a definire una gerarchia di geometrie, specificando i punti di interconnessione tra le varie e gli assi e centri di rotazione di ciascuna. Alcune geometrie, come ad esempio \lstinline{Beam}, sono particolari, perché rappresentano un punto in cui la luce può essere emessa dalla fixture.
-
+I vari modelli che vengono importati vengono poi usati all'interno del nodo \lstinline{Geometries}, che va a definire una gerarchia di geometrie, specificando i punti di interconnessione tra le varie e gli assi e centri di rotazione di ciascuna. Alcune geometrie, come ad esempio \lstinline{Beam}, sono particolari, perché rappresentano un punto in cui la luce può essere emessa dalla fixture.\newline
 Le varie funzionalità di una fixture sono implementate all'interno di una particolare geometria, o meglio, \textit{riguardano} una geometria.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{img/introduzione/GDTFgeometriesExample.jpg}
+    \caption{Esempio di nodi \lstinline{Models} e \lstinline{Geometries} in un file GDTF}
+    \label{fig:1_gdtfGeometriesExample}
+\end{figure}
 
 \subsubsection{Modalità e canali DMX}\label{subsec:1_2_dmxchannels}
+Il nodo \lstinline{DMXMode} raccoglie tutte le modalità di funzionamento di un faro, che vengono enumerate dal nome. Dentro ciascuno di questi nodi troviamo la descrizione dettagliata dei canali DMX di una fixture, disposta in maniera gerarchica:
+\begin{itemize}
+    \item I primi figli di un DMXMode sono i nodi \lstinline{DMXChannel} che rappresentano un canale dmx \say{fisico}. Gli attributi principali di un DMXChannel sono: \begin{itemize}
+            \item \lstinline{Offset}: Offset del canale fisico rispetto all'indirizzo di partenza di una fixture.
+            \item \lstinline{Highlight}: Valore dmx applicato al canale quando la fixture viene messa in modalità \say{Highlight}, ovvero una modalità usata per evidenziare e trovare una determinato faro tra i tanti montati su un palcoscenico.
+            \item \lstinline{Geometry}: Nome della geometria controllata da questo canale.
+            \item \lstinline{InitialFunction}: Nome della \lstinline{ChannelFunction} da eseguire come valore default del canale, espresso nella forma \lstinline{NomeGeometria_AttributoLogicalChannel.AttributoChannelFunction.NomeChannelFunction}
+        \end{itemize}
+    \item I figli di un DMXChannel sono i nodi \lstinline{LogicalChannel}. Su alcune fixture un canale dmx fisico può controllare funzionalità differenti, per questo motivo esiste una distinsione tra DMXChannel (Ovvero il canale fisico) e LogicalChannel. I LogicalChannel all'interno dello stesso DMXChannel sono mutualmente esclusivi. Gli attributi principali di un LogicalChannel sono: \begin{itemize}
+            \item \lstinline{Snap}: Se lo snap è abilitato, nel momento della preview del faro, vuol dire che questo attributo non deve essere interpolato, ma deve saltare direttamente a quel valore, poiché, fisicamente su una luce nella realtà, la feature non è controllata da un motore che ha il suo tempo per muoversi. Un esempio è il controllo della luminosità di un LED, che è instantaneo.
+            \item \lstinline{Attribute}: Feature controllata da questo LogicalChannel.
+        \end{itemize}
+    \item Sotto i LogicalChannel abbiamo i \lstinline{ChannelFunction}, che rappresentano una funzionalità specifica dell'attributo indicato nel LogicalChannel padre. Ad esempio, l'attributo del padre potrebbe essere \lstinline{Shutter} e come figli potrebbe avere due ChannelFunction di tipo \lstinline{StrobeRandom} e \lstinline{LinearStrobe}: Entrambi i ChannelFunction fanno uso dello stesso attributo fisico (lo shutter), ma di fatto sono due funzionalità differenti. Gli attributi principali di una ChannelFunction sono: \begin{itemize}
+            \item \lstinline{Name}: Nome della ChannelFunction
+            \item \lstinline{Attribute}: Feature specifica di questo ChannelFunction, che riguarda comunque la feature generale specificata nel nodo LogicalChannel padre.
+            \item \lstinline{DMXFrom}: Valore DMX in cui questa ChannelFunction inizia nel DMXChannel. Non esiste un attributo DMXTo indicato esplicitamente in GDTF; viene calcolato utilizzando il valore DMXFrom della ChannelFunction successiva, oppure, se è l'ultima ChannelFunction nella lista, il valore massimo che può assumere il DMXChannel.
+            \item \lstinline{Default}: Valore default quando questa ChanenlFunction viene richiamata.
+            \item \lstinline{PhysicalFrom}: Valore fisico di partenza che questo attributo può raggiungere in un faro vero. Esempio: se l'attributo è \lstinline{Zoom}, corrisponde all'apertura che il fascio di luce avrà quando il valore DMX corrisponde a DMXFrom.
+            \item \lstinline{PhysicalTo}: Valore fisico di arrivo che questo attributo può raggiungere in un faro vero. Esempio: se l'attributo è \lstinline{Zoom}, corrisponde all'apertura che il fascio di luce avrà quando il valore DMX corrisponde a DMXTo.
+            \item \lstinline{RealFade}: Tempo in secondi che questa feature impiega su un faro vero per passare da PhysicalFrom a PhysicalTo, usato per l'interpolazione
+            \item \lstinline{RealAcceleration}: Tempo in secondi che questa feature impiega su un faro vero per passare dall'essere fermo a raggiungere la velocità di movimento massima, usato per l'interpolazione
+            \item \lstinline{Wheel}: Opzionale, nome della ruota a cui questo attributo fa riferimento
+        \end{itemize}
+    \item Infine abbiamo i \lstinline{ChannelSet} che rappresentano delle macro o valori precisi che una ChannelFunction può assumere. Gli attributi di un ChannelSet sono: \begin{itemize}
+            \item \lstinline{Name}: Nome/DisplayName del channel set
+            \item \lstinline{DMXFrom}: Valore DMX in cui questo ChannelSet inizia nel DMXChannel. Analogalmente alle ChannelFunction, non esiste un attributo DMXTo, che verrà calcolato allo stesso modo delle loro DMXTo, eccezion fatta che come valore massimo non si userà quello del DMXChannel, bensì quello della ChannelFunction. 
+            \item \lstinline{PhysicalFrom}: Funzionamento analogo alle ChannelFunction. Se non viene specificato, può essere calcolato come proporzione \begin{math}CS.PysicalFrom : CF.PhysicalRange = CS.DMXFrom : CS.DMXRange\end{math} dove $PhysicalRange$ e $DMXRange$ si ottengono calcolando il rispettivo valore To meno il rispettivo valore From
+            \item \lstinline{PhysicalTo}: Funzionamento analogo alle ChannelFunction. Se non viene specificato, può essere calcolato come proporzione \begin{math}CS.PysicalTo : CF.PhysicalRange = CS.DMXTo : CS.DMXRange\end{math} dove $PhysicalRange$ e $DMXRange$ si ottengono calcolando il rispettivo valore To meno il rispettivo valore From
+            \item \lstinline{WheelSlotIndex}: Se la ChannelFunction padre è collegato ad una ruota, è l'identificativo dello slot nella ruota che dovrà essere attivo quando il valore del canale DMX fisico si trova nel range di questo ChannelSet 
+        \end{itemize}
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{img/introduzione/GDTFdmxExample.jpg}
+    \caption{Esempio di nodi rappresentanti la descrizione di un canale DMX in un file GDTF}
+    \label{fig:1_gdtfDmxExample}
+\end{figure}
 
 \subsection{Informazioni sul tirocinio}\label{subsec:1_tirocinio}
 CPGDTF-Importer è un progetto sviluppato dalla \say{Clay Paky}, azienda italiana leader mondiale nella progettazione e realizzazione di luci per concerti, architettura e teatri, per cui ho svolto il tirocinio curriculare. Lo sviluppo ha avuto inizio nel Maggio 2022 da un altro tirocinante che ha forkato il plugin originale sviluppato dalla Epic Games ed ha iniziato ad aggiungere funzioni che, nonostante fossero basilari, mancavano totalmente. Il plugin originale leggeva solamente quali fossero i componenti di una fixture, i suoi canali e poche altre informazioni. Utilizzava sempre modelli 3D e ruote gobo predefinite, non importava i valori di fade e accellerazione per l'interpolazione, mancavano moltissime funzionalità delle fixture e quelle esistenti funzionavano male, e molto altro ancora. Il tirocinante precedente, dopo aver speso quasi tutto il periodo del suo tirocinio a fare ricerca su come funzionasse il plugin originale ha gettato delle basi per iniziare ad estenderlo e per completare l'importazione di tutti i dati e file da un GDTF, ha scritto delle documentazioni abbastanza esaustive, per poi andare via.\newline
