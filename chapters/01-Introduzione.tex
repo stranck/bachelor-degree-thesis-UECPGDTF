@@ -6,7 +6,7 @@
 
 \vspace{1.0cm}
 
-\section{Introduzione}\label{sec:Introduzione}
+\section{Introduzione}\label{sec:Intro}
 Nel mondo dell'eventistica progettare e programmare in anticipo e virtualmente palchi e show è una pratica sempre più diffusa e viene realizzata attraverso programmi detti \say{Previsualizer}. Solitamente vengono utilizzati software\cite{capture} ad-hoc closed-source e molto costosi, con una resa qualitativa molto elevata. Esistono anche dei software gratuiti, molto spesso già inclusi nei sistemi di controllo luci, sempre closed-source, che però omettono molte funzionalità essenziali ed hanno una resa grafica nettamente inferiore.\newline
 
 Lo scopo del progetto CPGDTF-Importer è quello di realizzare un Previsualizer open-source basato su \say{Unreal Engine}\cite{UnrealEngine}, un importante ed affermato software ed engine grafico per la realizzazione di videogiochi, sviluppato dalla \say{Epic Games}. Unreal Engine (da ora abbreviato con \say{UE}) è gratuito e open-source, ha un rendering visivo fotorealistico e mette a disposizione un sistema di plugin con i quali è possibile integrare l'importazione di file non nativi, automatizzare i processi di creazione di \say{oggetti} utilizzabili all'interno dell'engine, oppure definire il comportamento di questi oggetti stessi. UE dispone di una libreria di plugin sviluppati dalla Epic Games tra cui figura \say{DMXEngine}, che già implementa protocolli standard per la gestione di luci e già detta delle basi per sviluppare un proprio plugin nel medesimo contesto.  
@@ -63,16 +63,62 @@ Alcune fixture possono supportare più modalità di controllo, che possono andar
 
 
 \subsection{GDTF}\label{subsec:1_gdtf}
-GDTF - \textit{General Device Type Format} - è un formato per descrivere fixture nella maniera più accurata possibile. È stato sviluppato da MAlighting (azienda produttrice del sistema di controllo luci attualmente più usato in show medio-grandi), Robe (altro leader industriale nello sviluppo e realizzazione di luci per l'eventistica) e Vectorworks (Un software di CAD/Deisgn anch'esso molto usato nella progettazione e previsualizzazione di palcoscenici). 
+GDTF - \textit{General Device Type Format} - è un formato per descrivere fixture nella maniera più accurata possibile. È stato sviluppato da MAlighting (azienda produttrice del sistema di controllo luci attualmente più usato in show medio-grandi), Robe (Uno dei leader industriali nello sviluppo e realizzazione di luci per l'eventistica) e Vectorworks (Un software di CAD/Deisgn anch'esso molto usato nella progettazione e previsualizzazione di palcoscenici). 
 \newline
 
-Un file GDTF è essenzialmente un pacchetto contenente all'interno 
+Un file GDTF è essenzialmente un pacchetto contenente all'interno i modelli delle varie geometrie che compongono un faro, le texture delle sue gobo/animazioni/prismi/etc ed un file in formato XML contentente una descrizione esaustiva delle caratteristiche del faro. \newline
+Dei vari dati contenuti in questo XML a noi ci interessano principalmente:
+\begin{itemize}
+    \item Informazioni e texture sulle ruote colori e gobo
+    \item Informazioni sui valori di fade e accelerazione per l'interpolazione delle varie componenti fisiche
+    \item Modelli 3D, geometrie di un faro e come sono in relazione tra di loro
+    \item Informazioni sui vari canali DMX e varie modalità DMX
+\end{itemize}
+
+\subsubsection{Ruote}\label{subsec:1_2_wheels}
+Nel nodo \lstinline{Wheels} all'interno del file XML viene definita una lista di ruote presenti all'interno del faro. Ogni ruota (rappresentata da un nodo \lstinline{Wheel}) può avere un nome, e dentro ciascuna troviamo una lista di \lstinline{Slot} che rappresentano ognuno un elemento della ruota. Ogni slot ha anch'esso un nome, e può avere degli attributi opzionali quali:
+\begin{itemize}
+    \item \lstinline{Color}: Il colore di uno slot presente su una color wheel.
+    \item \lstinline{MediaFileName}: Nome del file PNG contenente la texture di questo slot, utilizzato per le ruote gobo ed animazione.
+\end{itemize}
+I prismi vengono comunque classificati come ruote, dove ogni slot rappresenta un tipo diverso di prisma. In questi casi avranno come figli dei nodi \lstinline{Facet} rappresentanti le facce di un prisma, in cui ne viene definito il colore, la rotazione, la traslazione e la grandezza della faccia.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{img/introduzione/GDTFwheelExample.jpg}
+    \caption{Nodo \lstinline{Wheels} in un file GDTF}
+    \label{fig:dmxChannelsExample}
+\end{figure}
+
+\subsubsection{Geometrie}\label{subsec:1_2_geometries}
+Il nodo \lstinline{Models} viene utilizzato per definire una lista di modelli da importare. Per ciascuno può essere assegnato un nome e delle dimensioni per effettuare dello scaling al modello stesso. 
+
+I vari modelli che vengono importati vengono poi usati all'interno del nodo \lstinline{Geometries}, che va a definire una gerarchia di geometrie, specificando i punti di interconnessione tra le varie e gli assi e centri di rotazione di ciascuna. Alcune geometrie, come ad esempio \lstinline{Beam}, sono particolari, perché rappresentano un punto in cui la luce può essere emessa dalla fixture.
+
+Le varie funzionalità di una fixture sono implementate all'interno di una particolare geometria, o meglio, \textit{riguardano} una geometria.
+
+\subsubsection{Modalità e canali DMX}\label{subsec:1_2_dmxchannels}
 
 \subsection{Informazioni sul tirocinio}\label{subsec:1_tirocinio}
-CPGDTF-Importer è un progetto sviluppato dalla \say{Clay Paky}, azienda italiana leader mondiale nella progettazione e realizzazione di luci per concerti, architettura e teatri, per cui ho svolto il tirocinio curriculare. Lo sviluppo ha avuto inizio nel Maggio 2022 
+CPGDTF-Importer è un progetto sviluppato dalla \say{Clay Paky}, azienda italiana leader mondiale nella progettazione e realizzazione di luci per concerti, architettura e teatri, per cui ho svolto il tirocinio curriculare. Lo sviluppo ha avuto inizio nel Maggio 2022 da un altro tirocinante che ha forkato il plugin originale sviluppato dalla Epic Games ed ha iniziato ad aggiungere funzioni che, nonostante fossero basilari, mancavano totalmente. Il plugin originale leggeva solamente quali fossero i componenti di una fixture, i suoi canali e poche altre informazioni. Utilizzava sempre modelli 3D e ruote gobo predefinite, non importava i valori di fade e accellerazione per l'interpolazione, mancavano moltissime funzionalità delle fixture e quelle esistenti funzionavano male, e molto altro ancora. Il tirocinante precedente, dopo aver speso quasi tutto il periodo del suo tirocinio a fare ricerca su come funzionasse il plugin originale ha gettato delle basi per iniziare ad estenderlo e per completare l'importazione di tutti i dati e file da un GDTF, ha scritto delle documentazioni abbastanza esaustive, per poi andare via.\newline
 
-\subsection{Strutture dati su Unreal Engine}\label{subsec:1_dataStructsUE}
+Al mio arrivo in Claypaky mi è stato affidato il progetto con l'obiettivo di finire di implementare nuove funzionalità delle fixtures in modo da poter arrivare a simulare completamente tutti i fari dell'azienda.
+
+Dopo aver speso un primo periodo a prendere conoscenza con la codebase mi sono reso conto di quanto buona parte del codice necessitasse di un refactoring. In particolare ho riscontrato difficoltà nell'implementare nuove features, sia perché il codice che si occupava del rendering dell'illuminazione non fosse in alcun modo modulare e sia perché la gerarchia di classi che le gestisce fosse maldisegnata e con tanto codice duplicato. 
+
+Solamente dopo aver risolto questi grossi problemi strutturali nel codice (e dopo aver fatto funzionare correttamente l'interpolazione) ho potuto dedicarmi all'implementazione effettiva di nuove features. 
+
+%\subsection{Strutture dati su Unreal Engine}\label{subsec:1_dataStructsUE}
 
 \subsection{Struttura della tesi}\label{subsec:1_thesisInfo}
+L'elaborato è articolato come segue. Ogni capitolo rappresenta una milestone del progetto:
+\begin{itemize}
+    \item \textbf{Capitolo \ref{sec:Intro}, Introduzione} %We like recurion
+    \item \textbf{Capitolo \ref{sec:RenderingPipeline}, design di una pipeline di rendering}: In questo capitolo verrà analizzata l'implementazione originale con la quale veniva effettuato il rendering dell'illuminazione di ogni singola fixture. Verranno evidenziati i problemi e mostrate idee per risolverli. Infine verrà anche esposta l'implementazione per la generazione di una pipeline vera e propria per il rendering dei vari moduli di una luce. 
+    \item \textbf{Capitolo \ref{sec:FixtureComponentHierachy}, redesign gerarchia dei FixtureComponent}: Tratta l'analisi della gerarchia precedente dei FixtureComponent, ovvero quelle classi responsabili di controllare ogni singola feature che compone una fixture. Vengono proposte nuove idee di implementazione e mostrati quali dati e metodi servirebbe mettere a disposizione alle classi che implementano la singola feature.
+    \item \textbf{Capitolo \ref{sec:Interpolation}, reimplementazione dell'interpolazione}: All'interno di questo capitolo vengono velocemente esposti i problemi dell'attuale classe che controlla l'interpolazione, ovvero il controllo del movimento dei motori virtuali. Successivamente viene mostrata la nuova implementazione della classe, esponendo i vari problemi che si sono verificati durante la scrittura del codice e come sono stati risolti.
+    \item \textbf{Capitolo \ref{sec:NewFeatures}, implementazione di nuove funzionalità alle fixtures}: Una volta sistemata la struttura del plugin e reso comodo e meno error-prone l'implementazione di nuove feature, qui viene descritta come sono state pensate e implementate le due funzionalità che sono state aggiunte a CPGDTF-Importer.
+    \item \textbf{Capitolo \ref{sec:End}, conclusioni}: In questo capitolo conclusivo, vengono sintetizzati i problemi, generali, emersi durante lo sviluppo con GDTF ed Unreal Engine. Inoltre, vengono valutati futuri sviluppi con Arri (l'azienda che ha acquisito Claypaky lo scorso Marzo, durante il mio periodo di tirocinio) e con Epic Games stessa.
+\end{itemize}
+
 
 \end{document}
