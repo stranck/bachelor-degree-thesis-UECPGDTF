@@ -74,8 +74,9 @@ def gitPush(gitPath, commitMessage):
 		print("Pusing to origin!")
 		origin = repo.remote(name='origin')
 		origin.push()
-	except:
+	except Exception as e:
 		print('Some error occured while pushing the code')   
+		print(e)
 
 
 args = sys.argv.copy()
