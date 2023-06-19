@@ -2,3 +2,4 @@ overleafLogin.json
 overleafLogin.*
 
 .vs/*
+.vscode/*
