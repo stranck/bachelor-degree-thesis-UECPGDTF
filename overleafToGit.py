@@ -5,12 +5,15 @@ import os
 import sys
 import time
 import random
+import logging
 import zipfile
 import requests
 from git import Repo
 from tqdm import tqdm
 
 PROJECT_LINK = "https://www.overleaf.com/project/648c2bafed1243937ceb97d5"
+
+logging.basicConfig(level=logging.DEBUG)
 
 path = Path(__file__).resolve().parent
 os.chdir(path)
