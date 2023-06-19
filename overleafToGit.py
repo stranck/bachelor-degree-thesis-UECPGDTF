@@ -71,6 +71,7 @@ def gitPush(gitPath, commitMessage):
 		repo.git.add(update=True)
 		print(f"Committing with message '{commitMessage}'")
 		repo.index.commit(commitMessage)
+		print("Pusing to origin!")
 		origin = repo.remote(name='origin')
 		origin.push()
 	except:
@@ -85,3 +86,4 @@ downloadLink = PROJECT_LINK + "/download/zip"
 download(downloadLink)
 gitPath = path / Path(".git/")
 gitPush(gitPath, commitMessage)
+print("Bye bye")
