@@ -38,18 +38,125 @@ Il RayMarching viene spesso usato per generare geometrie che si ripetono, ed è 
     \label{fig:2_raymarchQualities}
 \end{figure}
 
-%TODO Spiegazione grafo materiale, per poi spiegare la custom expression. Mostrare a cosa aserve il loop e dove viene effettuato il sampling delle gobo
+Gran parte del grafo del materiale si occupa della preparazione dei parametri del RayMarching, quali la \lstinline{StepSize} (influenzata dalla qualità di rendering e dalla lontananza del beam), il punto di intersezione con il beam di una luce più vicino e quello più lontano (\lstinline{NSlice} e \lstinline{FSlice}), la distanza da questi punti (\lstinline{NDepth} e \lstinline{FDepth}), la distanza tra la camera e la fine del mondo (\lstinline{SCdepth}), la grandezza della base del beam (\lstinline{ConeRadius}), la distanza che un beam può percorrere e il suo zoom (\lstinline{AdjOpp}), la trasparenza del beam rispetto agli altri oggetti (\lstinline{SoftClipSize}). L'algoritmo effettivo si trova all'interno di una CustomExpression che prende come argomenti, oltre ai parametri calcolati dal grafo, le texture delle ruote gobo e colori (\lstinline{TXTpGobo} e \lstinline{TXTpColor}), la loro grandezza in slot (\lstinline{NumGobos} e \lstinline{NumColors}) e gli indici all'interno delle ruote (\lstinline{GoboIndex} e \lstinline{ColorIndex}). \newline
+
+Inizialmente il codice della CustomExpression si calcola la distanza totale che il nostro fotone percorrerà (\lstinline{traversalDepth}) e, utilizzando StepSize, calcolerà il numero di step che impiegherà a percorrerla (\lstinline{numSteps}) e lo scostamento ad ogni step (\lstinline{posOffset}). Successivamente prenderà la distanza massima (che corrisponde alla potenza in base allo zoom) che può percorrere la luce de faro (\lstinline{Adj}) e il suo zoom (\lstinline{Opp}).
+\lstset{language=glsl}
+\begin{lstlisting}
+float traversalDepth = FDepth - NDepth ;
+uint numSteps = floor(traversalDepth / StepSize) ;
+float3 posOffset = normalize(FSlice-NSlice) * StepSize ;
+
+float Adj = AdjOpp.x;
+float Opp = AdjOpp.y + ConeRadius;
+\end{lstlisting}
+
+Da qui in poi inizia il loop dell'algoritmo di Beam RayMarching. Il ciclo in se si occupa principalmente di replicare, ad ogni iterazione, la texture che si vuole proiettare, a distanza \lstinline{StepSize} l'una dall'altra. Inoltre, all'interno ha anche il compito di gestire la trasparenza e l'overlay di oggetti posti davanti al fascio di luce. Il ciclo inizia dichiarando una variabile (\lstinline{cumul}) che verrà usata per salvare tutti i vari sample che vengono effettuati ad ogni iterazione, e che poi sarà l'output del RayMarch.
+\begin{lstlisting}
+float3 cumul = 0;
+for(uint i=0; i<numSteps; i++){
+    ...
+}
+return cumul ;
+\end{lstlisting}
+
+La prima operazione effettuata nel ciclo è ottenere la distanza e la posizione relativa all'iterazione corrente.
+\begin{lstlisting}
+///Position & depth at rayHit
+float3 pos = NSlice + posOffset * i ;
+float depth = NDepth + StepSize * i ;
+\end{lstlisting}
+Successivamente la posizione viene convertita per essere nel range [0, 1], in modo da poter effettuare sucessivamente le operazioni di sample. A questo punto la nostra posizione è stata convertita in coordinate UV.
+\begin{lstlisting}
+///Domain Transform
+pos.z = -pos.z;
+pos /= float3(Opp*2,Opp*2,Adj);
+
+float div = ConeRadius / Opp;
+div = (pos.z*(1-div))+div;
+pos.xy /= div;
+
+//Center domain
+pos.z -= 0.5 ;
+\end{lstlisting}
+Poi viene verificato che non stiamo disegnando texture dalla parte opposta della fixture, e che non abbiamo un qualche altro oggetto che copre completamente il beam. Se è valida una delle due condizioni, saltiamo questa iterazione del ciclo.
+\begin{lstlisting}
+///Clip domain edges.
+bool maskX = abs(pos.x) > 0.5;
+bool maskY = abs(pos.y) > 0.5;
+bool maskZ = abs(pos.z) > 0.5;
+if (maskX || maskY || maskZ) continue;
+
+///Soft clipping with scene depth.
+float dClip = saturate((ScDepth-depth)/SoftClipSize);
+if(dClip == 0) continue;
+\end{lstlisting}
+A questo punto avviene l'effettivo sample della ruota gobo e colori. Viene prima calcolato l'offset all'interno nella ruota, viene poi usato per modificare la coordinata $X$ delle UV ed infine viene effettuata l'operazione di sampling della texture
+\begin{lstlisting}
+// UVs from pos
+pos.xy = saturate(pos.xy+0.5);
+
+//gobo
+float2 texCoor = pos.xy;
+float scale = 1 / NumGobos;
+float offset = GoboIndex / NumGobos;
+texCoor.x = texCoor.x * scale + offset;
+float GoboSample = TXTpGobo.SampleLevel(TXTpGoboSampler, texCoor, 0);
+
+//color
+ColorUV.x = ColorUV.x / NumColors;
+ColorUV.x = ColorUV.x  + (ColorIndex/NumColors) ;
+float3 ColorSample =
+    TXTpColor.SampleLevel(TXTpColorSampler, ColorUV.xy,0);
+// Add DMXColor in
+ColorSample = ColorSample * DMXColor;
+\end{lstlisting}
+Infine viene calcolato il valore di decadenza della luce e vengono combinati insieme tutti i valori calcolati fin'ora.
+\begin{lstlisting}
+float dist = length(pos);
+float falloff = 1.0f-(dist/MaxDistance);
+// InvSqr falloff function
+float invsqr = 1.0f / (dist*dist);
+
+///Add to Result
+cumul +=
+    (1/numSteps) * GoboSample * ColorSample * dClip * invsqr * falloff;
+\end{lstlisting}
+
+Nell'implementazione attuale non esiste la possibilità di implementare più ruote dello stesso tipo: lo evinciamo semplicemente dal fatto che gli input della CustomExpression sono solo uno per tipo di ruota. Inoltre notiamo come nel codice il sampling della ruota colore e di quella gobo viene essenzialmente fatto allo stesso modo, eppure non è stata creata una funzione generalizzata per farlo, bensì due codici specifici per ciascuna. 
 
 \subsubsection{Light}\label{subsec:2_1_light}
 Questo materiale si occupa della proiezione della luce su altri materiali
-%TODO SCREENSHOT
-Come possiamo notare è molto basilare, abbiamo due MaterialFunctionCall che si occupano dell'elaborazione del dimmer e della strobo, che vengono moltiplicati con il risultato di una terza MaterialFunctionCall chiamata \say{TODO}. Aprendo quest'ultima possiamo notare un grafo più interessante, che è quello con cui vengono renderizzate le ruote.
-%TODO SCREENSHOT E SPIEGAZIONE
-Da notare come il nome dei parametri all'interno di questa MaterialFunction facciano riferimento solo alle ruote gobo, e come all'interno del Materiale originale sia presente solamente una MaterialFunctionCall a questa MF. Questo implica l'impossibilità di renderizzare sia ruote differenti da quelle gobo e l'impossibilità di avere più ruote gobo nella stessa fixture
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{img/renderingPipeline/LightMaterialFull.jpg}
+    \caption{Grafo del materiale Light}
+    \label{fig:2_lightGraphFull}
+\end{figure}
+Come possiamo notare è molto basilare, abbiamo due MaterialFunctionCall che si occupano dell'elaborazione del dimmer e della strobo, che vengono moltiplicati con il risultato di una terza MaterialFunctionCall chiamata \say{DMXGobo}. Aprendo quest'ultima possiamo notare un grafo più interessante, che è quello con cui vengono renderizzate le ruote.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{img/renderingPipeline/DMXGoboMFFull.jpg}
+    \caption{Grafo della Material Function DMXGobo}
+    \label{fig:2_dmxGoboGraphFull}
+\end{figure}
+A sinistra riceviamo in input le coordinate UV che la camera sta renderizzando in quel momento. Successivamente passiamo in due blocchi, che essenzialmente svolgono l'operazione $UV.x * (1 / GoboNumMask) + (GoboIndex / GoboNumMask)$. Notiamo come questo calcolo sia lo stesso utilizzato per fare il sample delle gobo dentro il materiale Beam (\ref{subsec:2_1_beam}). Infatti il risultato viene poi utilizzato come input per due nodi (\say{DMX Gobo Disk} e \say{DMX Gobo Disk Frosted}, uno contiene la texture originale, l'altro una versione sfocata della stessa texture) per effettuare il sample della ruota gobo. Successivamente i due sample vengono interpolati in base al valore del frost (sfocatura) ed infine viene restituito in output.
+
+Da notare come il nome dei parametri all'interno di questa MaterialFunction facciano riferimento solo alle ruote gobo, e come all'interno del Materiale originale sia presente solamente una MaterialFunctionCall a DMXGobo. Questo implica l'impossibilità di renderizzare sia ruote differenti da quelle gobo e l'impossibilità di avere più ruote gobo nella stessa fixture
 
 \subsubsection{Lens}\label{subsec:2_1_lens}
-Questo materiale si occupa di applicare l'effetto che stiamo renderizzando sulle lenti (virtuali) di un faro %SCREENSHOT + EFFETTO SU LENTI VERE
-
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{img/renderingPipeline/Lens.jpg}
+    \label{fig:2_Lens}
+\end{figure}
+Questo materiale si occupa di applicare l'effetto che stiamo renderizzando sulle lenti (virtuali) di un faro \begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{img/renderingPipeline/LensMaterialFull.jpg}
+    \caption{Grafo del materiale Lens}
+    \label{fig:2_lensGraphFull}
+\end{figure}
+Il grafo è in realtà molto simile a quello visto precedentemente per il materiale Light (\ref{subsec:2_1_light}). Si aggiungono solamente dei blocchi di nodi in più (\say{Lens}, \say{Lamp}) che servono a redere più fotorealistica la resa delle lenti. Anche in questo materiale è presente una MaterialFunctionCall a DMXGobo, ma notiamo come ce n'è un'altra a DMXColorWheel (la quale implementazione è identica a quella delle gobo, nonostante, di fatto, stiano facendo la stessa cosa).
 
 \subsection{Idea della pipeline}\label{subsec:2_pipelineIdea}
 Nelle precedenti sezioni abbiamo potuto vedere come allo stato attuale sia davvero difficile aggiungere nuove features e rendere possibile la presenza di più attributi contemporaneamente. Una buona idea per risolvere questi problemi è quella di astrarre il rendering dei vari moduli in moduli generici e realizzare una pipeline il più simile possibile ad una vera fixutre. Come spiegato in precedenza, in una vera luce è presente un emettitore che genera un fascio di luce che attraverserà ogni singolo modulo montato. Ogni singolo modulo prende quindi il \say{risultato} del modulo precedente, ci applica un filtro sottrattivo sopra e lo da in output al modulo successivo. \newline
