@@ -201,8 +201,55 @@ Come ci aspettavamo, questo metodo compila con successo. Possiamo quindi impleme
 
 Il motivo per cui si sta preferendo mantenere una doppia implementazione dei vari moduli (Sia come materiali che come codice HLSL) deriva dal fatto che quando Unreal Engine va a compilare i materiali in codice HLSL effettua una prima, grossa, ottimizzazione in cui eventuali valori e calcoli che non cambiano durante il rendering di un materiale vengono automaticamente messi in una cache. La stessa cosa non accade al codice HLSL dentro le MaterialExpressionCustom, che viene invece incapsulato senza essere toccato all'interno di una funzione, nel sorgente HLSL del materiale di cui fa parte. \cite{hlslNoOptimize}
 
-\lstset{language=c++}
+\lstset{language=UEcpp}
 \subsection{Generazione dinamica del codice e delle MaterialExpression}\label{subsec:2_codeGeneration}
+Non tutte fixture hanno gli stessi moduli. Alcune, ad esempio, potrebbero avere il sagomatore, mentre altre no. Inoltre alcune luci possono avere un numero variabile di una stessa feature. Per far fronte a queste differenze, al posto di usare un unico materiale in ogni tipo di fixture, si è scelto di generare programmaticamente una pipeline di rendering per ogni tipo di faro importato. Purtroppo, per poter usare una MaterialFunction (E quindi una pipeline) specifica per ogni attore (rappresentante un tipo di fixture) che viene creato, bisogna che quell'attore abbia anche i propri componenti. Ad ogni import quindi viene prima generata la pipeline, successivamente vengono clonati i materiali Light, Beam e Lens, poi viene inserita una MaterialFunctionCall alla pipeline (o inserito il codice HLSL) nei materiali, ed infine vengono assegnati questi nuovi materiali all'attore. 
+Poiché modalità differenti di una fixture possono avere feature (ed in realtà anche geometrie) differenti, questa operazione va fatta per ciascuna modalità e dovranno essere salvate tutte le pipeline e tutti i materiali separatamente.
+
+Viene quindi creata una classe \lstinline{CPGDTFRenderPipelineBuilder} il quale costruttore si occuperà di analizzare i componenti in input per individuare quali e quante features dovranno essere inserite all'interno della pipeline
+\begin{lstlisting}
+CPGDTFRenderPipelineBuilder::CPGDTFRenderPipelineBuilder(
+        UCPGDTFDescription* gdtfDescription,
+        int selectedMode,
+        TArray<UActorComponent*> components,
+        FString fixturePathOnContentBrowser) {
+
+    //Salva l'indice della modalità selezionata
+	this->mSelectedMode = selectedMode;
+	this->mGdtfDescription = gdtfDescription;
+	//Ottieni l'array con le ruote presenti in un faro
+    this->mWheels = Cast<UDMXImportGDTFWheels>(
+        gdtfDescription->Wheels)->Wheels;
+    //Salva il nome (sanitizzato) del tipo di fixture
+	this->mSanitizedName = UPackageTools::SanitizePackageName(
+        Cast<UDMXImportGDTFFixtureType(
+            gdtfDescription->FixtureType)->Name.ToString());
+
+    //Genera e salva il path in cui verranno
+    //salvati i materiali clonati e la pipeline
+	if (fixturePathOnContentBrowser.EndsWith(TEXT("/")))
+        fixturePathOnContentBrowser.RemoveAt(
+            fixturePathOnContentBrowser.Len() - 1);
+	fixturePathOnContentBrowser.Append("/lightRenderingPipeline/");
+	fixturePathOnContentBrowser.Append(FString::FromInt(selectedMode));
+	fixturePathOnContentBrowser.Append(TEXT("/"));
+	this->mBasePackagePath = fixturePathOnContentBrowser;
+
+    //Analizza le ruote del faro e conta quante ce ne sono per tipo
+	for (FDMXImportGDTFWheel wheel : this->mWheels) {
+		FCPGDTFWheelImporter::WheelType wType =
+            FCPGDTFWheelImporter::GetWheelType(
+                this->mGdtfDescription,
+                wheel.Name,
+                selectedMode);
+		this->mWheelsNo[wType]++;
+	}
+
+    //Analizza gli altri componenti
+	for (int i = 0; i < components.Num(); i++) {}
+}
+\end{lstlisting}
+
 \subsubsection{Custom Material (per Beam)}\label{subsec:2_3_CM}
 \subsubsection{Material Function (per Light e Lens)}\label{subsec:2_3_MF}
 
