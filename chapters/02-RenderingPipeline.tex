@@ -551,7 +551,7 @@ if (meEmissiveColor)
 \end{lstlisting}
 
 Per quanto riguarda invece la seconda lambda, abbiamo un codice un po' più elaborato, poiché si occupa anche di generare gli input per la CustomExpression.
-Inizialmente andiamo a cercare la CustomExpression. Se esiste, generiamo il codice HLSL e glielo impostiamo. Successivamente creiamo l'input per il valore di frost e lo piazziamo dentro il materiale un \lstinline{MeBlocksMover}.
+Inizialmente andiamo a cercare la CustomExpression. Se esiste, generiamo il codice HLSL e glielo impostiamo. Successivamente creiamo l'input per il valore di frost e lo piazziamo dentro il materiale usando un \lstinline{MeBlocksMover}.
 \begin{lstlisting}
 UMaterialExpressionCustom* meCustom =
     searchMaterialExpressionByDesc<UMaterialExpressionCustom>(
@@ -621,6 +621,7 @@ Il risultato dell'esecuzione di questo codice a seguito di una importazione è i
     \includegraphics[scale=0.516]{img/renderingPipeline/beamMaterialGenerated.jpg}
     \label{fig:2_beamGenerated}
 \end{wrapfigure}
+\lstset{language=glsl}
 \begin{lstlisting}
 float3 outputSample = DMXColor;
 if(outputSample.x > 1)outputSample.x = 1;
@@ -645,8 +646,84 @@ if(outputSample.x < 0)outputSample.x = 0;
 if(outputSample.y < 0)outputSample.y = 0;
 if(outputSample.z < 0)outputSample.z = 0;
 \end{lstlisting}
+\clearpage
 
 \subsubsection{Material Function (per Light e Lens)}\label{subsec:2_3_MF}
+Come per la costruzione della pipeline per il Beam, aggiungere parametri ad un materiale è una operazione ripetitiva. Per questo motivo è stata creata una funzione \lstinline{addScalarParameterToMiPipeline} che però, al posto della sua corrispondente, si ferma a generare e spostare la MaterialExpressionParameter senza effettuare nessun'altra operazione. \newline
+
+La pipeline in se viene creata dentro una Material Function, in modo che possa essere richiamata sia dal materiale Light che da quello Lens. Scriviamo quindi una funzione \lstinline{buildMaterialFunctionPipeline()} che verrà chiamata prima di clonare i due materiali. Iniziamo col creare il nuovo materiale in cui salveremo la pipeline:
+\lstset{language=UEcpp}
+\begin{lstlisting}
+auto materialPackage = CreatePackage(*(this->basePackagePath + mfName));
+auto materialFactory = NewObject<UMaterialFunctionFactoryNew>();
+UMaterialFunction* dstMaterial = materialFactory->FactoryCreateNew(
+    UMaterialFunction::StaticClass(),
+    materialPackage,
+    *mfName,
+    RF_Standalone | RF_Public,
+    NULL, GWarn
+);
+auto dstMaterialData = dstMaterial->GetEditorOnlyData();
+\end{lstlisting}
+Andiamo anche a caricarci la MaterialFunction che si occuperà di fare il rendering delle ruote. Nota: Va scinto il concetto di MaterialFunction e MaterialFunctionCall: La prima rappresenta il \say{codice} in se da eseguire, la seconda rappresenta un nodo all'interno del grafo di un materiale che andrà a chiamare la MaterialFunction impostata. In informatica, è come se la prima fosse una funzione e la seconda una chiamata a funzione. Una volta generata una MaterialFunctionCall bisognerà impostargli quale MaterialFunction dovrà richiamare.
+Quando verrà aggiunto il supporto a nuove features qui dovrà essere aggiunto il precaricamento delle loro MaterialFunctions.
+\begin{lstlisting}
+FString mfDmxWheelPath = FCPGDTFImporterUtils::BASEPATH;
+mfDmxWheelPath +=
+    TEXT("MaterialInstances/MaterialFunctions/MF_DMXWheel.MF_DMXWheel");
+UMaterialFunctionInterface* mfWheel = Cast<UMaterialFunctionInterface>(
+    FCPGDTFImporterUtils::LoadObjectByPath(mfDmxWheelPath)
+);
+\end{lstlisting}
+Da qui in poi andiamo a generare i singoli moduli per la pipeline di rendering, a partire dal parametro del colore di partenza. Come già spiegato, ogni modulo prenderà in input il risultato di quello precedente. Ad ogni generazione quindi colleghiamo la material function precedente salvata per puntatore dentro \lstinline{previousNode} agli input di quella corrente e successivamente aggiorniamo la variabile.
+\begin{lstlisting}
+UMaterialExpressionVectorParameter* input =
+    generateMaterialExpression<UMaterialExpressionVectorParameter>(
+    dstMaterial);
+input->ParameterName = FName(TEXT("DMX Color"));
+input->DefaultValue = { 1, 1, 1, 0 };
+input->Group = FName(TEXT("Runtime Parameters"));
+input->Function = dstMaterial;
+
+UMaterialExpression* previousNode = input;
+dstMaterialData->ExpressionCollection.AddExpression(previousNode);
+\end{lstlisting}
+Prima di procedere all'aggiunta dei vari moduli, si genera il parametro di frost, lo si sposta e si carica una texture di default 
+\begin{lstlisting}
+UMaterialExpressionScalarParameter* frostParam =
+    addScalarParameterToMiPipeline(dstMaterial, getFrostParamName());
+
+//Moves the starting parameter in the material editor
+frostParam->MaterialExpressionEditorX =
+    meModulesMover->getCurrentX() - MI_EDITOR_PARAM_BLOCK_DISTANCE_X;
+frostParam->MaterialExpressionEditorY =
+    meModulesMover->getCurrentY() + EDITOR_MINI_BLOCK_SIZE * 2;
+meModulesMover->moveMaterialExpression(previousNode);
+
+FString defaultTexturePath = FCPGDTFImporterUtils::BASEPATH;
+defaultTexturePath +=
+    TEXT("MaterialInstances/Textures/T_Circle_01.T_Circle_01");
+UTexture2D* defaultTexture = Cast<UTexture2D>(
+    FCPGDTFImporterUtils::LoadObjectByPath(defaultTexturePath)
+);
+\end{lstlisting}
 
 
+Una volta generati tutti i moduli creiamo un nodo di output, operazione che, a differenza di un materiale normale, va effettuata manualmente. Inoltre, va esplicitamente generato lo UUID della stessa, poiché questa operazione non viene effettuata dal suo costruttore. 
+\begin{lstlisting}
+UMaterialExpressionFunctionOutput* output =
+    generateMaterialExpression<UMaterialExpressionFunctionOutput>(
+    dstMaterial);
+output->bRealtimePreview = false;
+output->ConditionallyGenerateId(false);
+dstMaterialData->ExpressionCollection.AddExpression(output);
+\end{lstlisting}
+Quindi lo colleghiamo all'ultimo nodo creato.
+\begin{lstlisting}
+output->A.Connect(0, previousParameter);
+meModulesMover->moveMaterialExpression(output);
+\end{lstlisting}
+
+\begin{lstlisting}
+\end{lstlisting}
 \end{document}
