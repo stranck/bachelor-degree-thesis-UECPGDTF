@@ -71,7 +71,7 @@ def gitPush(gitPath, commitMessage):
 	print(f"Using '{gitPath}' as git path")
 	try:
 		repo = Repo(gitPath)
-		repo.git.add(update=True)
+		repo.git.add(all=True)
 		print(f"Committing with message '{commitMessage}'")
 		repo.index.commit(commitMessage)
 		print("Pusing to origin!")
