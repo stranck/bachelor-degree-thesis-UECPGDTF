@@ -693,7 +693,6 @@ Prima di procedere all'aggiunta dei vari moduli, si genera il parametro di frost
 UMaterialExpressionScalarParameter* frostParam =
     addScalarParameterToMiPipeline(dstMaterial, getFrostParamName());
 
-//Moves the starting parameter in the material editor
 frostParam->MaterialExpressionEditorX =
     meModulesMover->getCurrentX() - MI_EDITOR_PARAM_BLOCK_DISTANCE_X;
 frostParam->MaterialExpressionEditorY =
@@ -708,6 +707,81 @@ UTexture2D* defaultTexture = Cast<UTexture2D>(
 );
 \end{lstlisting}
 
+Analogalmente a come abbiamo fatto nella generazione del materiale Beam, per creare i moduli per renderizzare le ruote, usiamo due cicli for: uno itera sui tipi differenti di ruote, e l'altro scorre sulla quantità di ruote di quel tipo. 
+\begin{lstlisting}
+for (int i = 0; i < FCPGDTFWheelImporter::WheelType::SIZE; i++) {
+    FCPGDTFWheelImporter::WheelType wheelType = i;
+
+    for (int j = 0; j < this->mWheelsNo[wheelType]; j++) {
+        MI_INIT_BLOCKS_MOVER
+        switch (wheelType) {
+            case FCPGDTFWheelImporter::WheelType::Color:
+            case FCPGDTFWheelImporter::WheelType::Gobo:
+            {
+                [...]
+                
+                break;
+            }
+            case FCPGDTFWheelImporter::WheelType::Animation:
+            case FCPGDTFWheelImporter::WheelType::Prism:
+            case FCPGDTFWheelImporter::WheelType::Effects:
+                break;
+        }
+        delete meParamsMover;
+    }
+}
+\end{lstlisting}
+Per la generazione di un modulo wheel innanzitutto partiamo dal creare la MaterialFunctionCall ed a settargli la MaterialFunction che abbiamo caricato in precedenza.
+\begin{lstlisting}
+UMaterialExpressionMaterialFunctionCall* currentNode =
+    generateMaterialExpression<UMaterialExpressionMaterialFunctionCall>(
+    dstMaterial);
+dstMaterialData->ExpressionCollection.AddExpression(currentNode);
+currentNode->SetMaterialFunction(mfWheel);
+\end{lstlisting}
+Successivamente andiamo a generare i nodi per i vari parametri.
+\begin{lstlisting}
+auto texParam = addTextureParameterToMiPipeline(
+    dstMaterial, getDiskParamName(wheelType, false, j),
+    defaultTexture, meParamsMover);
+auto texFrostedParam = addTextureParameterToMiPipeline(
+    dstMaterial, getDiskParamName(wheelType, true, j),
+    defaultTexture, meParamsMover);
+auto numSlotParam = addScalarParameterToMiPipeline(
+    dstMaterial, getNumSlotsParamName(wheelType, j), meParamsMover, 1);
+auto wheelIndexParam = addScalarParameterToMiPipeline(
+    dstMaterial, getIndexParamName(wheelType, j), meParamsMover);
+\end{lstlisting}
+Ed infine andiamo ad effettuare tutte le varie connessioni agli input della MaterialFunction. Viene anche effettuato lo spostamento e viene salvata come ultimo modulo elaborato. 
+\begin{lstlisting}
+currentNode->FunctionInputs[1].Input.Connect(0, previousParameter);
+currentNode->FunctionInputs[2].Input.Connect(0, frostParam);
+currentNode->FunctionInputs[3].Input.Connect(0, texParam);
+currentNode->FunctionInputs[4].Input.Connect(0, texFrostedParam);
+currentNode->FunctionInputs[5].Input.Connect(0, numSlotParam);
+currentNode->FunctionInputs[6].Input.Connect(0, wheelIndexParam);
+
+meModulesMover->moveMaterialExpression(currentNode);
+previousParameter = currentNode;
+\end{lstlisting}
+
+\clearpage
+
+\begin{wrapfigure}{r}{0.6\textwidth}
+    \centering
+    \captionsetup{justification=centering}
+    \includegraphics[scale=0.26]{img/renderingPipeline/SubtractiveCalcFull.jpg}
+    \caption{MaterialFunction SubtractiveCalc}
+    \label{fig:2_SubtractiveCalc}
+\end{wrapfigure}
+Il rendering effettivo delle ruote viene spostato in una MaterialFunction unica sia per le ruote gobo che colori, quasi identica alle originali. Prima dell'output è stato posto un nodo \say{SubtractiveCalc} (Figura \ref{fig:2_SubtractiveCalc}) che si occupa di \say{potenziare} (attraverso una potenza alla $1/3$, effettuata per le stesse ragioni spiegate nel materiale Beam) ed invertire il valore del nodo precedente, sottrarlo al valore del nodo corrente e clampare il risultato. 
+Inoltre tutti i parametri della MaterialFunction della ruota sono stati sostituiti con degli input, in modo che possa essere utilizzata in più occasioni per scopi differenti.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{img/renderingPipeline/DMXWheelFuul.jpg}
+    \caption{MaterialFunction DMXWheel}
+    \label{fig:2_dmxWheel}
+\end{figure}
 
 Una volta generati tutti i moduli creiamo un nodo di output, operazione che, a differenza di un materiale normale, va effettuata manualmente. Inoltre, va esplicitamente generato lo UUID della stessa, poiché questa operazione non viene effettuata dal suo costruttore. 
 \begin{lstlisting}
@@ -723,7 +797,42 @@ Quindi lo colleghiamo all'ultimo nodo creato.
 output->A.Connect(0, previousParameter);
 meModulesMover->moveMaterialExpression(output);
 \end{lstlisting}
+\clearpage
+La MaterialFunction che viene generata è la seguente:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{img/renderingPipeline/GeneratedPipelineFull.jpg}
+    \label{fig:2_generatedMFpipeline}
+\end{figure}
 
+La clonazione dei materiali Light e Lens viene fatta attraverso la funzione \lstinline{cloneMaterialInterface}, spiegata in precedenza. Utilizzeremo due lamba differenti per i due materiali per il link degli output, poiché ciascuno utilizza nodi differenti. Entrambe comunque sono molto simili a quella spiegata nel materiale Beam e pertanto non verranno viste nel dettaglio. La lamba per caricare la pipeline è invece identica per i due materiali ed è la seguente:
 \begin{lstlisting}
+//Cerca il nodo a cui collegare la MF della pipeline
+UMaterialExpressionMultiply* meInput =
+    searchMaterialExpressionByDesc<UMaterialExpressionMultiply>(
+    dstExpression, FIND_DESCR_INPUT);
+if (meInput) {
+    FString name = this->mSanitizedName + TEXT("_RenderPipeline");
+    FString mfName = TEXT("MF_") + name;
+
+    //Carica la pipeline
+    auto materialFunction = Cast<UMaterialFunctionInterface>(
+            FCPGDTFImporterUtils::LoadObjectByPath(
+                *(this->mBasePackagePath + mfName + TEXT(".") + mfName)
+            )
+        );
+
+    //Crea il nodo MaterialFunctionCall e ne imposta la MF
+    auto mfCall = generateMaterialExpression<
+            UMaterialExpressionMaterialFunctionCall
+        >(dstMaterial);
+    mfCall->Material = dstMaterial;
+    mfCall->SetMaterialFunction(materialFunction);
+    dstMaterialData->ExpressionCollection.AddExpression(mfCall);
+
+    //Linka la material function al primo nodo (trovato in precedenza)
+    meInput->A.Connect(0, mfCall);
+}
 \end{lstlisting}
+
 \end{document}
