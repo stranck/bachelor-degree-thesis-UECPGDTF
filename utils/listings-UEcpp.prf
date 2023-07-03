@@ -4,7 +4,7 @@
 {%
 	morekeywords={%
 	% UE constants
-		false,FALSE,NULL,true,TRUE,TEXT,const,std,nullptr,null,private,public,inline,auto,delete,%
+		false,FALSE,NULL,true,TRUE,TEXT,const,std,nullptr,null,private,public,inline,auto,delete,UPROPERTY,%
 	% UE predefinde macro constant
 		__LINE__,__FILE__,__VERSION__,%
 	% UE control keywords
@@ -16,9 +16,9 @@
 	% UE struct member -> FixMe: Should have dot(.) as delimiter
 		rgb,%
 	% UE extra functions
-		SetMaterialFunction,Connect,UMaterialExpressionVectorParameter,ConditionallyGenerateId,LoadObjectByPath,FCPGDTFImporterUtils,StaticClass,FactoryCreateNew,CreatePackage,Add,AddExpression,generateMaterialExpression,addScalarInputToBeamPipeline,getCurrentX,getCurrentY,moveMaterialExpressions,moveMaterialExpression,Contains,searchMaterialExpressionByDesc,Get,cloneMaterialInterface,copyUMaterialDetails,CopyMaterialExpressions,GetEditorOnlyData,Cast,SanitizePackageName,ToString,EndsWith,RemoveAt,Len,Append,FromInt,GetWheelType,Num,%
+		GetGDTFAttributeTypeValueFromString,SetMaterialFunction,Connect,UMaterialExpressionVectorParameter,ConditionallyGenerateId,LoadObjectByPath,FCPGDTFImporterUtils,StaticClass,FactoryCreateNew,CreatePackage,Add,AddExpression,generateMaterialExpression,addScalarInputToBeamPipeline,getCurrentX,getCurrentY,moveMaterialExpressions,moveMaterialExpression,Contains,searchMaterialExpressionByDesc,Get,cloneMaterialInterface,copyUMaterialDetails,CopyMaterialExpressions,GetEditorOnlyData,Cast,SanitizePackageName,ToString,EndsWith,RemoveAt,Len,Append,FromInt,GetWheelType,Num,%
 	% UE extra types
-		UMaterialExpressionMultiply,UMaterialExpressionMaterialFunctionCall,UMaterialExpressionFunctionOutput,UMaterialFunctionInterface,UMaterialFunctionFactoryNew,UMaterialFunction,NewObject,UPackage,FCustomInput,FName,UMaterialExpressionScalarParameter,UMaterialExpressionCustom,UMaterialExpressionScalarParameter,MeBlocksMover,UMaterialExpression,TObjectPtr,UMaterialEditorOnlyData,UMaterial,CPGDTFRenderPipelineBuilder,UCPGDTFDescription,TArray,FString,UDMXImportGDTFWheels,UPackageTools,UDMXImportGDTFFixtureType,FDMXImportGDTFWheel,FCPGDTFWheelImporter,UActorComponent%
+		CPGDTFDescription,ECPGDTFAttributeType,FCPDMXChannelData,FDMXImportGDTFDMXChannel,TMap,UMaterialExpressionMultiply,UMaterialExpressionMaterialFunctionCall,UMaterialExpressionFunctionOutput,UMaterialFunctionInterface,UMaterialFunctionFactoryNew,UMaterialFunction,NewObject,UPackage,FCustomInput,FName,UMaterialExpressionScalarParameter,UMaterialExpressionCustom,UMaterialExpressionScalarParameter,MeBlocksMover,UMaterialExpression,TObjectPtr,UMaterialEditorOnlyData,UMaterial,CPGDTFRenderPipelineBuilder,UCPGDTFDescription,TArray,FString,UDMXImportGDTFWheels,UPackageTools,UDMXImportGDTFFixtureType,FDMXImportGDTFWheel,FCPGDTFWheelImporter,UActorComponent%
 	},
 	sensitive=true,%
 	morecomment=[s]{/*}{*/},%

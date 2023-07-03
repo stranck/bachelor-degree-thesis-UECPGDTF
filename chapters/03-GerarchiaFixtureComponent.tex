@@ -79,12 +79,121 @@ Idealmente un componente dovrebbe definire pochi comportamenti specializzanti:
     \item \lstinline{SetValueNoInterp_BeamInternal()} per definire come inviare i dati elaborati dal componente, verso il materiale. A differenza di prima questa funzione dovrà supportare più feature differenti, invece di avere un SetValueNoInterp per ogni feature differente.
 \end{itemize}
 
-Tutto il resto invece dovrebbe essere appannaggio \say{automatico} dei padri, principalmente di \lstinline{FixtureComponentBase}
-%TODO spiegazione precisa di fcbase
+Tutto il resto invece dovrebbe essere appannaggio \say{automatico} dei padri, principalmente di \lstinline{FixtureComponentBase}\newline
 
-\subsubsection{Strutture dati}\label{subsec:3_2_structs}
+%TODO spiegazione precisa di fcbase
+Nella nuova implementazione ogni FixtureComponent ha a disposizione 3 strutture dati principali: 
+\begin{itemize}
+    \item \lstinline{TArray<FCPComponentChannelData> channels}: Ogni \lstinline{FCPComponentChannelData} nell'array contiene informazioni su un particolare canale DMX fisico da cui il componente è dipendente, come il suo indirizzo ed il suo ultimo valore. All'interno di questa struttura sono stati spostati il DMXChannelTree e la variabile rappresentante l'attributo dell'ultima ChannelFunction che è stata eseguita. Per ogni pacchetto DMX che riceviamo, andiamo a chiamare \lstinline{ApplyEffectToBeam()} per ogni canale in questo array.
+    \item \lstinline{TArray<FChannelInterpolation> interpolations}: Array contenente la lista di interpolazioni in esecuzione su questo determinato componente. Ogni interpolazione corrisponde a qualcosa che una vera luce muove fisicamente. Ciascuna ha un identificativo corrispondente al suo indice nell'array che viene spesso usato all'interno dei FixtureComponent per identificare a quale attributo esistente nella realtà ci stiamo riferendo. Un componente può avere $M$ canali ed $N$ componenti, non c'è una correlazione tra i due. Il target delle varie interpolazioni può essere impostato all'interno di \lstinline{ApplyEffectToBeam()} quando viene ricevuto un nuovo pacchetto DMX, oppure \lstinline{InterpolateComponent_BeamInternal()} ad ogni tick. Inoltre, ad ogni tick, FixtureComponentBase scorrerà automaticamente tutto l'array di interpolazioni e ne aggiornerà lo stato.
+    \item \lstinline{FAttributesData attributesData}: Struttura dati alla quale si possono fare delle query per ottenere dei \lstinline{FCPDMXChannelData}, ovvero i valori minimi, massimi, default, e di interpolazione, relativi ad un determinato attributo. Come già accennato precedentemente, attributi differenti che controllano una stessa identica feature possono essere raggruppati in dei set chiamati \say{AttributeGroup}. Poiché controllano la stessa feature, condivideranno anche gli stessi valori dentro \lstinline{attributesData}. Questa struttura dati infatti viene usata anche per salvarsi la lista di AttributeGroup di un determinato FixtureComponent.
+\end{itemize}
+
+%\subsubsection{Strutture dati}\label{subsec:3_2_structs}
 
 \subsection{Implementazione}\label{subsec:3_implementation}
+Iniziamo con l'analizzare l'implementazione della struttura dati \lstinline{FAttributesData}. Tale struttura ha internamente memorizzata una lista di tutti i ChannelData presenti nel componente ed una mappa da attributo a ChannelData. Attributi che fanno parte dello stesso AttributeGroup verranno quindi risolti attravero questa mappa, al medesimo ChannelData in memoria.
+\lstset{language=UEcpp}
+\begin{lstlisting}
+//Struttura dati che incapsula FCPDMXChannelData assieme
+//  all'attributeGroup di cui fa parte
+struct F__SingleAttributeData {
+    GENERATED_BODY()
+    UPROPERTY(VisibleDefaultsOnly, Category = "Internal")
+    TSet<ECPGDTFAttributeType> attributeGroup;
+    UPROPERTY(VisibleDefaultsOnly, Category = "Internal")
+    FCPDMXChannelData data;
+};
+
+UPROPERTY(VisibleDefaultsOnly, Category = "Internal")
+//Utilizziamo gli indici nella lista al posto di puntatori perche',
+//  altrimenti, UE non ne supporterebbe la serializzazione
+TMap<ECPGDTFAttributeType, int32> attributeData;
+UPROPERTY(VisibleDefaultsOnly, Category = "Internal")
+TArray<F__SingleAttributeData> attributeList;
+\end{lstlisting}
+L'inserimento di un nuovo attributeGroup viene fatto aggiungendo prima uno \lstinline{F__SingleAttributeData} dentro la rispettiva lista e successivamente aggiungendo nella mappa ogni elemento del gruppo associato all'indice del precedente inserimento nella lista.\newline
+Il costruttore di un \lstinline{FAttributesData} chiamerà due metodi: \lstinline{initAttributeGroups()} e \lstinline{analizeDMXChannels()}. Il primo dei due metodi si occupa di preallocare tutti gli attributeGroups con dei dati vuoti:
+\begin{lstlisting}
+void initAttributeGroups(
+        TArray<TSet<ECPGDTFAttributeType>> attributeGroups
+    ) {
+
+    attributeData.Empty();
+    attributeList.Empty();
+    for (int i = 0; i < attributeGroups.Num(); i++)
+        addAttributeData(attributeGroups[i]);
+}
+\end{lstlisting}
+Il secondo invece si scorre ogni singola ChannelFunction presente dei DMXChannel in input e, per ciascuna, chiede alla \lstinline{FCPDMXChannelData} di aggiornare i propri valori:
+\begin{lstlisting}
+void analizeDMXChannels(TArray<FDMXImportGDTFDMXChannel> DMXChannels) {
+    for ([itera per ogni channelFunction cf dentro DMXChannels]) {
+        ECPGDTFAttributeType attrType =
+            CPGDTFDescription::GetGDTFAttributeTypeValueFromString(
+                cf.Attribute.Name.ToString()
+            );
+        FCPDMXChannelData* channelData = getChannelData(attrType);
+        channelData->updateMinMaxFadeAccelCalc(cf);
+    }
+
+    for (int i = 0; i < attributeList.Num(); i++)
+        attributeList[i].data.finalizeMinMaxFadeAccelCalc();
+}
+\end{lstlisting}
+Andiamo quindi a vedere come vengono calcolati i valori nella struttura dati \lstinline{FCPDMXChannelData}. Il problema principale da gestire è che spesso i valori di minimo e massimo di diversi attributi non sono indicati in ordine e per giunta, il valore minimo può non corrispondere al valore matematicamente più piccolo: Alcune funzionalità potrebbero essere invertite, quindi partire da un valore grande e finire ad uno piccolo. Tale caratteristica deve essere preservata ed automaticamente riconosciuta nel momento in cui si calcola un valore minimo e massimo globale per un attributeGroup. Inoltre, può capitare che attributi differenti dello stesso attributeGroup presentino valori differenti di fade e accelerazione (anche se, da standard, dovrebbero essere uguali. Qui stiamo gestendo la casistica in cui in input abbiamo GDTF malscritti), quindi facciamo la media tra di essi. Per effettuare queste operazioni ci appoggiamo ad una struttura dati temporanea, che viene allocata automaticamente la prima volta che sopra viene chiamato \lstinline{updateMinMaxFadeAccelCalc()} e viene distrutta quando invece finalizziamo il calcolo:
+\begin{lstlisting}
+struct MinMaxHelper {
+    //Numero di coppie from/to con from < to
+    int normalNo = 0;
+    //Numero di coppie from/to con from > to
+    int invertedNo = 0;
+    //Lista di tutti i valori from
+    TArray<float> minArr;
+    //Lista di tutti i valori to
+    TArray<float> maxArr;
+
+    //Somma di tutti i valori di fade ed accelerazione
+    float fadeSum = 0, accelSum = 0;
+
+    //Numero totale di elementi presenti
+    float totalNo = 0;
+    ~MinMaxHelper() {
+        minArr.Empty();
+        maxArr.Empty();
+    }
+};
+MinMaxHelper* minMaxHelper = nullptr;
+\end{lstlisting}
+La funzione di update si occupa semplicemente di aggiungere i nuovi valori in input alle varie liste ed agli accumulatori. All'inizio controlla anche se l'attributo \lstinline{minMaxHelper} è nullo ed, in caso, lo alloca. Più interessante è invece la funzione che finalizza i calcoli. L'idea di base è ordinare i due array con i valori from ed i valori to in modo da ottenere i valori min/max assoluti, e decidere di prendere il primo o l'ultimo elemento da ciascuno in base a chi è più grande tra \lstinline{normalNo} e \lstinline{invertedNo}, controllando quindi se ci sono stati più coppie from/to \say{dritte} che il contrario.
+\begin{lstlisting}
+void finalizeMinMaxFadeAccelCalc() {
+    if (minMaxHelper == nullptr)
+        return;
+    
+    minMaxHelper->minArr.Sort();
+    minMaxHelper->maxArr.Sort();
+    bool isAsc = minMaxHelper->normalNo > minMaxHelper->invertedNo;
+    this->MaxValue = minMaxHelper->maxArr[
+        isAsc  ? minMaxHelper->maxArr.Num() - 1 : 0;
+    ];
+    this->MinValue = minMaxHelper->minArr[
+        !isAsc ? minMaxHelper->maxArr.Num() - 1 : 0;
+    ];
+
+    float no = minMaxHelper->totalNo;
+    interpolationFade = minMaxHelper->fadeSum / no;
+    interpolationAcceleration = minMaxHelper->accelSum / no;
+
+    delete minMaxHelper;
+    minMaxHelper = nullptr;
+}
+\end{lstlisting}
+
+A questo punto andiamo ad analizzare l'implementazione in se di una FixtureComponent.\newline
+
+%TODO
+
 \subsubsection{Ottenimento valori di default per le varie funzionalità di una fixture}\label{subsec:3_1_defaultValues}
 
 \end{document}
