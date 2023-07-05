@@ -193,7 +193,7 @@ A questo punto andiamo ad analizzare l'implementazione in se di una FixtureCompo
 
 Come in precedenza, la vita di un FixtureComponent inizia con il metodo \lstinline{Setup()}, che creerà automaticamente un \lstinline{FCPComponentChannelData} per ogni canale DMX in input, per poi successivamente inizializzare la struttura dati \lstinline{FAttributesData attributesData}. Durante l'inizializzazione di quest'ultimo oggetto avverrà una chiamata a \lstinline{getAttributeGroups()} che dovrà essere definita dai componenti e restituirà una lista di set, ognuno rappresentante un attributeGroup. I componenti possono opzionalmente fare overriding di questo metodo per effettuare operazioni extra in fase di caricamento (come ad esempio, caricare texture per le ruote).
 
-Il metodo \lstinline{BeginPlay()} inizializzerà automaticamente le interpolazioni, creandone una per ogni AttributeGroup trovato all'interno di \lstinline{attributesData}. Anche questo metodo può subire overriding, in caso i componenti specifici vogliano inizializzare un numero di interpolazioni differente, oppure assegnargli diversi valori o un diverso ordine. Prima che venga inizializzata realmente l'interpolazione creando un nuovo oggetto \lstinline{FChannelInterpolation}, vengono generati i valori di fade e/o accelerazione se non erano già presenti nel GDTF originale. Ogni componente deve fare overriding di 2 metodi: \lstinline{float getDefaultRealAcceleration(int interpolationId)} e \lstinline{float getDefaultRealFade(int interpolationId)} che ci restituiscono un valore esatto in secondi di default, in caso nel GDTF manchi sia il valore di fade che quello di accelerazione. Se invece manca solamnente uno dei due, l'altro viene ricalcolato in base al rapportro tra fade ed accelerazione di default. Se a mancare è l'accelerazione, questa viene calcolata come $accel = fade * (defaultAccel / defaultFade)$. Un po' più complicato invece è il calcolo del fade: durante il movimento una interpolazione accelera (in $accel$ secondi), rimane a velocità costante e poi decellera (di nuovo in $accel$ secondi). Il tempo di fade rappresenta la somma di tutti e tre questi momenti. Poiché già sappiamo quanto tempo impieghiamo ad accelerare e decellerare, ci interessa sapere quanto tempo rimaniamo a velocità costante rispetto a quanto tempo ci mettiamo ad accelerare. Quindi $deafultConstantSpeedTime = deafaultFade - 2 * defaultAccel$ ed infine $defaultFadeRatio = deafultConstantSpeedTime / defaultAccel$. Per ottenere un valore di fade a partire da quello di accelerazione e dal defaultFadeRatio, basta invertire la formula: $fade = 2 * accel + accel * defaultFadeRatio$.
+Il metodo \lstinline{BeginPlay()} inizializzerà automaticamente le interpolazioni, creandone una per ogni AttributeGroup trovato all'interno di \lstinline{attributesData}. Anche questo metodo può subire overriding, in caso i componenti specifici vogliano inizializzare un numero di interpolazioni differente, oppure assegnargli diversi valori o un diverso ordine. Prima che venga inizializzata realmente l'interpolazione creando un nuovo oggetto \lstinline{FChannelInterpolation}, vengono generati i valori di fade e/o accelerazione se non erano già presenti nel GDTF originale. Ogni componente deve fare overriding di 2 metodi: \lstinline{float getDefaultRealAcceleration(int interpolationId)} e \lstinline{float getDefaultRealFade(int interpolationId)} che ci restituiscono un valore esatto in secondi di default, in caso nel GDTF manchi sia il valore di fade che quello di accelerazione. Se invece manca solamnente uno dei due, l'altro viene ricalcolato in base al rapportro tra fade ed accelerazione di default. Se a mancare è l'accelerazione, questa viene calcolata come $accel = fade * (defaultAccel / defaultFade)$. Un po' più complicato invece è il calcolo del fade: durante il movimento una interpolazione accelera (in $accel$ secondi), rimane a velocità costante e poi decelera (di nuovo in $accel$ secondi). Il tempo di fade rappresenta la somma di tutti e tre questi momenti. Poiché già sappiamo quanto tempo impieghiamo ad accelerare e decelerare, ci interessa sapere quanto tempo rimaniamo a velocità costante rispetto a quanto tempo ci mettiamo ad accelerare. Quindi $deafultConstantSpeedTime = deafaultFade - 2 * defaultAccel$ ed infine $defaultFadeRatio = deafultConstantSpeedTime / defaultAccel$. Per ottenere un valore di fade a partire da quello di accelerazione e dal defaultFadeRatio, basta invertire la formula: $fade = 2 * accel + accel * defaultFadeRatio$.
 
 Nella nuova implementazione così come nella vecchia \lstinline{PushNormalizedRawValues()} chiama \lstinline{PushDMXRawValues()} ogni volta che arriva un nuovo pacchetto DMX. Nella nuova però \lstinline{PushDMXRawValues()} è implementato direttamente in \lstinline{FixtureComponentBase} e scorre automaticamente la lista di canali dmx del componente (invece di avere la lista hard-coded). Inoltre viene fatto un overloading della funzione \lstinline{ApplyEffectToBeam()}: \lstinline{PushDMXRawValues()} chiamerà prima una versione intermedia di questa funzione che si occuperà di ottenere e di passare già precalcolati il tipo dell'attributo ed il valore fisico del canale ad un'altra versione della stessa funzione che dovrà essere implementata da ciascun componente. Questa operazione in precedenza era svolta (e copia-incollata) dentro ogni implementazione di \lstinline{ApplyEffectToBeam()} in ogni componente che estendeva \lstinline{FixtureComponentBase}.
 
@@ -202,5 +202,33 @@ Nella nuova implementazione così come nella vecchia \lstinline{PushNormalizedRa
 Infine, viene modificata la funzione \lstinline{InterpolateComponent()}. Al posto di aggiornare in maniera hard-coded la lista di canali ed interpolazioni di un determinato componente, ora \lstinline{InterpolateComponent()} scorrerà prima la lista di canali e su ciascuno chiamerà \lstinline{InterpolateComponent_BeamInternal()} (che dovrà essere implementata su ciascun componente e che si occuperà solamente di aggiornarne lo stato ad ogni tick) e, con un altro ciclo, aggiornerà tutte le varie interpolazioni e chiamerà \lstinline{SetValueNoInterp()} con il valore di ciascuna.
 
 \subsubsection{Ottenimento valori di default per le varie funzionalità di una fixture}\label{subsec:3_1_defaultValues}
+Per l'ottenimento dei valori default dei vari componenti di una luce è stato purtroppo impossibile ottenere dati direttamente dalle fixture. Non esiste un modo attualmente implementato dalle fixture Claypaky per ottenere la posizione dei vari motori, anche se ci si collega direttamente in seriale alla scheda del faro. La soluzione quindi adottata è stata quindi quella di filmare a rallentatore un faro ed inserire il video in un software di editing, in modo da contare con precisione il numero dei frame video che il faro impiega ad accelerare o decelerare ed il numero di frame che impiega a svolgere un movimento completo. Tramite questo metodo otteniamo una precisione pari a $1 / FPS$, dove, sui telefoni moderni, FPS è uguale a 480 o addirittura 960.\newline
+
+Successivamente è stata scritta una utility molto semplice in python per convertire automaticamente un numero espresso in \lstinline{secondo.frame} (Che ci viene dato direttamente dal programma di editing) in secondi nel mondo reale.
+Innanzitutto vengono specificato gli FPS del timelapse e gli FPS del video rallentato
+\lstset{language=python}
+\begin{lstlisting}
+SLOWMOTION_FPS = 480
+VIDEO_FRAMERATE = 30
+\end{lstlisting}
+Poi dichiariamo una funzione che si occupa di convertire il numero di secondi che ci viene dato dal software di editing video in numero di frame totale, attraverso la formula $totalFrames = secs * fps + frames$. La usiamo quindi per convertire i valori in input
+\begin{lstlisting}
+def convertFrames(s):
+    sp = s.split(".")
+    return int(sp[0]) * VIDEO_FRAMERATE + int(sp[1])
+
+realFadeFrames = convertFrames(sys.argv[1])
+realAccelFrames = convertFrames(sys.argv[2])
+\end{lstlisting}
+
+Infine ci calcoliamo quanti secondi dura un frame del video in slowmotion ed otteniamo i valori finali moltiplicando il numero di frame per la durata di ciascuno
+\begin{lstlisting}
+#Calcoliamo quanto dura un frame
+frameTime = 1 / SLOWMOTION_FPS
+
+#Otteniamo il numero di secondi nel mondo reale
+realFade = realFadeFrames * frameTime
+realAccel = realAccelFrames * frameTime
+\end{lstlisting}
 
 \end{document}
