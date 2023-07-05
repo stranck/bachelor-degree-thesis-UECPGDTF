@@ -7,10 +7,17 @@
 \vspace{1.0cm}
 
 \section{Reimplementazione dell'interpolazione}\label{sec:Interpolation}
+L'oggetto interpolazione si occupa di emulare lo spostamento di un vero motore nella realtà. Ad una interpolazione è possibile impostare un target ed il valore fornito in output da questo oggetto verrà modificato ad ogni tick seguendo una velocità che accelera, rimane costante e decelera, fino a raggiungere il suddetto target.
 
-\subsection{Problemi riscontrati}\label{subsec:4_oldProblems}
+L'ogetto interpolazione originale era implementato attraverso varie formule matematiche di derivate e integrali, che però erano difficile da modificare se necessario, non erano documentate, ma soprattutto non funzionavano: Come già spiegato nell'introduzione, molte volte il valore dell'interpolazione non convergeva al target continuando ad alternarsi intorno ad esso, oppure era molto lento. Inoltre non era possibile specificare davvero la velocità in secondi con il quale doveva accellerare o arrivare a destinazione, cosa invece richiesta da GDTF.\newline
 
+In questo capitolo tratto come è stato completamente re-implementato l'algoritmo di interpolazione in una maniera più standard. Dopo essermi confrontato con le persone che lavorano al firmware dei fari, nel reparto R\&D di ClayPaky, ho anche avuto conferma che la mia implementazione è molto vicina a quella presente nei fari veri.
+
+%\subsection{Problemi riscontrati}\label{subsec:4_oldProblems}
 \subsection{Prima implementazione}\label{subsec:4_trafficImplementation}
+Un problema simile a questo era già stato riscontrato nell'implementazione di un progetto per l'esame di \say{Metodologie di Programmazione} \cite{TrafficGame}: Il progetto consisteva in un videogioco in cui erano presenti delle macchine che dovevano muoversi senza scontrarsi con quelle davanti. Ogni macchina doveva avere un movimento realistico, quindi, partendo da ferma, doveva accelerare e, per fermarsi, doveva decelerare. Sono quindi partito da quel progetto per la scrittura di questo algoritmo. Le uniche due differenze consistono che nel progetto d'esame le macchine potevano andare solamente \say{avanti} ed il tempo tra un frame e l'altro del videogioco era constante, mentre su unreal engine è variabile. Quest'ultima differenza ci porta a dover mettere in atto numerose modifiche spiegate nel capitolo successivo \ref{subsec:4_edits}.\newline
+
+
 
 \subsection{Modifiche all'implementazione}\label{subsec:4_edits}
 %TODO prendere docs scritte in inglese e tradurle + sintetizzarle
