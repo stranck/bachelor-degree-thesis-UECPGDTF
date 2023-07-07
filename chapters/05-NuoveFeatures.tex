@@ -7,8 +7,37 @@
 \vspace{1.0cm}
 
 \section{Implementazione di nuove funzionalità alle fixtures}\label{sec:NewFeatures}
+Una volta creata una pipeline di rendering, sistemata la gerarchia dei componenti e fatta funzionare l'interpolazione è possibile finalmente aggiungere nuove features alle fixture virtuali. Come visto nel capitolo \ref{sec:RenderingPipeline}, per aggiungere una nuova feature bisogna:
+\begin{itemize}
+	\item Implementarla come codice HLSL
+	\item Implementarla come MaterialFunction
+	\item Aggiungerla al generatore di codice HLSL
+	\item Aggiungerla al generatore della pipeline per il rendering del materiale Light e Lens
+\end{itemize}
+In questo capitolo non tratteremo mai il secondo punto poiché rappresenta la trasposizione in MaterialExpression del codice già visto in HLSL.
 
 \subsection{Sagomatori}\label{subsec:5_shaper}
+Il sistema dei sagomatori (detto anche \say{framing system} oppure \say{shaper}) consiste in un modulo composto da 4 lame (dette anche \say{bandiere}) che possono immettersi ed inclinasi singolarmente all'interno del fascio di luce. Inoltre, l'intero modulo può roteare, muovendo contemporaneamente la direzione in cui si immettono tutte le lame si immettono.
+%TODO Esempi con foto
+Il controllo della lama può avvenie in due modi:
+\begin{itemize}
+	\item \textbf{A+B}: Controlliamo singolarmente l'immissione dei due punti estremi della lama ($A$ e $B$). Per avere la lama \say{dritta} Dovremmo avere $A = B$, per inclinarla da un lato basta avere uno dei due valori maggiori dell'altro.
+	%TODO Schema immagine
+	\item \textbf{A+Rot}: Controlliamo l'immissione della lama ($A$) e separatamente la sua inclinazione ($R$).
+	%TODO Schema immagine
+\end{itemize}
+Effettuare il rendering di una funzionalità come lo shaper attraverso texture è davvero oneroso in termini computazionali. La scelta migliore è fare il rendering immaginandoci il framing system come delle equazioni matematiche. In generale, il rendering di un material avviene effettuando il rendering di varie coordinate UV, ovvero coordinate bidimensionali normalizzate tra [0, 1]. Possiamo immaginare il nostro codice come se fosse inserito in un ciclo for che si scorre \say{tutte} le x e le y comprese tra 0 ed 1. Il nostro codice però si occupa di renderizzare una sola UV alla volta. 
+
+Se immaginiamo quindi una singola lama come una equazione matematica, possiamo renderizzarla controllando semplicemente se la Y della coordinata UV che stiamo renderizzando in quel momento (TODO mettere x o y) si trova sopra o sotto l'equazione. Il nostro lavoro diventa quindi generare la corretta equazione matematica in base gli input $A$ e $B$ o $R$.
+%TODO Wrapfigure in cui mostriamo un semplice rendering `return y > 0.5;'
+
+%TODO spiegazione equazioni
+
+%TODO spiegazione frost
+
+%TODO spiegazione ricalcolo valore A in base a frost
+
+%TODO spiegazione rotazione
 
 \subsection{Iris}\label{subsec:5_Iris}
 
