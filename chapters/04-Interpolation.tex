@@ -157,7 +157,7 @@ TargetValue potrebbe cambiare (avvicinandosi a CurrentValue) sia tra un frame e 
     \caption{Vogliamo che la nostra velocità si comporti come l'area verde, non come la rossa}
     \label{fig:4_OverrideDecelIntro}
 \end{figure}
-Questa correzione sulla decelerazione viene effettuata quando CompensateLateCall non è stata eseguita oppure ha fallito, stiamo decelerando, TargetValue è cambiato e la nostra stopPosition lo sorpassa. Queste condizioni fanno anche si che mentre stiamo già rallentando la decelerazione possa cambiare diventando sia più veloce che più lenta in base ai valori che vengono assegnati a TargetValue.
+Questa correzione sulla decelerazione viene effettuata quando CompensateLateCall non è stata eseguita oppure ha fallito, stiamo decelerando, TargetValue è cambiato e la nostra stopPosition lo sorpassa. Queste condizioni fanno anche si che mentre stiamo già rallentando la decelerazione possa cambiare diventando sia più veloce che più lenta in base ai valori che vengono assegnati a TargetValue. Queste correzioni vengono effettuate come ultimo step nella funzione di \lstinline{Update()}, ergo immediatamente prima il punto \textbf{14}.
 La differenza tra questa correzione e CompensateLateCall sta nel fatto che in quest'ultima il momento in cui avremmo dovuto iniziare a decelerare si trova tra il tick corrente ed il precedente, mentre in questo caso si trova prima del frame precedente. Poiché però non possiamo andare \say{indietro nel tempo} e correggere il calcolo effettuato dal tick precedente, l'unica scelta che abbiamo è quella di decelerare più in fretta.\newline
 
 Poiché un motore non può fisicamente decelerare troppo in fretta, è presente un cap hard-coded alla massima velocità di decelerazione pari a $acceleration * 1.5$.
@@ -170,8 +170,8 @@ Per calcolarci il nuovo valore di decelerazione, ci serve sapere la stopDistance
     \caption{Il punto $G$ è il momento in cui la nostra toccherà lo zero raggiungendo TargetValue}
     \label{fig:4_OverrideDecelTimeDiff}
 \end{figure}
-Il valore di decelerazione corrisponde al coefficiente della retta passante tra il punto in cui iniziamo a decelerare ($C$) e $G$. Assumiamo quindi che $C$ abbia la coordinata X pari a 0. $C$ si troverà quindi a (0, prevSpeed), mentre $G$ si troverà a (stopTime, 0). Possiamo trovato il coefficiente di questa retta usando la formula:
-\[\frac{y_2 - y_1}{x_2 - x_1}\]
+Il valore di decelerazione corrisponde al coefficiente della retta passante tra il punto in cui iniziamo a decelerare ($C$) e $G$. Assumiamo quindi che $C$ abbia la coordinata X pari a 0. $C$ si troverà quindi a (0, prevSpeed), mentre $G$ si troverà a (stopTime, 0). Possiamo trovato il coefficiente angolare di una retta passante per due punti usando la formula:
+\[m = \frac{y_2 - y_1}{x_2 - x_1}\]
 Che, nel nostro caso, corrisponde a:
 \[acceleration = \frac{0 - prevSpeed}{stopTime - 0} = -\frac{prevSpeed}{stopTime}\]
 
@@ -179,9 +179,173 @@ Una volta trovato questo valore, il codice farà un rollback al tick precedente 
 \clearpage %TODO CONTROLLARE SE SERVE ANCORA
 
 \subsubsection{SpeedCap per i piccoli movimenti}\label{subsubsec:4_2_Speedcap}
-%TODO
+In una fixture vera, se TargetValue viene spostato di poco il movimento, al posto di essere a piena velocità, sarà più lento. Questa particolarità è molto utile quando viene effettuato un fade molto lungo che viene gestito da una consolle luci: In questi casi viene inviato costantemente un nuovo valore di TargetValue che si scosta di poco da quello precedente. Con l'attuale implementazione le nostre fixture virtuali si muoverebbero a scatti perché proveranno costantemente a raggiungere TargetValue al meglio della loro velocità, mentre sarebbe più realistico avere un movimento più lento e fluido. 
+
+Per realizzare questa funzionalità si è quindi deciso di imporre uno \say{SpeedCap}, ovvero un limite alla velocità massima di un'interpolazione. Questo limite viene impostato quando il tempo impiegato per raggiungere TargetValue scende sotto una determinata soglia ed è proporzionale alla differenza tra CurrentValue e TargetValue, in modo che il movimento duri almeno quanto tale soglia (Vedi figura \ref{fig:4_speedCapIntro}). L'attivazione dello SpeedCap viene effettuata alla fine della funzione \lstinline{SetTargetValue()}, mentre l'attivazione viene svolta nella funzione \lstinline{Update()} dopo aver deciso se dobbiamo iniziare ad accelerare o decelerare, ma prima di effettivamente applicare questa decisione (Tra i punti \textbf{11} e \textbf{12}). \newline
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{img/interpolazione/speedCapIntro.png}
+    \caption{A sinistra un ciclo di interpolazione normale, a destra uno con lo speedCap abilitato per effettuare il movimento in \textit{minTime} secondi.}
+    \label{fig:4_speedCapIntro}
+\end{figure}
+
+\begin{wrapfigure}{r}{0.6\textwidth}
+    \centering
+    \captionsetup{justification=centering}
+    \includegraphics[scale=0.25]{img/interpolazione/movementThreeParts.png}
+    \caption{Nel triangolo $T_1$ avviene l'accelerazione, nel rettangolo $R$ rimaniamo a velocità costante e nel triangolo $T_2$ deceleriamo}
+    \label{fig:4_movementThreeParts}
+\end{wrapfigure}
+L'ottenimento del tempo impiegato da un intero ciclo di interpolazione viene effettuato attraverso una previsione che prende in considerazione l'accelerazione, la velocità corrente e la differenza tra CurrentValue e TargetValue. Immaginiamo di dividere il ciclo di interpolazione in tre poligoni, come in figura \ref{fig:4_movementThreeParts}. Il raggiungere maxSpeed durante il movimento ci farà calcolare la predizione in maniera differente. \newline
+
+La prima operazione che viene fatta è una compensazione per gestire i casi in cui $currentSpeed > 0$. Calcoliamo quindi due valori: Immaginando di partire con velocità pari a 0, otteniamo il tempo per raggiungere currentSpeed (\say{TimeToReachCurrentSpeed}) come $TTRCS = TTFA * currentSpeed$ e lo spazio percorso fino a raggiungere currentSpeed come l'area di un triangolo che ha TTRCS come base e currentSpeed come altezza: $prevArea = TTRCS * currentSpeed / 2$.
+
+Successivamente avviene il controllo per scoprire se durante l'interpolazione raggiungiamo maxSpeed. La somma dell'area dei due triangoli viene calcolata come:
+\[A_t = T_1 + T_2 = 2\frac{TTFA * 1}{2} - prevArea = TTFA - prevArea\]
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{img/interpolazione/speedCapTriangleAreaSplice.png}
+    \caption{Calcolo dell'area $T_1 + T_2$ considerando $currentSpeed > 0$.}
+    \label{fig:4_speedCapTriangleAreaSplice}
+\end{figure}
+
+
+\textbf{Se l'area di $T_1 + T_2$ è minore di distanceDifference} allora vuol dire che serve arrivare a velocità costante per compiere l'intero movimento. In tal caso abbiamo già la base di $T_1$ e di $T_2$ (corrispondenti al tempo di accelerazione e decelerazione); ci manca calcolare la base di $R$: Prima ci calcoliamo l'area di $R$ come $distanceDifference - (T_1 + T_2)$ e successivamente la dividiamo per l'altezza. Poiché stiamo a velocità massima, l'altezza sarà sempre uguale ad 1. La formula finale quindi per calcolare il tempo richiesto da una interpolazione per completare il suo ciclo raggiungendo la velocità massima è quindi:
+\[time = (TTFA * 2 - TTRCS) + (distanceDifference - A_t)\]
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{img/interpolazione/speedCapTotalAreaCalc.png}
+    \caption{Calcolo del tempo richiesto da una interpolazione quando raggiungiamo maxSpeed.}
+    \label{fig:4_speedCapTotalAreaCalc}
+\end{figure}
+
+\textbf{Se l'area di $T_1 + T_2$ è maggiore o uguale di distanceDifference} allora vuol dire che serve arrivare a velocità costante per compiere l'intero movimento. Dobbiamo quindi trovare la base (corrispondente al tempo dell'interpolazione) di un triangolo di cui sappiamo l'area ($A$), e il rapporto ($a$, corrispondente all'accelerazione) tra la base ($b$, notiamo come l'accelerazione si riferisce alla base di solo uno dei due triangoli) e l'altezza ($h$).
+\[h = ab\]
+\[A = \frac{2bh}{2}\]
+Risolvendo per $b$ arriviamo quindi a:
+\[b = \sqrt{\frac{A}{a}}\]
+Come detto sopra, $b$ fa riferimento solamente alla base di uno dei due triangoli. Per ottenere quindi il tempo totale bisogna moltiplicare $b$ per 2. Inoltre, se $currentSpeed > 0$ allora bisogna aggiungere il \say{pezzo} di $T_1$ che viene tagliato fuori all'area totale, e togliere da $2b$ il TTRCS. La formula finale è quindi la suegente:
+\[b = 2\sqrt{\frac{A + prevArea}{a}} - TTRCS\]
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{img/interpolazione/speedCapNoMaxSpeedCalcSplice.png}
+    \caption{Calcolo del tempo richiesto da una interpolazione quando \textbf{non} raggiungiamo maxSpeed.}
+    \label{fig:4_speedCapNoMaxSpeedCalcSplice}
+\end{figure}
+
+Come detto sopra, il tempo che una interpolazione ci mette a completare il suo ciclo sia pari almeno a quello di una soglia prestabilita. Se dal nostro calcolo il tempo risultasse inferiore, dobbiamo trovare una velocità massima ($x$) in modo da percorrere il movimento esattamente in quel limite di tempo. Andiamo ad impostare un'equazione con le seguenti variabili:
+\begin{itemize}
+    \item $x$: Valore finale dello speedcap.
+    \item $t$: Alias di TTFA (\textbf{Valore noto}).
+    \item $s$: Alias di currentSpeed (\textbf{Valore noto}).
+    \item $T$: Tempo totale, ovvero in quanto tempo l'interpolazione deve essere completata (\textbf{Valore noto}).
+    \item $B_1$: Base di $T_1$, ottenuta dalla differenza tra TTRCS e TimeToReachX, ovvero il tempo per raggiungere lo speedcap (Abbreviato con \say{TTRX}). Poiché la velocità iniziale può essere superiore allo speedcap, questa differenza deve essere assoluta: \[B_1 = t\abs{x - s} = \abs{tx - ts}\]
+    \item $B_2$: Base di $T_2$ definita semplicemente come TTRX: \[B_2 = tx\]
+    \item $B_r$: Base di $R$ definita come la base totale meno quella dei due triangoli: \[B_r = T - B_1 - B_2 = T - B_1 - tx\]
+    \item $A_1$: Area di $T_1$ ottenuta in maniera simile a \lstinline{__calcNextMovementInternal()}, ovvero la somma tra l'area di un rettangolo con l'altezza uguale a currentSpeed e quella di un triangolo con la stessa base e l'altezza uguale alla differenza tra $x$ e la currentSpeed: \[A_1 = sB_1 + \frac{(x - s)B_1}{2}\]
+    \item $A_2$: L'area di $B_2$ ottenuta come l'area di un normale triangolo con altezza uguale a $x$: \[A_2 = \frac{B_2x}{2} = \frac{tx^2}{2}\]
+    \item $A_r$: L'area di $R$ definita come l'area di un normale rettangolo con altezza uguale a $x$: \[A_r = B_rx = Tx - B_1x - tx^2\]
+    \item $A$: Area totale, ovvero lo spazio che l'interpolazione deve percorrere per arrivare a TargetValue (alias di distanceDifference. \textbf{Valore noto}). Definita come la somma delle tre precedenti aree (la formula è già stata semplificata): \[A = A_1 + A_2 + A_r = \frac{sB_1}{2} + \frac{xB_1}{2} + \frac{tx^2}{2} + Tx\]
+\end{itemize}
+Otteniamo quindi l'equazione:
+\[\frac{s\abs{tx - ts}}{2} + \frac{x\abs{tx - ts}}{2} + \frac{tx^2}{2} + Tx - A = 0\]
+Possiamo avere 3 possibili casi:\newline
+\begin{itemize}
+%\begin{minipage}{.45\textwidth}
+    \item $s > x$: Partendo dalla currentSpeed dobbiamo decelerare fino ad arrivare allo speedCap. Dobbiamo sostituire il modulo nella precedente equazione con $tx - ts$
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=.9\linewidth]{img/interpolazione/speedCapCalcGE.png}
+        \label{fig:4_speedCapCalcGE}
+    \end{figure}
+%\end{minipage}
+%\begin{minipage}{.45\textwidth}
+\clearpage %TODO CHECK IF THIS IS REALLY NEEDED
+    \item $s < x$: Partendo dalla currentSpeed dobbiamo accelerare fino ad arrivare allo speedCap. Dobbiamo sostituire il modulo nella precedente equazione con $ts - tx$
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=.9\linewidth]{img/interpolazione/speedCapCalcBE.png}
+        \label{fig:4_speedCapCalcBE}
+    \end{figure}
+%\end{minipage}
+%\newline
+
+\item Nel terzo caso abbiamo $s = x$, ovvero currentSpeed è già allo stesso valore di speedCap. Possiamo precedere come uno dei due precedenti casi. \newline
+\end{itemize}
+
+Le equazioni finali per ottenere lo speedcap a partire dalla nostra velocità, l'accelerazione e il tempo in cui dobbiamo percorrere l'interpolazione sono:
+\[tx^2 + (ts + T)x + (\frac{ts^2}{2} + A) = 0 \quad\text{quando}\qquad x \geq p\]
+\[(-ts + T)x + (\frac{ts^2}{2} - A) = 0 \quad\text{quando}\qquad x \leq p\]
+Il codice inizialmente risolverà il secondo caso (poiché più rapido, visto che non implica risolvere un'equazione di secondo grado) e controllerà la validità del risultato. Se il risultato non rispetta la condizione, allora procederà con la risoluzione del secondo. \newline
+
+Una volta mostrato come lo speedcap viene calcolato ed impostato, la funzione \lstinline{Update()} si dovrà occupare di mantenerlo ed interverrà solamente se non stiamo già decelerando per raggiungere TargetValue. Lo speedCap è implementato impostando l'override dell'accelerazione (Lo stesso usato da OverrideDeceleration \ref{subsubsec:4_2_OverrideDeceleration}) a 0. Il codice si occuperà di rimuovere l'override quando lo speedcap viene disattivato dentro \lstinline{TargetValue} e si occuperà di impostarlo o forzare la decelerazione quando viene invece attivato. Più specificatamente, abbiamo 3 casi da gestire:
+\begin{enumerate}
+    \item \textbf{La nostra velocità ha raggiunto lo speedCap}: Sovrascriviamo l'accelerazione con 0 in modo che la velocità non venga più aggiornata.
+    \item \textbf{La nostra velocità è superiore allo speedCap}: Forziamo una decelerazione fino a che non raggiungiamo lo speedCap, ricadendo nel caso \textbf{1}. Questo caso copre anche la situazione in cui eravamo già fermi su uno speedCap e nel mentre \textbf{cambia verso un valore più piccolo}.
+    \item \textbf{Avevamo già raggiunto uno speedCap e nel mentre cambia verso un valore più grande}: Disabilitamo l'override dell'accelerazione in modo da tornare a guadagnare velocità, fino a che non ricadiamo nel caso \textbf{1}.
+\end{enumerate}
+
+Ci sono due casi che sono trattati implicitamente dal resto della funzione \lstinline{Update()} e quindi non servere prendere particolari misure:
+\begin{itemize}
+    \item Il caso in cui la nostra velocità è inferiore ad uno speedCap e non ne abbiamo ancora mai raggiunto uno non è coperto perché stiamo normalmente già accelerando. Eventualmente ricadremo nel caso \textbf{1}
+    \item caso in cui dobbiamo iniziare a decelerare perché stiamo raggiungendo TargetValue non è coperto perché impostando una nuova accelerazione (operazione che viene fatta per iniziare a decelerare) l'override della stessa viene automaticamente disattivato.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{img/interpolazione/speedCapThreeCases.png}
+    \caption{I tre casi descritti sopra, da sinistra verso destra.}
+    \label{fig:4_speedCapThreeCases}
+\end{figure}
 
 \subsubsection{Conversioni da RealFade e RealAcceleration}\label{subsubsec:4_2_Conversions}
-%TODO
+Questa funzione si occupa di convertire i parametri GDTF \lstinline{RealFade} e \lstinline{RealAcceleration} verso i valori \lstinline{maxSpeed} e \lstinline{acceleration} utilizzati all'interno dell'oggetto interpolazione. Per calcolare \lstinline{maxPhysicalSpeed} ha bisogno anche della dimensione del range in cui opererà l'interpolazione, definito come $MaxValue - MinValue$.\newline
+
+\begin{wrapfigure}{r}{0.5\textwidth}
+    \centering
+    \captionsetup{justification=centering}
+    \includegraphics[scale=0.3]{img/interpolazione/RealAccelerationVSacceleration.png}
+    \caption{Differenza tra \textit{acceleration} e \textit{RealAcceleration}}
+    \label{fig:4_RealAccelerationVSacceleration}
+\end{wrapfigure}
+Il parametro \lstinline{RealAcceleration} rappresenta il tempo in secondi utilizzati per passare da 0 a maxSpeed, mentre \lstinline{acceleration} rappresenta quanta velocità guadagnamo ogni secondo. Poiché \lstinline{acceleration} è il reciproco di \lstinline{RealAcceleration}, possiamo ottenerlo semplicemente facendo \[acceleration = \frac{1}{RealAcceleration}\] \newline
+\clearpage %TODO CHECK IF STILL NEEDED
+
+Il parametro \lstinline{RealFade} considera anche i tempi di accelerazione e decelerazione di un movimento, per cui non possiamo usarlo direttamente come valore di \lstinline{maxPhysicalSpeed} che, ricordiamo, rappresenta quanto movimento facciamo ogni secondo quando siamo a maxSpeed. Per ottenere questo valore dobbiamo quindi fare una proporzione (RealAcceleration è abbreviato in $a$ e RealFade è abbreviato in $f$):
+\begin{itemize}
+    \item L'area dei triangoli dell'accelerazione/decelerazione è uguale a $\frac{RealAcceleration * maxSpeed}{2}$. Poiché maxSpeed è uguale ad 1 e ci serve calcolare l'area di entrambi (Poiché entrambi presenti dentro RealFade), la formula finale sarà quindi:
+    \[A_1 + A_2 = 2\frac{a * 1}{2} = a\]
+    \item La base di $R$ è uguale a RealFade meno la base di $T_1$ e $T_2$, ergo $RealFade - a * 2$. L'area di $R$ invece corrisponde alla base per maxSpeed, che essendo uguale ad 1 abbiamo sempre la stessa formula di prima:
+    \[B_r = f - B_1 - B_2 = f - 2a\]
+    \[A_r = B_r * maxSpeed = B_r * 1 = B_r\]
+    \item L'area totale è uguale a:
+    \[A = A_1 + A_2 + A_r = a + f - 2a = f - a\]
+\end{itemize}
+A questo punto mettiamo in proporzione l'area \say{virtuale} appena calcolata con la sua velocità massima (ovvero 1), e il range reale dell'interpolazione con \lstinline{maxPhysicalSpeed} (che vogliamo calcolare):
+\[A : maxSpeed = range : maxPhysicalSpeed\]
+E risolviamo l'equazione attraverso la formula:
+\[maxPhysicalSpeed = \frac{range * maxSpeed}{A} = \frac{range * 1}{A} = \frac{range}{f - a}\]
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{img/interpolazione/RealAccelerationVSRealFadeVSmaxSpeed.png}
+    \caption{I vari valori della precedente proporzione.}
+    \label{fig:4_RealAccelerationVSRealFadeVSmaxSpeed}
+\end{figure}
+\clearpage %TODO CHECK IF STILL NEEDED
+
+\subsubsection{Codice}\label{subsubsec:4_2_Code}
+Qui sotto mostrata la funzione \lstinline{Update()} e \lstinline{SetTargetValue()} in cui è possibile osservare i vari punti spiegati precedentemente nel capitolo \ref{subsec:4_trafficImplementation} ed in cui sono evidenziate le modifiche fatte all'algoritmo originale per implementare le varie funzionalità e correzioni.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{img/interpolazione/Update.png}
+    \caption{Funzione \textit{Update()}. In arancione i punti elencati nel capitolo \ref{subsec:4_trafficImplementation}, in rosso le nuove funzionalità.}
+    \label{fig:4_Update}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{img/interpolazione/SetTargetValue.png}
+    \caption{Funzione \textit{SetTargetValue()} con l'aggiunta, in rosso, del codice per l'attivazione dello SpeedCap.}
+    \label{fig:4_SetTargetValue}
+\end{figure}
 
 \end{document}
