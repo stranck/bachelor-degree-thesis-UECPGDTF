@@ -28,12 +28,19 @@ Il controllo della lama può avvenie in due modi:
 \end{itemize}
 Effettuare il rendering di una funzionalità come lo shaper attraverso texture è davvero oneroso in termini computazionali. La scelta migliore è fare il rendering immaginandoci il framing system come delle equazioni matematiche. In generale, il rendering di un material avviene effettuando il rendering di varie coordinate UV, ovvero coordinate bidimensionali normalizzate tra [0, 1]. Possiamo immaginare il nostro codice come se fosse inserito in un ciclo for che si scorre \say{tutte} le x e le y comprese tra 0 ed 1. Il nostro codice però si occupa di renderizzare una sola UV alla volta. 
 
-Se immaginiamo quindi una singola lama come una equazione matematica, possiamo renderizzarla controllando semplicemente se la Y della coordinata UV che stiamo renderizzando in quel momento (TODO mettere x o y) si trova sopra o sotto l'equazione. Il nostro lavoro diventa quindi generare la corretta equazione matematica in base gli input $A$ e $B$ o $R$.
+Se immaginiamo quindi una singola lama come una equazione matematica, possiamo renderizzarla controllando semplicemente se la Y della coordinata UV che stiamo renderizzando in quel momento (TODO mettere x o y) si trova sopra o sotto l'equazione. Il nostro lavoro diventa quindi generare la corretta equazione matematica in base agli input $A$ e $B$ o $R$.
 %TODO Wrapfigure in cui mostriamo un semplice rendering `return y > 0.5;'
 
-%TODO spiegazione equazioni
+Per trovare l'equazione della retta quando facciamo il sample A+B, possiamo ricorrere alla formula per ottenre l'equazione di una retta passante per due punti:
+\[m = \frac{y_2 - y_1}{x_2 - x_1}\]
+Immaginiamo che i valori di $A$ e $B$ corrispondano alle loro y, che $A$ si trovi a coordinate $x = 0$ e che $B$ si trovi a $x = 1$. La formula sarà uguale a
+\[m = \frac{y_B - y_A}{x_B - x_A} = \frac{B - A}{1 - 0} = B - A\]
+In questo modo generiamo il coefficiente una retta che però ha sempre origine in $(0, 0)$. Nella realtà, ciò che abbiamo appena creato è una bandiare in cui solamente il valore B \say{funziona}. Per far \say{funzionare} anche il valore $A$, basta aggiungerlo come termine noto del'equazione. Come scritto sopra, per generare una flag bisogna controllare quando stiamo \say{sopra} questa equazione, rendendola quindi uguale a:
+\[y > x(B - A) + A\]
 
-%TODO spiegazione frost
+%TODO Sample a+rot
+
+Come anche le ruote, anche il framing system deve implementare il frost. Piuttosto di applicare un filtro di blur al framing system già renderizzato, è preferibile in termini di peso computazionale,  
 
 %TODO spiegazione ricalcolo valore A in base a frost
 
