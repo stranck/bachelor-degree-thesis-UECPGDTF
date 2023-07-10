@@ -30,6 +30,7 @@ float sampleIris(float2 texCoor, float irisVal, float frost) {
 	return mapLineValue(passed, d, frost, frostMul);
 }
 
+
 float sampleBladeAB(float2 texCoor, float a, float b, float orientationRads, float frost){
 	float x, y;
 	rotateUV(texCoor, orientationRads, x, y);
@@ -43,7 +44,7 @@ float sampleBladeARot(float2 texCoor, float a, float rotRads, float orientationR
 	float x, y;
 	rotateUV(texCoor, orientationRads, x, y);
 	float m = rotRads * x;
-	float eq = m - (rotRads * 0.5) + a;
+	float eq = m - (rotRads * 0.5) + a; //eq = rot * x - (rot/2 + a)
 	float d = abs(y - eq) /*/ sqrt(1 + m * m)*/;
 	float passed = y > eq;
 	return mapLineValue(passed, d, frost, 1);
