@@ -7,7 +7,7 @@
 {%
 	morekeywords={%
 	% HLSL constants
-		false,FALSE,NULL,true,TRUE,%
+		false,FALSE,NULL,true,TRUE,const,%
 	% GLSL predefinde macro constant
 		__LINE__,__FILE__,__VERSION__,GL_core_profile,GL_es_profile,GL_compatibility_profile,%
 	% GLSL precision modifier
