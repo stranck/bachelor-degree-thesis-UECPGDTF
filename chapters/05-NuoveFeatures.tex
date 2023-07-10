@@ -28,7 +28,7 @@ Il controllo della lama può avvenie in due modi:
     \centering
     \includegraphics[width=1\linewidth]{img/newFeatures/abVSarot.png}
     \caption{A sinistra, la modalità di controllo \textit{A+B}. A destra, \textit{A+Rot}}
-    \label{fig:5_shaperFixes}
+    \label{fig:5_shaperDifferentModes}
 \end{figure}
 
 Effettuare il rendering di una funzionalità come lo shaper attraverso texture è davvero oneroso in termini computazionali. La scelta migliore è fare il rendering immaginandoci il framing system come delle equazioni matematiche. In generale, il rendering di un material avviene effettuando il rendering di varie coordinate UV, ovvero coordinate bidimensionali normalizzate tra [0, 1]. Possiamo immaginare il nostro codice come se fosse inserito in un ciclo for che si scorre \say{tutte} le x e le y comprese tra 0 ed 1. Il nostro codice però si occupa di renderizzare una sola UV alla volta. 
@@ -138,8 +138,8 @@ void rotateUV(float2 texCoor, float rads, out float x, out float y) {
 	y = s * (texCoor.x - 0.5) - c * (texCoor.y - 0.5) + 0.5;
 }
 
-float fade(float passed, float d, float frost, float frostMultiplier){
-	float max = (0.05 * frost + 0.002) * frostMultiplier;
+float fade(float passed, float d, float frost){
+	float max = 0.05 * frost + 0.002;
 	float clamp = d > max;
 	d = clamp + (1 - clamp) * (d / max);
 
@@ -157,7 +157,7 @@ float sampleBladeAB(float2 texCoor, float a, float b,
 	float eq = (x * m) + a;
 	float d = abs(y - eq);
 	float passed = y > eq;
-	return mapLineValue(passed, d, frost, 1);
+	return fade(passed, d, frost);
 }
 float sampleBladeARot(float2 texCoor, float a, float rotRads,
 		float orientationRads, float frost){
@@ -167,7 +167,7 @@ float sampleBladeARot(float2 texCoor, float a, float rotRads,
 	float eq = m - (rotRads * 0.5) + a;
 	float d = abs(y - eq);
 	float passed = y > eq;
-	return mapLineValue(passed, d, frost, 1);
+	return fade(passed, d, frost);
 }
 \end{lstlisting}
 
@@ -381,10 +381,49 @@ Di seguito, degli screenshot della classe per mostrare quanto sia semplice imple
 
 
 \subsection{Iris}\label{subsec:5_Iris}
+%TODO wrap figure componente iris di una luce
+L'iris è una feature atta a restringere un fascio di luce. Differisce dallo zoom, poiché quest'ultimo definisce di quanto si allarga una immagine che vogliamo proiettare rispetto alla distanza, mentre l'iris definisce la dimensione in se dell'immagine. In generale, è come se fosse un sagomatore di forma circolare che entra nel fascio di luce da tutte le direzioni contemporaneamente. Così come per i sagomatori, renderizziamo questa feature attraverso formule matematiche.
 
 \subsubsection{Idea come formula matematica}\label{subsec:5_2_IrisMath}
+L'idea per il rendering di questa feature è di utilizzare delle formule simili a quelle usate per il calcolo dell'area di un cerchio attraverso il metodo di Monte Carlo \cite{circleMonteCarlo}. Questo metodo consiste essenzialmente nel generare punti casuali all'interno di un quadrato le cui coordinate sono comprese tra [-1, 1], e contare quanti di questi punti cadono all'interno del cerchio e quanti all'esterno. Per sapere se un punto è collocato all'interno o all'esterno del cerchio, basta usare il teorema di Pitagora per ottenere la distanza dal centro e controllare se è più grande o piccola di 1.
+\[1 > \sqrt{x^2 + y^2}\]
+Per implementare l'iris, in cui abbiamo bisogno di stringere ed allargare questo cerchio, basterà controllare se la distanza è inferiore al nostro valore $i$.
+\[i > \sqrt{x^2 + y^2}\]
+Questa formula può essere approssimata rimuovendo interamente la radice quadrata, in modo da guadagnare un discreto incremento prestazionale. Visivamente l'iris si chiuderà in maniera esponenziale piuttosto che lineare, ma l'effetto è difficilmente notabile ad occhio nudo su un faro simulato. 
+
+Inoltre, le coordinate UV in input sono limitate solamente al range [0, 1]. È necessario portarle nel range [-1, 1] per poter usare la formula sopra. L'equazione finale sarà quindi
+\[i > (2x - 1)^2 + (2y - 1)^2\]
+\newline
+
+Per quanto riguarda il frost, si procede nella stessa maniera dei sagomatori. Si utilizza di nuovo la funzione $fade$ per ottenere l'effetto. La distanza ($d$) questa volta è calcolata come la differenza assoluta tra il valore dell'iris e la distanza della coordinata UV dal centro.
+\[d = \abs{(2x - 1)^2 + (2y - 1)^2 - i}\]
+Insorge lo stesso problema riscontrato con i sagomatori: Quando l'iris è chiuso del tutto, avere il frost attivo fa comunque apparire della sfumatura al centro del rendering. Questo problema viene risolto aggiungendo un parametro ($m$) alla $remapFrost$, che moltiplica l'intero valore della funzione:
+\[remapFrost(f, m) \coloneqq m(f * 0.05 + 0.002)\]
+Questo parametro per il sample dei sagomatori viene impostato ad 1, mentre per il sample dell'iris lo definiamo come uguale ad 1 se il valore dell'iris è sopra una certa soglia prefissata, altrimenti cala proporzionalmente allo stesso.
+\[m = 
+    \begin{dcases}
+        \hfil 1 & \text{se } i \geq 0.15\\
+        \frac{i}{0.15} & \text{altrimenti}
+    \end{dcases}
+\]
 
 \subsubsection{Generazione codice HLSL}\label{subsec:5_2_IrisHlsl}
+Le funzioni per il sample dell'iris sono state riportate in codice HLSL come segue:
+\lstset{language=glsl}
+\begin{lstlisting}
+float sampleIris(float2 texCoor, float irisVal, float frost) {
+    const float x = texCoor.x * 2 - 1, y = texCoor.y * 2 - 1;
+    float dist = x * x + y * y;
+    float d = abs(dist - irisVal);
+    float passed = dist <= irisVal;
+    const float mActivation = 0.15;
+    float mEnabled = irisVal >= mActivation;
+    float m = mEnabled + (1 - mEnabled) * (irisVal / mActivation);
+    return fade(passed, d, frost, m);
+}
+\end{lstlisting}
+
+\lstset{language=UEcpp}
 
 \subsubsection{Generazione nella RenderingPipeline}\label{subsec:5_2_IrisRenderingPipeline}
 
