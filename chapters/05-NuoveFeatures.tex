@@ -172,8 +172,17 @@ float sampleBladeARot(float2 texCoor, float a, float rotRads,
 \end{lstlisting}
 
 
-Il codice per la generazione del codice HLSL in se è molto semplice. Si prende in input un array di ShaperFixtureComponent già instanziati e per ciascuno controlla se sono in modalità A+B oppure A+Rot, e seleziona la relativa chiamata a funzione corretta.
+Nel costruttore della \lstinline{CPGDTFRenderPipelineBuilder}, all'interno del for finale, è stato aggiunto del codice che ricerca i componenti di tipo ShaperFixtureComponent e li aggiunge ad un array di bandiere.
 \lstset{language=UEcpp}
+\begin{lstlisting}
+auto shaper = Cast<UCPGDTFShaperFixtureComponent>(components[i]);
+if (shaper != nullptr) {
+    shapers.Add(shaper);
+    continue;
+}
+\end{lstlisting}
+
+Il codice per la generazione del codice HLSL in se è molto semplice. Si prende in input un array di ShaperFixtureComponent già instanziati e per ciascuno controlla se sono in modalità A+B oppure A+Rot, e seleziona la relativa chiamata a funzione corretta.
 \begin{lstlisting}
 for (int i = 0; i < mShapers.Num(); i++) {
     FString orientationVarName =
@@ -422,11 +431,175 @@ float sampleIris(float2 texCoor, float irisVal, float frost) {
     return fade(passed, d, frost, m);
 }
 \end{lstlisting}
+Tale funzione è stata inserita nella struct di helper utilizzata all'interno dell'algoritmo BeamRayMarch. \newline
 
+Nel for finale del costruttore della \lstinline{CPGDTFRenderPipelineBuilder} è stata inserita una ricerca per i componenti di tipo IrisFixtureComponent. Se vengono trovati, segnamo come vero un flag che ci dice se nella pipeline deve essere presente un iris.
 \lstset{language=UEcpp}
+\begin{lstlisting}
+auto iris = Cast<UCPGDTFIrisFixtureComponent>(components[i]);
+if (iris != nullptr) {
+    hasIris = true;
+    continue;
+}
+\end{lstlisting}
+
+Nella generazione del codice HLSL si controlla semplicemente se tale flag è vera ed, in caso, si aggiunge il codice per il sample dell'iris, come segue:
+\begin{lstlisting}
+if (mIrisEnabled) {
+    FString irisName = CPGDTFRenderPipelineBuilder::getInputIrisName();
+    placeholderCode = placeholderCode + FString::Format(*textAdd, {
+        FString::Printf(
+            TEXT("sampleIris(pos.xy, %s, %s)"),
+            *irisName,
+            *frostVarName
+        )
+    });
+}
+\end{lstlisting}
+
+Anche l'aggiunta alla CustomExpression del materiale Beam è molto seplice: Basta semplicemente aggiungere il parametro relativo al valore dell'iris se questo è presente.
+\begin{lstlisting}
+if (this->hasIris)
+    addScalarInputToBeamPipeline(
+        dstMaterial,
+        getIrisParamName(),
+        getInputIrisName(),
+        meCustom, meBlocksMover
+    );
+\end{lstlisting}
 
 \subsubsection{Generazione nella RenderingPipeline}\label{subsec:5_2_IrisRenderingPipeline}
+Come in precedenza, la funzione $sampleIris$ è stata riportata sottoforma di MaterialFunction che prende in input il risultato del modulo precedente. Il codice che la inserisce all'interno della pipeline inizia col controllare se deve essere presente un iris.
+\begin{lstinline}
+if (this->hasIris) {
+    //...
+}
+\end{lstinline}
+
+Viene poi generata ed impostata la MaterialFunctionCall:
+\begin{lstlisting}
+MI_INIT_BLOCKS_MOVER
+UMaterialExpressionMaterialFunctionCall* currentNode =
+    generateMaterialExpression<UMaterialExpressionMaterialFunctionCall>(
+        dstMaterial
+    );
+dstMaterialData->ExpressionCollection.AddExpression(currentNode);
+currentNode->SetMaterialFunction(mfIris);
+\end{lstlisting}
+Successivamente si genera il parametro e vengono connessi gli input alla MaterialFunction.
+\begin{lstlisting}
+UMaterialExpressionScalarParameter* irisVal =
+    addScalarParameterToMiPipeline(
+        dstMaterial,
+        getIrisParamName(),
+        meParamsMover
+    );
+
+currentNode->FunctionInputs[1].Input.Connect(0, previousParameter);
+currentNode->FunctionInputs[2].Input.Connect(0, frostParam);
+currentNode->FunctionInputs[3].Input.Connect(0, irisVal);
+\end{lstlisting}
+Infine viene spostata la MaterialFunction ed impostata come ultimo nodo generato
+\begin{lstlisting}
+meModulesMover->moveMaterialExpression(currentNode);
+previousParameter = currentNode;
+delete meParamsMover;
+\end{lstlisting}
 
 \subsubsection{IrisFixtureComponent}\label{subsec:5_1_IrisFixtureComponent}
+Il componente di gestione dell'iris, per le stesse ragioni di quello che gestisce i sagomatori, è davvero molto semplice e simile al precedente, per tanto non è necessario soffermarsi su una spiegazione generale dello stesso. L'unica cosa da tener conto è che esistono degli effetti preprogrammati all'interno delle fixture reali legati all'iris:
+\begin{itemize}
+    \item \textbf{Pulse}: $y = sin^{-1}(sin(x))$
+    \item \textbf{PulseOpen}: $y = tan^{-1}(tan(x))$
+    \item \textbf{PulseClose}: $y = -tan^{-1}(tan(x))$
+\end{itemize}
+Questi effetti sono generati e gestiti da una classe esterna (\lstinline{FPulseEffectManager}), poiché effetti simili sono di fatto disponibili anche in altre features (come ad esempio, lo shutter). I nostri compiti, da componente che si appoggia a quella classe per la generazione degli effetti pulse, sono:
+\begin{itemize}
+    \item \textbf{Far partire o impostare la velocità di un effetto}: questa operazione viene fatta all'interno della funzione \lstinline{ApplyEffectToBeam()} ogni qualvolta il valore dmx corrisponde ad una di queste features:
+    \begin{lstlisting}
+switch (AttributeType) {
+
+    //Imposta il valore diretto dell'iris
+	case ECPGDTFAttributeType::Iris:
+		this->SetTargetValue(physicalValue, 0);
+		break;
+
+    //Fai partire un effetto o impostane la velocita'
+    // se gia' in esecuzione
+	case ECPGDTFAttributeType::IrisPulse:
+	case ECPGDTFAttributeType::IrisPulseOpen:
+	case ECPGDTFAttributeType::IrisPulseClose:
+		if (channel.RunningEffectTypeChannel != AttributeType) 
+            this->PulseManager.StartPulseEffect(
+                AttributeType, 1 / physicalValue, DMXBehaviour.Key
+            );
+		else
+            this->PulseManager.ChangePeriod(1 / physicalValue);
+		break;
+    default: break; // Not supported behaviour
+}
+\end{lstlisting}
+    Dove \lstinline{StartPulseEffect()} è una funzione che si prende in input il tipo di effetto (Pulse, PulseOpen, PulseClose) selezionato
+    \item \textbf{Aggiornare lo stato di un effetto}: Operazione che viene effettuata ad ogni tick dentro \lstinline{InterpolateComponent_BeamInternal}. Il nuovo stato dell'effetto viene anche usato per impostare un nuovo target dell'interpolazione.
+    \begin{lstlisting}
+switch (channel.RunningEffectTypeChannel) {
+    case ECPGDTFAttributeType::IrisPulse:
+    case ECPGDTFAttributeType::IrisPulseOpen:
+    case ECPGDTFAttributeType::IrisPulseClose:
+        this->SetTargetValue(
+                this->PulseManager.InterpolatePulse(deltaSeconds),
+            0);
+        break;
+    default: break;
+}
+\end{lstlisting}
+\end{itemize}
+
+\subsection{RenderingPipeline finale}\label{subsec:5_final}
+Abbiamo mostrato nei precedenti due capitoli come l'implementazione di nuove funzionalità sia, finalmente, una operazione molto semplice e chiara, in cui definire solamente i comportamenti specifici del singolo componente.
+
+Le seguenti immagini mostrano il risultato della generazione \say{finale} della pipeline di rendering, sia all'interno della MaterialFunction per quanto riguarda Light e Lens e sia all'interno del materiale Beam.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{img/newFeatures/renderPipeline.jpg}
+    \caption{Rendering pipeline finale generata per i materiali Light e Lens}
+    \label{fig:5_finalRenderingPipeline}
+\end{figure}
+
+Mentre il codice HLSL generato per il rendering del materiale Beam è il seguente:
+\begin{lstlisting}
+float3 outputSample = DMXColor;
+FunctionsWrapper _fncs;
+outputSample = outputSample - 1 + pow(_fncs.sampleIris(
+        pos.xy, irisVal, frost
+), 0.66);
+outputSample = outputSample - 1 + pow(_fncs.sampleWheel(
+        TXTpColor__0, TXTpColor__0Sampler,
+        pos.xy, NumColor__0, ColorIndex__0
+), 0.66);
+outputSample *= pow(_fncs.sampleWheel(
+        TXTpGobo_Frosted__0, TXTpGobo_Frosted__0Sampler,
+        pos.xy, NumGobo__0, GoboIndex__0
+), 0.66);
+outputSample = outputSample - 1 + pow(_fncs.sampleBladeARot(
+        pos.xy, bladeA__0, bladeBRot__0, bladeOrientationRads__0, frost
+), 0.66);
+outputSample = outputSample - 1 + pow(_fncs.sampleBladeARot(
+        pos.xy, bladeA__1, bladeBRot__1, bladeOrientationRads__1, frost
+), 0.66);
+outputSample = outputSample - 1 + pow(_fncs.sampleBladeARot(
+        pos.xy, bladeA__2, bladeBRot__2, bladeOrientationRads__2, frost
+), 0.66);
+outputSample = outputSample - 1 + pow(_fncs.sampleBladeARot(
+        pos.xy, bladeA__3, bladeBRot__3, bladeOrientationRads__3, frost
+), 0.66);
+\end{lstlisting}
+%TODO Check if the previous code fits in just one window
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=.445\linewidth]{img/newFeatures/BeamGeneratedFull.jpg}
+    \caption{Parametri per la CustomExpression per il rendering del materiale Beam}
+    \label{fig:5_finalBeamCEparams}
+\end{figure}
 
 \end{document}
