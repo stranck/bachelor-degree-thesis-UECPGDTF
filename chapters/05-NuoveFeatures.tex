@@ -470,11 +470,11 @@ if (this->hasIris)
 
 \subsubsection{Generazione nella RenderingPipeline}\label{subsec:5_2_IrisRenderingPipeline}
 Come in precedenza, la funzione $sampleIris$ è stata riportata sottoforma di MaterialFunction che prende in input il risultato del modulo precedente. Il codice che la inserisce all'interno della pipeline inizia col controllare se deve essere presente un iris.
-\begin{lstinline}
+\begin{lstlisting}
 if (this->hasIris) {
     //...
 }
-\end{lstinline}
+\end{lstlisting}
 
 Viene poi generata ed impostata la MaterialFunctionCall:
 \begin{lstlisting}
@@ -568,8 +568,7 @@ Le seguenti immagini mostrano il risultato della generazione \say{finale} della 
 
 Mentre il codice HLSL generato per il rendering del materiale Beam è il seguente:
 \begin{lstlisting}
-float3 outputSample = DMXColor;
-FunctionsWrapper _fncs;
+float3 outputSample = DMXColor; FunctionsWrapper _fncs;
 outputSample = outputSample - 1 + pow(_fncs.sampleIris(
         pos.xy, irisVal, frost
 ), 0.66);
@@ -594,7 +593,7 @@ outputSample = outputSample - 1 + pow(_fncs.sampleBladeARot(
         pos.xy, bladeA__3, bladeBRot__3, bladeOrientationRads__3, frost
 ), 0.66);
 \end{lstlisting}
-%TODO Check if the previous code fits in just one window
+%TODO Check if the previous code fits in just one page
 \begin{figure}[H]
     \centering
     \includegraphics[width=.445\linewidth]{img/newFeatures/BeamGeneratedFull.jpg}
