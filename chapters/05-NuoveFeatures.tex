@@ -17,6 +17,12 @@ Una volta creata una pipeline di rendering, sistemata la gerarchia dei component
 In questo capitolo non tratteremo mai il secondo punto poiché rappresenta la trasposizione in MaterialExpression del codice già visto in HLSL.
 
 \subsection{Sagomatori}\label{subsec:5_shaper}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=.8\linewidth]{img/newFeatures/shaper.jpg}
+    \caption{Sagomatore in azione.}
+    \label{fig:5_shaper}
+\end{figure}
 Il sistema dei sagomatori (detto anche \say{framing system} oppure \say{shaper}) consiste in un modulo composto da 4 lame (dette anche \say{bandiere}) che possono immettersi ed inclinasi singolarmente all'interno del fascio di luce. Inoltre, l'intero modulo può roteare, muovendo contemporaneamente la direzione in cui si immettono tutte le lame si immettono.
 %TODO Esempi con foto
 Il controllo della lama può avvenie in due modi:
@@ -52,7 +58,7 @@ In questo modo generiamo il coefficiente una retta che però ha sempre origine i
 \newline
 
 Per effettuare, invece, il sampling di una flag A+Rot, possiamo utilizzare $A$ come termine noto, e convertire $R$ da gradi alla relativa tangente trigonometrica in modo da avere direttamente il coefficiente della retta. Poiché vogliamo però inclinare questa retta usando come punto di rotazione il suo centro ($x = 0.5$) e non la sua origine ($x = 0$), dobbiamo modificare il termine noto in base al coefficiente: più il coefficiente zè elevato (e più la retta sarà quindi inclinata crescendo da sinistra verso destra) e più il termine noto dovrà calare. Considerando la sezione della retta compresa tra $x = [0, 1]$, la tangente di $R$, essendo direttamente uguale al coefficiente della retta, è anche uguale alla differenza tra il valore della $y$ quando la retta avrà $x = 0$ e quando avrà $x = 1$. Al centro di questa sezione (quando $x = 0.5$) la differenza con i due estremi sarà quindi uguale a $\frac{tan(R)}{2}$, ovvero esattamente il valore da sottrarre al termine noto per mantenere centrale il punto di rotazione della retta. La formula finale dell'equazione sarà quindi:
-\[y > tan(R)x + (a - \frac{tan(R)}{2})\]
+\[y > \tan(R)x + (a - \frac{\tan(R)}{2})\]
 
 Come anche le ruote, anche il framing system deve implementare il frost. Piuttosto di applicare un filtro di blur al framing system già renderizzato, è preferibile in termini di peso computazionale implementare una sfocatura come formula matematica direttamente nel precedente rendering. L'idea è quella di utilizzare il valore del frost per definire la dimensione di una zona di sfumatura intorno alla retta. La prima operazione che viene effettuata è trovare la distanza della coordinata UV che stiamo renderizzando dalla retta. Questa operazione viene approssimata come la distanza assoluta ($d$) tra la $y$ della coordinata UV e la $y$ della retta per ogni $x$.
 \[d = \abs{y - g(x)}\]
@@ -115,8 +121,8 @@ La direzione di ogni singola bandiera, così come la rotazione dell'intero frami
 Dove $direction$ può essere uguale a 0, 90, 180 o 270 gradi. La rotazione viene effettuata trasformando i valori UV prima di qualsiasi altro calcolo effettuato per il sample di ogni singola blade.
 \[rotateUV(a) \coloneqq 
 	\begin{bmatrix}
-		cos(a)(x - \frac{1}{2}) + sin(a)(y - \frac{1}{2}) + x \\
-		cos(a)(y - \frac{1}{2}) + sin(a)(x - \frac{1}{2}) + y
+		\cos(a)(x - \frac{1}{2}) + \sin(a)(y - \frac{1}{2}) + x \\
+		\cos(a)(y - \frac{1}{2}) + \sin(a)(x - \frac{1}{2}) + y
 	\end{bmatrix}
 \]
 Dove $a$ corrisponde ai gradi di rotazione in input.
@@ -390,8 +396,20 @@ Di seguito, degli screenshot della classe per mostrare quanto sia semplice imple
 
 
 \subsection{Iris}\label{subsec:5_Iris}
-%TODO wrap figure componente iris di una luce
+%\begin{wrapfigure}{r}{0.6\textwidth}
+%    \centering
+%    \captionsetup{justification=centering}
+%    \includegraphics[scale=0.2]{img/newFeatures/Iris.jpg}
+%    \caption{Modulo iris di una fixture.}
+%    \label{fig:5_iris}
+%\end{wrapfigure}
 L'iris è una feature atta a restringere un fascio di luce. Differisce dallo zoom, poiché quest'ultimo definisce di quanto si allarga una immagine che vogliamo proiettare rispetto alla distanza, mentre l'iris definisce la dimensione in se dell'immagine. In generale, è come se fosse un sagomatore di forma circolare che entra nel fascio di luce da tutte le direzioni contemporaneamente. Così come per i sagomatori, renderizziamo questa feature attraverso formule matematiche.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=.75\linewidth]{img/newFeatures/Iris.jpg}
+    \caption{Modulo iris di una fixture.}
+    \label{fig:5_iris}
+\end{figure}
 
 \subsubsection{Idea come formula matematica}\label{subsec:5_2_IrisMath}
 L'idea per il rendering di questa feature è di utilizzare delle formule simili a quelle usate per il calcolo dell'area di un cerchio attraverso il metodo di Monte Carlo \cite{circleMonteCarlo}. Questo metodo consiste essenzialmente nel generare punti casuali all'interno di un quadrato le cui coordinate sono comprese tra [-1, 1], e contare quanti di questi punti cadono all'interno del cerchio e quanti all'esterno. Per sapere se un punto è collocato all'interno o all'esterno del cerchio, basta usare il teorema di Pitagora per ottenere la distanza dal centro e controllare se è più grande o piccola di 1.
@@ -509,9 +527,9 @@ delete meParamsMover;
 \subsubsection{IrisFixtureComponent}\label{subsec:5_1_IrisFixtureComponent}
 Il componente di gestione dell'iris, per le stesse ragioni di quello che gestisce i sagomatori, è davvero molto semplice e simile al precedente, per tanto non è necessario soffermarsi su una spiegazione generale dello stesso. L'unica cosa da tener conto è che esistono degli effetti preprogrammati all'interno delle fixture reali legati all'iris:
 \begin{itemize}
-    \item \textbf{Pulse}: $y = sin^{-1}(sin(x))$
-    \item \textbf{PulseOpen}: $y = tan^{-1}(tan(x))$
-    \item \textbf{PulseClose}: $y = -tan^{-1}(tan(x))$
+    \item \textbf{Pulse}: $y = \sin^{-1}(\sin(x))$
+    \item \textbf{PulseOpen}: $y = \tan^{-1}(\tan(x))$
+    \item \textbf{PulseClose}: $y = -\tan^{-1}(\tan(x))$
 \end{itemize}
 Questi effetti sono generati e gestiti da una classe esterna (\lstinline{FPulseEffectManager}), poiché effetti simili sono di fatto disponibili anche in altre features (come ad esempio, lo shutter). I nostri compiti, da componente che si appoggia a quella classe per la generazione degli effetti pulse, sono:
 \begin{itemize}
