@@ -19,19 +19,51 @@ Prendiamo in esempio la generazione della MaterialFunction utilizzata per la pip
 Questa problematica non è circoscritta solamente a quel caso, ma è stata una costante per praticamente tutto il progetto. In generale, tutorial, convenzioni, buone prassi e documentazione per scrivere un plugin per Unreal Engine sono materiali molto rari se non introvabili. Al contrario, è molto semplice trovare guide sulla programmazione di attori attraverso BluePrint. Sembra come se Unreal Engine, nonostante ne metta a disposizione la possibilità, non volesse o per lo meno non sia fatto per essere utilizzato scrivendo codice nativo in C++.
 \newline
 
-Un'altra problematica grossa è legata allo scarso ascolto delle richieste degli utenti (o almeno quelle specifiche). Durante lo sviluppo sono incorso in molti thread datati anche quasi 10 anni in cui utenti si lamentavano di feature utili mancanti, che però tutt'ora non sono presenti nell'engine. Parlo, ad esempio, della possibilità di richiamare MaterialFunction dal codice HLSL, citata nel capitolo \ref{subsec:2_2_CM-MFproblems}, oppure che il materiale per il rendering di una spotlight (ovvero il materiale Light) possa mandare in output un solo colore alla volta, costringendo a creare tre fonti di luce (una per colore) per ogni singolo emettitore della fixture (triplicando così il costo di rendering). \cite{rgbSpotlight}
+Un'altra problematica grossa è legata allo scarso ascolto delle richieste degli utenti (o almeno quelle specifiche). Durante lo sviluppo sono incorso in molti thread datati anche quasi 10 anni in cui utenti si lamentavano di feature utili mancanti, che però tutt'ora non sono presenti nell'engine. Parlo, ad esempio, della possibilità di richiamare MaterialFunction dal codice HLSL, citata nel capitolo \ref{subsec:2_2_CM-MFproblems}, oppure che il materiale per il rendering di una spotlight (ovvero il materiale Light) possa mandare in output un solo colore alla volta, costringendo a creare tre fonti di luce (una per colore) per ogni singolo emettitore della fixture (triplicando così il costo di rendering). \cite{rgbSpotlight}\newline
 
-%TODO Check for more problems!
+Altri problemi emersi riguardano GDTF. Non tanto sullo standard (in cui talvolta può capitare che dettagli minori siano omessi, oppure è presente un eccesso di valori ridondanti), ma principalmente sui file GDTF emessi dalle stesse case produttrici dei fari. Molto spesso si incombe in valori mancanti, approssimativi o addirittura sbagliati. Errori che vanno oltre all'avere una simulazione sbagliata o con valori opposti, errori che bloccano completamente una funzionalità di un faro se i relativi valori vengono interpretati come standard GDTF. L'approccio precedente di questo progetto era leave-as-it-is: se ci sono dei valori conflittuali o mancanti all'interno del file GDTF vanno lasciati come sono. Successivamente al mio arrivo questa filosofia è cambiata e si è cercato comunque di ottenere una simulazione funzionante, seppur imprecisa, dei fari con GDTF sbagliati.
+
+Riguardo questo problema, è emerso come Claypaky stessa pubblica dei GDTF con molte approssimazioni e talvolta valori errati. Analizzando i GDTF dei competitor però si può notare come questo, in realtà, sia un trend condiviso da praticamente tutti. Su molti aspetti GDTF permette di descrivere in maniera davvero granulare le varie feature e caratteristiche di una fixture. Questa granualità così elevata porta però le aziende - per fattori economici e temporali - ad approssimare oppure a non curarsi particolarmente se i dati siano corretti o meno. 
 
 \subsection{Sviluppi futuri}\label{subsec:6_newDevelops}
-Poiché nel corso del tirocinio la maggior parte del tempo è stato speso in un processo di refactoring delle classi principali al progetto (Processo sia lungo per se, che per i problemi riscontrati sopra elencati), l'implementazione di nuove features è stata piuttosto limitata. Questo progetto può avvicinarsi ad uno stato di completamento solamente quando saranno implementate tutte le features disponibili sui fari claypaky. Quelle restanti sono
-\begin{itemize}
-    \item Prismi
-    \item Focus con differenti piani focali
-    \item Ruota animazione
-    %TODO
-\end{itemize}
-Tuttavia, con il nuovo sistema di rendering e di gestione dei componenti è molto semplice l'aggiunta di queste nuove features: l'unica difficoltà rimanente è nell'implementazione della feature stessa.
+Poiché nel corso del tirocinio la maggior parte del tempo è stato speso in un processo di refactoring delle classi principali al progetto (Processo sia lungo per se, che per i problemi riscontrati sopra elencati), l'implementazione di nuove features è stata piuttosto limitata. Questo progetto può avvicinarsi ad uno stato di completamento solamente quando saranno implementate tutte le features disponibili sui fari claypaky. L'attuale stato dell'arte è il seguente: \newline
+
+\noindent\begin{tabularx}{1\textwidth} { | >{\centering\arraybackslash}X | >{\centering\arraybackslash}X | }
+    \hline
+        \textbf{Features implementate}	& \textbf{Features da implementare}	\\
+    \hline
+        Pan / Tilt						& Prisma							\\
+    \hline
+        Dimmer							& Focus								\\
+    \hline
+        Frost							& Ruota animazione					\\
+    \hline
+        Zoom							& Canali multifunzione				\\
+    \hline
+        CMYRGB+ (Inclusi WW e CW)		& Pan/tilt infinito					\\
+    \hline
+        CTO/CTB/CTC						& 									\\
+    \hline
+        CIE/HSB							& 									\\
+    \hline
+        Ruota colori					& 									\\
+    \hline
+        Macro colori					& 									\\
+    \hline
+        Tint							& 									\\
+    \hline
+        Framing system					& 									\\
+    \hline
+        Gobo fisse e rotanti			& 									\\
+    \hline
+        Shutter / Strobe				& 									\\
+    \hline
+        Iris							& 									\\
+    \hline
+\end{tabularx}
+\newline
+
+Anche se vi sono alcune features ancora da implementare, il nuovo sistema di rendering e di gestione dei componenti ne rende molto semplice l'aggiunta: l'unica difficoltà rimanente è nell'implementazione della feature stessa.
 
 \subsubsection{Arri e Epic Games}\label{subsec:6_1_Arri-EG}
 Durante il periodo di tirocinio (Partito a inizio Dicembre 2022 e terminato a fine Luglio 2023) ClayPaky è stata acquisita dal gruppo Arri, dopo essere stata ceduta dal gruppo OSRAM per motivi legati alla politica di vendita di prodotti OEM. Arri è una azienda leader nella vendita di lenti, videocamere e luci per il mondo cinematografico. Durante l'ultimo anno si è incentrata anche nello sviluppo di set cinematografici virtuali creati su UnrealEngine e \say{proiettati} dal vivo su LEDwall \cite{virtualProduction}, piuttosto di utilizzare il tradizionale sistema a green-screen e post produzione. Nello sviluppare questa tecnologia Arri ha collaborato e collabora tutt'oggi con la Epic Games, in modo da poter risolvere rapidamente le problematiche che si presentano nella creazione del loro plugin per la virtualizzazione. Durante il mio periodo da tirocinante, ho personalmente fatto molte riunioni con il dipartimento Virtual della Arri in cui ho illustrato lo stato dell'arte di questo progetto. La Arri ci ha quindi fornito un contatto diretto con la Epic Games a cui abbiamo inviato la nostra repository su github in attesa che possa essere revisionata ed iniziare così un processo di merge del nostro plugin all'interno di UnrealEngine stesso.
@@ -40,7 +72,7 @@ Durante il periodo di tirocinio (Partito a inizio Dicembre 2022 e terminato a fi
 \subsection{Ringraziamenti}\label{subsec:6_thank}
 Grazie a tutti
 \newline
-\textcolor{white}{In realtà, siccome sono sentimentale, ho un bel po' di persone da ringraziare. Primi fra tutti i miei amici e colleghi della Homework Heroes Gang, che mi hanno supportato e sopportato per questi 4 anni e dato una grossa mano nello studio degli esami, anche nei periodi più brutti. È stato un onore conoscervi ed avervi come compagni, vi ricorderò per sempre e ricorderò per sempre le speedrun fatte 3 minuti prima della consegna degli homework. Inoltre volevo ringraziare i miei amici Gonfalonieri irl e non, che mi alleviano le giornate ormai da 10 anni a questa parte. Grazie per le prese in giro, per gli scherzi, per le notti su discord e per tanto tanto altro. Poi, ma non in ordine di importanza, volevo ringraziare la mia Lulù che è entrata a piede teso nella mia vita e mi ha fatto capire cosa c'è davvero di bello. Ringrazio anche tutti i miei colleghi in Claypaky (sia del mio ufficio, che non) che hanno contribuito a creare il miglior ambiente lavorativo che abbia mai provato sulla mia pelle da quando ho iniziato a lavorare nel lontano 2017. È stato davvero bello passare ogni giornata con voi, scherzare in ufficio, andare a pranzo, ridere dei colleghi più \_strani\_ e così via. Siete stati tutti dei grandissimi amici ed ispiratori. Passerei ancora ore ad ascoltarvi parlare in ufficio di tutti i vari problemi che si possono generare durante la creazione di un prodotto come quelli di questo campo. Menzione speciale per i miei amici Lorenzo, Tommaso e Davide, che sono state le persone che mi hanno materialmente più supportato durante tutti i miei studi e che mi hanno incoraggiato a intraprendere questo percorso universitario. Ringrazio tante persone quali i miei colleghi tecnici al teatro Domma, gli altri membri dei TRX e mhackeroni, i miei colleghi dell'aps furizon, che mi hanno da sempre stimolato in vari campi ad essere il più creativo possibile e che mi hanno da sempre fatto inseguire i miei sogni. Ringrazio i miei genitori che mi hanno da sempre spinto lungo tutto questo percorso e che si sono subiti per la prima volta la mia lontananza per un periodo di tempo così lungo e filato (preparatevi che quando entreranno i tour grossi, 8 mesi saranno nulla) senza intromettersi troppo nella distanza :D. Ringrazio infine ogni singola persona che ha fatto parte, anche solo per un momento di 10 anni fa, della mia vita. Io credo fermamente che la vita sia un muro fatto di tanti mattoncini deposti da ogni persona che si incontra. C'è chi lascia un mattone più grande e chi uno più piccolo, ma tutti insieme fanno me. E se sono arrivato fino a dove sono ora, lavorativamente e \say{studescamente} parlando, è grazie a davvero tutti. Vi voglio bene.}
+\textcolor{white}{In realtà, siccome sono sentimentale, ho un bel po' di persone da ringraziare. Primi fra tutti i miei amici e colleghi della Homework Heroes Gang (Luca, Juan, Tommaso, Andrea, Alex, Lorenzo e gli altri), che mi hanno supportato e sopportato per questi 4 anni e dato una grossa mano nello studio degli esami, anche nei periodi più brutti. È stato un onore conoscervi ed avervi come compagni, vi ricorderò per sempre e ricorderò per sempre le speedrun fatte 3 minuti prima della consegna degli homework. Inoltre volevo ringraziare i miei amici Gonfalonieri irl e non, che mi alleviano le giornate ormai da 10 anni a questa parte. Grazie per le prese in giro, per gli scherzi, per le notti su discord e per tanto tanto altro. Poi, ma non in ordine di importanza, volevo ringraziare la mia Lulù che è entrata a piede teso nella mia vita e mi ha fatto capire cosa c'è davvero di bello. Grazie per essermi stata accanto sempre, grazie per avermi dato coraggio, grazie per avermi fatto sentire valorizzato quando non lo percepivo, grazie per avermi cambiato, in meglio. Ringrazio anche tutti i miei colleghi (Marco, Massimo, Massimiliano, Emanuele, Marta, Elisa, Davide, Mattia, Luca, Stefano e gli altri delle pause pranzo) in Claypaky (sia del mio ufficio, che non) che hanno contribuito a creare il miglior ambiente lavorativo che abbia mai provato sulla mia pelle da quando ho iniziato a lavorare nel lontano 2017. È stato davvero bello passare ogni giornata con voi, scherzare in ufficio, andare a pranzo, ridere dei colleghi più \_strani\_ e così via. Siete stati tutti dei grandissimi amici ed ispiratori. Passerei ancora ore ad ascoltarvi parlare in ufficio di tutti i vari problemi che si possono generare durante la creazione di un prodotto come quelli di questo campo. Ringrazio anche il mio relatore, Angelo Monti, che è riuscito a supportarmi nelle mie pazzie di voler sbrigrami a consegnare questa tesi. Menzione speciale per i miei amici Lorenzo, Tommaso e Davide, che sono state le persone che mi hanno materialmente più supportato durante tutti i miei studi e che mi hanno incoraggiato a intraprendere questo percorso universitario. Ringrazio tante persone quali i miei colleghi tecnici al teatro Domma, gli altri membri dei TRX e mhackeroni, i miei colleghi dell'aps furizon, che mi hanno da sempre stimolato in vari campi ad essere il più creativo possibile e che mi hanno da sempre fatto inseguire i miei sogni. Ringrazio Gioele e Andrea che, disponibilissimi, mi hanno da sempre aiutato ad ambientarmi qui a Bergamo. Ringrazio i miei genitori che mi hanno da sempre spinto lungo tutto questo percorso e che si sono subiti per la prima volta la mia lontananza per un periodo di tempo così lungo e filato (preparatevi che quando entreranno i tour grossi, 8 mesi saranno nulla) senza intromettersi troppo nella distanza :D. Ringrazio infine ogni singola persona che ha fatto parte, anche solo per un momento di 10 anni fa, della mia vita. Io credo fermamente che la vita sia un muro fatto di tanti mattoncini deposti da ogni persona che si incontra. C'è chi lascia un mattone più grande e chi uno più piccolo, ma tutti insieme fanno me. E se sono arrivato fino a dove sono ora, lavorativamente e \say{studescamente} parlando, è grazie a davvero tutti. Vi voglio bene.}
 \clearpage
 
 
