@@ -48,7 +48,12 @@ I moduli che verranno toccati in questo progetto sono i seguenti:
     \item \textbf{Frost}: È un filtro atto a rendere soffusa la luce, smorzando i bordi di eventuali figure che si stanno proiettando
 \end{itemize}
 I moduli solitamente funzionano sottrattivamente: per ogni modulo a partire dalla fonte luminosa, andiamo ad occluderla mano a mano per disegnare la forma che vogliamo ottenere.
-% TODO FOTO E SCHEMA DEI MODULI IN UNA LUCE APERTA
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/introduzione/fixtureModules.jpg}
+    \caption{Fotografia di una vecchia fixture aperta, in cui sono visibili in maniera chiara la sorgente luminosa ed i vari moduli che la compongono}
+    \label{fig:1_DynamicFixture}
+\end{figure}
 
 \subsubsection{Protocollo DMX}\label{subsec:1_1_dmx}
 Oggi giorno, quasi tutte le fixture che vengono usate sono intelligenti e, come citato sopra, vengono controllate via DMX. DMX è un protocollo unidirezionale in cui un master (solitamente una console luci) invia 44 volte al secondo agli slave (le varie fixture) un array di 512 byte chiamato \say{Universo DMX}. Le luci hanno memorizzato un offset all'interno di questo array chiamato \say{Indirizzo DMX} che viene impostato manualmente su ognuna dall'operaio che le monta su un palcoscenico. Ogni volta che arriva un nuovo pacchetto DMX la luce inizierà a leggere la sua sezione di dati a partire dall'indirizzo/offset specificato. Ogni byte che legge è chiamato \say{canale DMX} e, solitamente, corrisponde al valore da assegnare ad una diversa \say{funzionalità} (Chiamata anche \say{feature}, o \say{attributo}) della luce.
