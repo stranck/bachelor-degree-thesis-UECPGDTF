@@ -1,1 +1,3 @@
 # Netscape HTTP Cookie File
+# Use `git update-index --assume-unchanged cookies.txt` to don't track changes
+#  to this file without actually deleting it from the repository
