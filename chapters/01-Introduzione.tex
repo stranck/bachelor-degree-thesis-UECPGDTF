@@ -7,9 +7,9 @@
 \vspace{1.0cm}
 
 \section{Introduzione}\label{sec:Intro}
-Nel mondo dell'eventistica progettare e programmare in anticipo e virtualmente palchi e show è una pratica sempre più diffusa che viene realizzata attraverso programmi detti \say{Previsualizer}. Solitamente vengono utilizzati software\cite{capture} ad-hoc closed-source e molto costosi, con una resa qualitativa molto elevata. Esistono anche dei software gratuiti, molto spesso già inclusi nei sistemi di controllo luci, sempre closed-source, che però omettono molte funzionalità essenziali ed hanno una resa grafica nettamente inferiore.\newline
+Nel mondo dell'eventistica progettare anticipatamente su una piattaforma virtuale palchi e show, è una pratica sempre più diffusa e viene realizzata attraverso programmi detti \say{Previsualizer}. Solitamente vengono utilizzati software\cite{capture} ad-hoc closed-source e molto costosi, con una resa qualitativa molto elevata. Esistono anche dei software gratuiti, molto spesso già inclusi nei sistemi di controllo luci che però omettono molte funzionalità essenziali ed hanno una resa grafica nettamente inferiore.\newline
 
-Lo scopo del progetto CPGDTF-Importer è quello di realizzare un Previsualizer open-source basato su \say{Unreal Engine}\cite{UnrealEngine}, un importante ed affermato software ed engine grafico per la realizzazione di videogiochi, sviluppato dalla \say{Epic Games}. Unreal Engine (da ora abbreviato con \say{UE}) è gratuito e open-source, ha un rendering visivo fotorealistico e mette a disposizione un sistema di plugin con i quali è possibile integrare l'importazione di file non nativi, automatizzare i processi di creazione di \say{oggetti} utilizzabili all'interno dell'engine, oppure definire il comportamento di questi oggetti stessi. UE dispone di una libreria di plugin sviluppati dalla Epic Games tra cui figura \say{DMXEngine}, che già implementa protocolli standard per la gestione di luci e palchi, e già detta delle basi per sviluppare un proprio plugin nel medesimo contesto.  
+Lo scopo del progetto CPGDTF-Importer è quello di realizzare un Previsualizer open-source basato su \say{Unreal Engine}\cite{UnrealEngine}, un importante ed affermato software ed engine grafico per la realizzazione di videogiochi, sviluppato dalla \say{Epic Games}. Unreal Engine (abbreviato con \say{UE}) è gratuito, open-source, ha un rendering visivo fotorealistico e mette a disposizione un sistema di plugin con i quali è possibile integrare l'importazione di file non nativi, automatizzare i processi di creazione di \say{oggetti} utilizzabili all'interno dell'engine, oppure definire il comportamento degli stessi. UE dispone di una libreria di plugin sviluppati internamente dalla Epic Games tra cui figura \say{DMXEngine}, che già implementa protocolli standard per la gestione di luci e palchi, e già detta delle basi per sviluppare un proprio plugin nel medesimo contesto.  
 \newline
 CPGDTF-Importer è una fork di DMXEngine ed è, in particolare, un plugin per l'\say{editor} di UE, ovvero quella sezione che permette la creazione di mondi che, nel nostro caso, consisterebbero in palcoscenici virtuali. Il plugin lavorerà principalmente su 3 livelli:
 \begin{itemize}
@@ -19,7 +19,7 @@ CPGDTF-Importer è una fork di DMXEngine ed è, in particolare, un plugin per l'
 \end{itemize}
 
 \subsection{Anatomia di una fixture}\label{subsec:1_fixtureAnatomy}
-Le luci (Che chiameremo anche \say{fari} o \say{fixture}) utilizzati nel mondo dell'eventistica sono dei macchinari di vario tipo e dimensioni che hanno il compito di generare luce di forme e colori differenti. Le fixture che ci interessano sono quelle utilizzate sia come illuminazione di oggetti (Ad esempio, le luci frontali che illuminano un attore in teatro) che come effettistica (Ovvero le luci che fanno effetti aereografici ai concerti). Storicamente le luci nascono come semplici fari monocolore a cui si potevano applicare a mano dei filtri davanti la sorgente luminosa ed a cui si poteva solamente regolare l'intensità attraverso apparecchiature chiamate \say{dimmer}. Solo a partire dagli anni '90 sono entrate in commercio le prime fixture intelligenti, ovvero con la possibilità di essere controllate da remoto attraverso una console luci sfruttando il protocollo DMX \cite{DMX}. 
+Le luci (Che chiameremo anche \say{fari} o \say{fixture}) utilizzati nel mondo dell'eventistica sono dei macchinari di vario tipo e dimensioni che hanno il compito di generare luce di forme e colori differenti. Le fixture che ci interessano sono quelle utilizzate sia come illuminazione di oggetti (Ad esempio, le luci frontali che illuminano un attore in teatro) che come effettistica (Ovvero le luci che fanno effetti aerei ai concerti). Storicamente le luci nascono come semplici fari monocolore a cui si potevano applicare a mano dei filtri davanti la sorgente luminosa ed a cui si poteva solamente regolare l'intensità attraverso apparecchiature chiamate \say{dimmer}. Solo a partire dagli anni '90 sono entrate in commercio le prime fixture intelligenti, ovvero con la possibilità di essere controllate da remoto attraverso una console luci sfruttando il protocollo DMX \cite{DMX}. 
 
 \subsubsection{Luci statiche e dinamiche}\label{subsec:1_1_fixtureTypes}
 Le fixture possono essere classificabili come statiche o dinamiche. Le fixture dette \say{statiche} sono fixture che sono formate da un unico \say{blocco} (Che GDTF chiama \say{geometrie}, mentre Unreal Engine chiama \say{SceneComponents}) e che, fisicamente, non si muovono. Sono quelle più semplici nonché il primo tipo di faro entrato in commercio.
@@ -38,10 +38,10 @@ Le fixture dette invece \say{dinamiche} (chiamate anche \say{Teste mobili}) sono
 \end{figure}
 
 \subsubsection{Moduli di una luce}\label{subsec:1_1_modules}
-All'interno della testa, così come all'interno delle fixture statiche, è presente una sorgente luminosa che può essere sia bianca se il faro utilizza una sintesi colore sottrattiva, che colorata se il faro utilizza una sintesi colore additiva. La luce viene fatta passare attraverso vari moduli che ne alterano il colore, la messa a fuoco e la forma fino ad uscire dalla lente principale collocata ad una estremità della testa. Su praticamente tutti i fari in commercio non è possibile montare moduli custom o invertirli con quelli di un altro faro. Ciò implica di avere un unico file per descrivere interamente il comportamento di un determinato faro. \newline
+All'interno della testa, così come all'interno delle fixture statiche, è presente una sorgente luminosa che può essere sia bianca se il faro utilizza una sintesi colore sottrattiva, che colorata se il faro utilizza una sintesi colore additiva. La luce viene fatta passare attraverso vari moduli che ne alterano il colore, la messa a fuoco e la forma fino ad uscire dalla lente principale collocata ad una estremità della testa. Su praticamente tutti i fari in commercio non è possibile montare moduli custom o invertirli con quelli di un altro faro. \newline
 I moduli che verranno toccati in questo progetto sono i seguenti:
 \begin{itemize}
-    \item \textbf{Ruote colori e gobo}: Sono delle ruote in cui sopra sono presenti su degli slot, contenenti dei filtri colori o delle forme. Hanno sempre uno slot libero in cui la luce può passare senza essere modificata e, girando, possono mettere in mezzo alla luce uno slot alla volta
+    \item \textbf{Ruote colori e gobo}: Sono delle ruote in cui sono presenti degli slot contenenti dei filtri colori o delle forme. Hanno sempre uno slot libero in cui la luce può passare senza essere modificata e, girando, possono mettere in mezzo alla luce uno slot alla volta
     \item \textbf{Sintesi e correzione dei colori}: Nelle luci a sintesi additiva troviamo LED di colori differenti (RGB + Bianco, Ambra, Lime, UV, etc); nelle luci a sintesi sottrattiva invece abbiamo una luce bianca e delle flag CMY che vengono inserite davanti per regolarne il colore. Esistono anche dei filtri (sempre sottrattivi) per effettuare color correction.
     \item \textbf{Sagomatore}: È un sistema composto da quattro lame che possono essere inserite nel fascio di luce da direzioni differenti e possono essere inclinate, in modo da ritagliare in maniera precisa triangoli e quadrilateri per fare puntamenti.
     \item \textbf{Iris}: Sono delle lame circolari che entrano nel fascio di luce da tutte le direzioni e si occupano di ridurne la dimensione. Il funzionamento è analogo al diaframma di una fotocamera
@@ -74,14 +74,14 @@ GDTF - \textit{General Device Type Format} - è un formato per descrivere fixtur
 Un file GDTF è essenzialmente un pacchetto contenente all'interno i modelli 3D delle varie geometrie che compongono un faro, le texture delle sue gobo/animazioni/prismi/etc ed un file in formato XML contentente una descrizione esaustiva delle caratteristiche del faro. \newline
 Dei vari dati contenuti in questo XML a noi ci interessano principalmente:
 \begin{itemize}
-    \item Informazioni e texture sulle ruote colori e gobo
-    \item Informazioni sui valori di fade e accelerazione per l'interpolazione delle varie componenti fisiche
-    \item Modelli 3D, geometrie di un faro e come sono in relazione tra di loro
-    \item Informazioni sui vari canali DMX e sulle varie modalità DMX
+    \item Informazioni e texture delle ruote colori e gobo.
+    \item Informazioni sui valori di fade e accelerazione per l'interpolazione delle varie componenti fisiche.
+    \item Modelli 3D, geometrie di un faro e come sono in relazione tra di loro.
+    \item Informazioni sui vari canali DMX e sulle varie modalità DMX.
 \end{itemize}
 
 \subsubsection{Ruote}\label{subsec:1_2_wheels}
-Nel nodo \lstinline{Wheels} all'interno del file XML viene definita una lista di ruote presenti all'interno del faro. Ogni ruota (rappresentata da un nodo \lstinline{Wheel}) può avere un nome, e dentro ciascuna troviamo una lista di \lstinline{Slot} che rappresentano ognuno un elemento della ruota. Ogni slot ha anch'esso un nome, e può avere degli attributi opzionali quali:
+Nel nodo \lstinline{Wheels} all'interno del file XML viene definita una lista di ruote presenti all'interno del faro. Ogni ruota (rappresentata da un nodo \lstinline{Wheel}) può avere un nome e dentro ciascuna troviamo una lista di \lstinline{Slot} che rappresentano ognuno un elemento della ruota. Ogni slot ha anch'esso un nome e può avere degli attributi opzionali quali:
 \begin{itemize}
     \item \lstinline{Color}: Il colore di uno slot presente su una color wheel.
     \item \lstinline{MediaFileName}: Nome del file PNG contenente la texture di questo slot, utilizzato per le ruote gobo ed animazione.
@@ -90,7 +90,7 @@ I prismi vengono comunque classificati come ruote, dove ogni slot rappresenta un
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/introduzione/GDTFwheelExample.jpg}
-    \caption{Nodo \lstinline{Wheels} in un file GDTF}
+    \caption{Nodo \lstinline{Wheels} in un file GDTF.}
     \label{fig:1_gdtfWheelExample}
 \end{figure}
 
@@ -102,7 +102,7 @@ Le varie funzionalità di una fixture sono implementate all'interno di una parti
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/introduzione/GDTFgeometriesExample.jpg}
-    \caption{Esempio di nodi \lstinline{Models} e \lstinline{Geometries} in un file GDTF}
+    \caption{Esempio di nodi \lstinline{Models} e \lstinline{Geometries} in un file GDTF.}
     \label{fig:1_gdtfGeometriesExample}
 \end{figure}
 
@@ -133,8 +133,8 @@ Il nodo \lstinline{DMXMode} raccoglie tutte le modalità di funzionamento di un 
     \item Infine abbiamo i \lstinline{ChannelSet} che rappresentano delle macro o valori precisi che una ChannelFunction può assumere. Gli attributi di un ChannelSet sono: \begin{itemize}
             \item \lstinline{Name}: Nome/DisplayName del channel set
             \item \lstinline{DMXFrom}: Valore DMX in cui questo ChannelSet inizia nel DMXChannel. Analogalmente alle ChannelFunction, non esiste un attributo DMXTo, che verrà calcolato allo stesso modo loro, eccezion fatta che come valore massimo non si userà quello del DMXChannel, bensì quello della ChannelFunction. 
-            \item \lstinline{PhysicalFrom}: Funzionamento analogo alle ChannelFunction. Se non viene specificato, può essere calcolato come proporzione \begin{math}CS.PysicalFrom : CF.PhysicalRange = CS.DMXFrom : CS.DMXRange\end{math} dove $PhysicalRange$ e $DMXRange$ si ottengono calcolando il rispettivo valore To meno il rispettivo valore From
-            \item \lstinline{PhysicalTo}: Funzionamento analogo alle ChannelFunction. Se non viene specificato, può essere calcolato come proporzione \begin{math}CS.PysicalTo : CF.PhysicalRange = CS.DMXTo : CS.DMXRange\end{math} dove $PhysicalRange$ e $DMXRange$ si ottengono calcolando il rispettivo valore To meno il rispettivo valore From
+            \item \lstinline{PhysicalFrom}: Funzionamento analogo alle ChannelFunction. Se non viene specificato, può essere calcolato come proporzione \[CS.PysicalFrom : CF.PhysicalRange = CS.DMXFrom : CS.DMXRange\] dove $PhysicalRange$ e $DMXRange$ si ottengono calcolando il rispettivo valore To meno il rispettivo valore From
+            \item \lstinline{PhysicalTo}: Funzionamento analogo alle ChannelFunction. Se non viene specificato, può essere calcolato come proporzione \[CS.PysicalTo : CF.PhysicalRange = CS.DMXTo : CS.DMXRange\] dove $PhysicalRange$ e $DMXRange$ si ottengono calcolando il rispettivo valore To meno il rispettivo valore From
             \item \lstinline{WheelSlotIndex}: Se la ChannelFunction padre è collegata ad una ruota, è l'identificativo dello slot nella ruota che dovrà essere attivo quando il valore del canale DMX fisico si trova nel range di questo ChannelSet 
         \end{itemize}
 \end{itemize}
@@ -152,16 +152,16 @@ Qui sotto elencate tutti tutti i termini che si riferiscono a concetti e oggetti
     \item \textbf{Component}: I componenti sono un tipo di oggetto che un attore può possedere.
     \item \textbf{Material}: Un materiale è un asset che può essere applicato ad un componente e ne va a definire il suo comportamento. Un materiale viene programmato tramite un grafo che ha, come output, una texture.
     \item \textbf{MaterialInstance}: Istanza di un materiale con un valore impostato staticamente per ogni suo parametro. Utilizzato per avere più oggetti simili, ma con qualche differenza tra loro che non richiede la creazione completa di un nuovo materiale.
-    \item \textbf{MaterialFunction}: Materiali che si comportano come una funzione in un normale linguaggio di programmazione: prendono degli input ed hanno degli output.
+    \item \textbf{MaterialFunction}: Materiali che si comportano come una funzione in un normale linguaggio di programmazione: prendono degli input, hanno degli output e possono essere richiamate più volte in grafi differenti.
     \item \textbf{MaterialExpression}: Nodi di un grafo di un Material.
     \item \textbf{MaterialExpressionParameter}: Tipo di MaterialExpression che permettono di controllare i parametri del materiale esternamente.
-    \item \textbf{MaterialExpressionFunctionCall}: Tipo di MaterialExpression che implementa una chiamata ad una MaterialFunction
-    \item \textbf{MaterialExpressionCustom} o \say{CustomExpression}: Tipo di MaterialExpression che prende degli input e ritorna degli output. Mentre una MaterialExpressionFunctionCall elabora gli output utilizzando una MaterialFunction (E quindi un grafo), una MaterialExpressionCustom esegue codice vero e proprio scritto in HLSL, un linguaggio C-like utilizzato per la scrittura di Shader
+    \item \textbf{MaterialExpressionFunctionCall}: Tipo di MaterialExpression che implementa una chiamata ad una MaterialFunction.
+    \item \textbf{MaterialExpressionCustom} o \say{CustomExpression}: Tipo di MaterialExpression che prende degli input e ritorna degli output. Mentre una MaterialExpressionFunctionCall elabora gli output utilizzando una MaterialFunction (E quindi un grafo), una MaterialExpressionCustom esegue codice vero e proprio scritto in HLSL, un linguaggio C-like utilizzato per la scrittura di Shader.
 \end{itemize}
 
 
 \subsection{Informazioni sul tirocinio}\label{subsec:1_tirocinio}
-CPGDTF-Importer è un progetto sviluppato dalla \say{Clay Paky}, azienda italiana leader mondiale nella progettazione e realizzazione di luci per concerti, architettura e teatri, per cui ho svolto il tirocinio curriculare. Lo sviluppo ha avuto inizio nel Maggio 2022 da un altro tirocinante che ha forkato il plugin originale sviluppato dalla Epic Games ed ha iniziato ad aggiungere funzioni che, nonostante fossero basilari, mancavano totalmente. Il plugin originale leggeva solamente quali fossero i componenti di una fixture, i suoi canali e poche altre informazioni. Utilizzava sempre modelli 3D e ruote gobo predefinite, non importava i valori di fade e accellerazione per l'interpolazione, mancavano moltissime funzionalità delle fixture, quelle esistenti funzionavano male, e molto altro ancora. Il tirocinante precedente, dopo aver speso quasi tutto il periodo del suo tirocinio a fare ricerca su come funzionasse il plugin originale ha gettato delle basi per iniziare ad estenderlo e per completare l'importazione di tutti i dati e file da un GDTF. Ha infine scritto delle documentazioni abbastanza esaustive dell'intero plugin.\newline
+CPGDTF-Importer è un progetto sviluppato dalla \say{Clay Paky}, azienda italiana leader mondiale nella progettazione e realizzazione di luci per concerti, architettura e teatri, per cui ho svolto il tirocinio curriculare. Lo sviluppo ha avuto inizio nel Maggio 2022 da un altro tirocinante che ha fatto un fork del plugin originale sviluppato dalla Epic Games ed ha iniziato ad aggiungere funzioni che, nonostante fossero basilari, mancavano totalmente. Il plugin originale leggeva solamente quali fossero i componenti di una fixture, i suoi canali e poche altre informazioni. Utilizzava sempre modelli 3D e ruote gobo predefinite, non importava i valori di fade e accellerazione per l'interpolazione, mancavano moltissime features delle fixture, quelle esistenti funzionavano male, e molto altro ancora. Il tirocinante precedente, dopo aver speso quasi tutto il periodo del suo tirocinio a fare ricerca su come funzionasse il plugin originale, ha gettato delle basi per iniziare ad estenderlo e per completare l'importazione di tutti i dati e file da un GDTF. Ha infine scritto delle documentazioni abbastanza esaustive dell'intero plugin.\newline
 
 Al mio arrivo in Claypaky mi è stato affidato il progetto con l'obiettivo di implementare nuove funzionalità delle fixtures in modo da poter arrivare a simulare completamente tutti i fari dell'azienda.
 
@@ -176,7 +176,7 @@ L'elaborato è articolato come segue. Ogni capitolo rappresenta una milestone de
     \item \textbf{Capitolo \ref{sec:RenderingPipeline}, Design di una pipeline di rendering}: In questo capitolo verrà analizzata l'implementazione originale con la quale veniva effettuato il rendering dell'illuminazione di ogni singola fixture. Verranno evidenziati i problemi e mostrate idee per risolverli. Infine verrà anche esposta l'implementazione per la generazione di una pipeline vera e propria per il rendering dei vari moduli di una luce. 
     \item \textbf{Capitolo \ref{sec:FixtureComponentHierachy}, Redesign gerarchia dei FixtureComponent}: Tratta l'analisi della vecchia gerarchia dei FixtureComponent, ovvero quelle classi responsabili di controllare ogni singola feature che compone una fixture. Vengono proposte nuove idee di implementazione e mostrati quali dati e metodi servirebbe mettere a disposizione alle classi che implementano la singola feature.
     \item \textbf{Capitolo \ref{sec:Interpolation}, Reimplementazione dell'interpolazione}: All'interno di questo capitolo vengono velocemente esposti i problemi dell'attuale classe che controlla l'interpolazione, ovvero il controllo del movimento dei motori virtuali. Successivamente viene mostrata la nuova implementazione della classe, esponendo i vari problemi che si sono verificati durante la scrittura del codice e come sono stati risolti.
-    \item \textbf{Capitolo \ref{sec:NewFeatures}, Implementazione di nuove funzionalità alle fixtures}: Una volta sistemata la struttura del plugin e reso comodo e meno error-prone l'implementazione di nuove feature, qui viene descritta come sono state pensate e implementate le due funzionalità che sono state aggiunte a CPGDTF-Importer.
+    \item \textbf{Capitolo \ref{sec:NewFeatures}, Implementazione di nuove funzionalità alle fixtures}: Una volta sistemata la struttura del plugin e reso comodo e meno error-prone l'implementazione di nuove feature, viene descritta come sono state pensate e implementate le due funzionalità che sono state aggiunte a CPGDTF-Importer.
     \item \textbf{Capitolo \ref{sec:End}, Conclusioni}: In questo capitolo conclusivo, vengono sintetizzati i problemi generali, emersi durante lo sviluppo con GDTF ed Unreal Engine. Inoltre, vengono valutati futuri sviluppi con Arri (l'azienda che ha acquisito Claypaky lo scorso Marzo, durante il mio periodo di tirocinio) e con Epic Games stessa.
 \end{itemize}
 
