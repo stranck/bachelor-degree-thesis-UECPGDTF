@@ -25,7 +25,7 @@ I FixtureComponent vengono istanziati dalla classe \lstinline{FCPFActorComponent
     \item \textbf{Nuovo pacchetto DMX}: Ogni volta che arriva un nuovo pacchetto DMX viene chiamata la funzione \lstinline{PushNormalizedRawValues()} (implementata dentro \lstinline{FixtureComponentBase}) che chiama a sua volta \lstinline{PushDMXRawValues()}. Quest'ultima funzione è implementata allo stesso identico modo su ogni singolo componente. Quello che fa è chiamare \lstinline{ApplyEffectToBeam()} con il valore dmx del canale. Se un componente riceve input da più DMXChannel, ci sarà una chiamata hard-coded (senza alcun ciclo che li scorra) per ciascuno. \lstinline{ApplyEffectToBeam()} si occupa di interpretare i dati in arrivo. L'output di questo processo viene effettuato attraverso 3 funzioni: \lstinline{SetTargetValue()}, \lstinline{SetValueNoInterp()} e \lstinline{interp.SetValueNoInterp()}.
     \item \textbf{Viene eseguito un nuovo tick}: Viene chiamata \lstinline{InterpolateComponent()} che viene reimplementata da ogni componente ed in ciascuno si occupa di aggiornare lo stato interno degli effetti delle feature (Esempio: FrostPulseOpen) controllate dallo stesso, utilizzando anche qui le funzioni \lstinline{SetTargetValue()}, \lstinline{SetValueNoInterp()} e \lstinline{interp.SetValueNoInterp()}. Successivamente aggiorna lo stato dell'interpolazione.
 \end{itemize}
-\lstinline{SetTargetValue()} è una funzione, attualmente rimplementata in maniera identica da tutti i componenti, che serve ad impostare un nuovo valore di destinazione all'interpolazione. Prima di impostare un nuovo target, controlla se l'interpolazione è attiva e se è già stato impostato un primo valore. In caso negativo, viene chiamata direttamente la funzione \lstinline{SetValueNoInterp()}, implementata dentro \lstinline{MultipleAttributeBeamFixtureComponent}, che si occupa di chiamare \lstinline{SetValueNoInterp_BeamInternal()} con un for su ogni geometria, che manda in output verso i materiali i valori elaborati dal componente.
+\lstinline{SetTargetValue()} è una funzione, attualmente reimplementata in maniera identica da tutti i componenti, che serve ad impostare un nuovo valore di destinazione all'interpolazione. Prima di impostare un nuovo target, controlla se l'interpolazione è attiva e se è già stato impostato un primo valore. In caso negativo, viene chiamata direttamente la funzione \lstinline{SetValueNoInterp()}, implementata dentro \lstinline{MultipleAttributeBeamFixtureComponent}, che si occupa di chiamare \lstinline{SetValueNoInterp_BeamInternal()} con un for su ogni geometria, che manda in output verso i materiali i valori elaborati dal componente.
 
 \lstinline{interp.SetValueNoInterp()} è una funzione dell'oggetto interpolazione che lo fa saltare direttamente a quel valore.
 
@@ -59,7 +59,7 @@ void UCPGDTFShutterFixtureComponent::PushDMXRawValues(
 \end{lstlisting}
     \item \textbf{Virtualizzazione delle funzioni quasi assente}: Molte funzioni sono presenti su vari componenti della gerarchia, ma non sono mai dichiarate su una classe padre, nonostante facciano la stessa cosa ed è giusto che siano esposte agli altri componenti. Un esempio sono \lstinline{ApplyEffectToBeam()} e \lstinline{SetTargetValue()} che sono implementate da molti componenti, ma mai definiti in un padre (E sono anche un altro esempio di codice completamente duplicato) 
     \item \textbf{Elementi superflui nella gerarchia}: Elementi come Simple o Multiple AttributeBeamFixtureComponent sono essenzialmente vuoti e non portano miglioramenti alla definizione implicita della gerarchia %TODO CHIEDERE A DAVIDE COME SCRIVERE
-    \item \textbf{Nessuna centralizzazione della gestione delle features}: La gerarchia viene definita attraverso delle classi che di fatto sono quasi delle interfacce. Questo comporta che la gestione di tutto che ci sta attorno ad una feature è a carico dei singoli componenti finali. Ogni volta che si implementa un nuovo componente si è quindi obbligati a rimplementare tutta la logica che sta dietro la gestione degli stessi.
+    \item \textbf{Nessuna centralizzazione della gestione delle features}: La gerarchia viene definita attraverso delle classi che di fatto sono quasi delle interfacce. Questo comporta che la gestione di tutto che ci sta attorno ad una feature è a carico dei singoli componenti finali. Ogni volta che si implementa un nuovo componente si è quindi obbligati a reimplementare tutta la logica che sta dietro la gestione degli stessi.
     \item \textbf{Bassa chiarezza su cosa deve essere implementato nella singola feature}: Visti i punti precedenti, se si vuole implementare un nuovo componente (senza avere conoscenze pregresse) si rimane interdetti poiché non si capisce esattamente cosa bisogna fare. Non è presente una lista ben definita di funzionalità in cui il singolo componente deve specializzarsi.
     \item \textbf{Errori veri e propri nel calcolo di valori}: In generale, sono state riscontrate grosse mancanze con il calcolo di valori utili ad un componente. Ad esempio, il valore di minimo e massimo di una ChannelFunction viene calcolato solamente su quella corrente, piuttosto di avere un valore globale per tutti gli attributi dello stesso tipo. Oppure, i valori di fade e accelerazione per l'interpolazione non vengono proprio calcolati né presi dal GDTF originale.
     \item \textbf{Interpolazione mancante su molti componenti}: L'interpolazione non è gestita nella maniera corretta, di conseguenza è completamente mancante su molte feature di un faro (Ad esempio zoom, o rotazione di una gobo). Più specificatamente, è presente solamente sui componenti che estendono \lstinline{MultipleAttributesFixtureComponent} e se uno stesso componente controlla più features è attiva solo su una di esse.
@@ -92,7 +92,7 @@ Nella nuova implementazione ogni FixtureComponent ha a disposizione 3 strutture 
 %\subsubsection{Strutture dati}\label{subsec:3_2_structs}
 
 \subsection{Implementazione}\label{subsec:3_implementation}
-Iniziamo con l'analizzare l'implementazione della struttura dati \lstinline{FAttributesData}. Tale struttura ha internamente memorizzata una lista di tutti i ChannelData presenti nel componente ed una mappa da attributo a ChannelData. Attributi che fanno parte dello stesso AttributeGroup verranno quindi risolti attravero questa mappa, al medesimo ChannelData in memoria.
+Iniziamo con l'analizzare l'implementazione della struttura dati \lstinline{FAttributesData}. Tale struttura ha internamente memorizzata una lista di tutti i ChannelData presenti nel componente ed una mappa da attributo a ChannelData. Attributi che fanno parte dello stesso AttributeGroup verranno quindi risolti attraverso questa mappa, al medesimo ChannelData in memoria.
 \lstset{language=UEcpp}
 \begin{lstlisting}
 //Struttura dati che incapsula FCPDMXChannelData assieme
@@ -128,7 +128,7 @@ void initAttributeGroups(
 Il secondo invece si scorre ogni singola ChannelFunction presente dei DMXChannel in input e, per ciascuna, chiede alla \lstinline{FCPDMXChannelData} di aggiornare i propri valori:
 \begin{lstlisting}
 void analizeDMXChannels(TArray<FDMXImportGDTFDMXChannel> DMXChannels) {
-    for ([itera per ogni channelFunction cf dentro DMXChannels]) {
+    for (/*itera per ogni channelFunction cf dentro DMXChannels*/) {
         ECPGDTFAttributeType attrType =
             CPGDTFDescription::GetGDTFAttributeTypeValueFromString(
                 cf.Attribute.Name.ToString()
@@ -141,7 +141,7 @@ void analizeDMXChannels(TArray<FDMXImportGDTFDMXChannel> DMXChannels) {
         attributeList[i].data.finalizeMinMaxFadeAccelCalc();
 }
 \end{lstlisting}
-Andiamo quindi a vedere come vengono calcolati i valori nella struttura dati \lstinline{FCPDMXChannelData}. Il problema principale da gestire è che spesso i valori di minimo e massimo di diversi attributi non sono indicati in ordine e per giunta, il valore minimo può non corrispondere al valore matematicamente più piccolo: Alcune funzionalità potrebbero essere invertite, quindi partire da un valore grande e finire ad uno piccolo. Tale caratteristica deve essere preservata ed automaticamente riconosciuta nel momento in cui si calcola un valore minimo e massimo globale per un attributeGroup. Inoltre, può capitare che attributi differenti dello stesso attributeGroup presentino valori differenti di fade e accelerazione (anche se, da standard, dovrebbero essere uguali. Qui stiamo gestendo la casistica in cui in input abbiamo file GDTF malscritti), quindi facciamo la media tra di essi. Per effettuare queste operazioni ci appoggiamo ad una struttura dati temporanea, che viene allocata automaticamente la prima volta che sopra viene chiamato \lstinline{updateMinMaxFadeAccelCalc()} e viene distrutta quando invece finalizziamo il calcolo:
+Andiamo quindi a vedere come vengono calcolati i valori nella struttura dati \lstinline{FCPDMXChannelData}. Il problema principale da gestire è che spesso i valori di minimo e massimo di diversi attributi non sono indicati in ordine e per giunta, il valore minimo può non corrispondere al valore matematicamente più piccolo: Alcune funzionalità potrebbero essere invertite, quindi partire da un valore grande e finire ad uno piccolo. Tale caratteristica deve essere preservata ed automaticamente riconosciuta nel momento in cui si calcola un valore minimo e massimo globale per un attributeGroup. Inoltre, può capitare che attributi differenti dello stesso attributeGroup presentino valori differenti di fade e accelerazione (anche se, da standard, dovrebbero essere uguali. Qui stiamo gestendo la casistica in cui in input abbiamo file GDTF mal scritti), quindi facciamo la media tra di essi. Per effettuare queste operazioni ci appoggiamo ad una struttura dati temporanea, che viene allocata automaticamente la prima volta che sopra viene chiamato \lstinline{updateMinMaxFadeAccelCalc()} e viene distrutta quando invece finalizziamo il calcolo:
 \begin{lstlisting}
 struct MinMaxHelper {
     //Numero di coppie from/to con from < to
@@ -173,7 +173,9 @@ void finalizeMinMaxFadeAccelCalc() {
     
     minMaxHelper->minArr.Sort();
     minMaxHelper->maxArr.Sort();
+    //Scegli quali valori usare
     bool isAsc = minMaxHelper->normalNo > minMaxHelper->invertedNo;
+    //Ottieni i valori di massimo e minimo
     this->MaxValue = minMaxHelper->maxArr[
         isAsc  ? minMaxHelper->maxArr.Num() - 1 : 0;
     ];
@@ -181,10 +183,12 @@ void finalizeMinMaxFadeAccelCalc() {
         !isAsc ? minMaxHelper->maxArr.Num() - 1 : 0;
     ];
 
+    //Calcola i valori medi di fade e accelerazione
     float no = minMaxHelper->totalNo;
     interpolationFade = minMaxHelper->fadeSum / no;
     interpolationAcceleration = minMaxHelper->accelSum / no;
 
+    //Elimina l'oggetto di helper
     delete minMaxHelper;
     minMaxHelper = nullptr;
 }
@@ -194,7 +198,7 @@ A questo punto andiamo ad analizzare l'implementazione in se di una FixtureCompo
 
 Come in precedenza, la vita di un FixtureComponent inizia con il metodo \lstinline{Setup()}, che creerà automaticamente un \lstinline{FCPComponentChannelData} per ogni canale DMX in input, per poi successivamente inizializzare la struttura dati \lstinline{FAttributesData attributesData}. Durante l'inizializzazione di quest'ultimo oggetto avverrà una chiamata a \lstinline{getAttributeGroups()} che dovrà essere definita dai componenti e restituirà una lista di set, ognuno rappresentante un attributeGroup. I componenti possono opzionalmente fare overriding del metodo \lstinline{Setup()} per effettuare operazioni extra in fase di caricamento (come ad esempio, caricare texture per le ruote).
 
-Il metodo \lstinline{BeginPlay()} inizializzerà automaticamente le interpolazioni, creandone una per ogni AttributeGroup trovato all'interno di \lstinline{attributesData}. Anche questo metodo può subire overriding, in caso i componenti specifici vogliano inizializzare un numero di interpolazioni differente, oppure assegnargli diversi valori o un diverso ordine. Prima che venga inizializzata realmente l'interpolazione creando un nuovo oggetto \lstinline{FChannelInterpolation}, vengono generati i valori di fade e/o accelerazione se non erano già presenti nel GDTF originale. Ogni componente deve obbligatoriamente fare overriding di 2 metodi: \lstinline{float getDefaultRealAcceleration(int interpolationId)} e \lstinline{float getDefaultRealFade(int interpolationId)} che ci restituiscono un valore esatto in secondi di default, in caso nel GDTF manchi sia il valore di fade che quello di accelerazione. Se invece manca solamnente uno dei due, l'altro viene ricalcolato in base al rapportro tra fade ed accelerazione di default. Se a mancare è l'accelerazione, questa viene calcolata come:
+Il metodo \lstinline{BeginPlay()} inizializzerà automaticamente le interpolazioni, creandone una per ogni AttributeGroup trovato all'interno di \lstinline{attributesData}. Anche questo metodo può subire overriding, in caso i componenti specifici vogliano inizializzare un numero di interpolazioni differente, oppure assegnargli diversi valori o un diverso ordine. Prima che venga inizializzata realmente l'interpolazione creando un nuovo oggetto \lstinline{FChannelInterpolation}, vengono generati i valori di fade e/o accelerazione se non erano già presenti nel GDTF originale. Ogni componente deve obbligatoriamente fare overriding di 2 metodi: \lstinline{float getDefaultRealAcceleration(int interpolationId)} e \lstinline{float getDefaultRealFade(int interpolationId)} che ci restituiscono un valore esatto in secondi di default, in caso nel GDTF manchi sia il valore di fade che quello di accelerazione. Se invece manca solamente uno dei due, l'altro viene ricalcolato in base al rapporto tra fade ed accelerazione di default. Se a mancare è l'accelerazione, questa viene calcolata come:
 \[accel = fade * \frac{defaultAccel}{defaultFade}\]
 Un po' più complicato invece è il calcolo del fade: durante il movimento una interpolazione accelera (in $accel$ secondi), rimane a velocità costante e poi decelera (di nuovo in $accel$ secondi). Il tempo di fade rappresenta la somma di tutti e tre questi momenti. Poiché già sappiamo quanto tempo impieghiamo ad accelerare e decelerare ($2 * accel$), ci interessa sapere quanto tempo rimaniamo a velocità costante rispetto a quanto tempo ci mettiamo ad accelerare. Quindi definiamo il tempo in cui rimaniamo a velocità costante come:
 \[deafultConstantSpeedTime = deafaultFade - 2 * defaultAccel\] 
@@ -203,7 +207,7 @@ Ed il rapporto come:
 Per ottenere un valore di fade a partire da quello di accelerazione e dal defaultFadeRatio, basta invertire la formula:
 \[fade = 2 * accel + accel * defaultFadeRatio\]
 
-Nella nuova implementazione così come nella vecchia \lstinline{PushNormalizedRawValues()} chiama \lstinline{PushDMXRawValues()} ogni volta che arriva un nuovo pacchetto DMX. Nella nuova però \lstinline{PushDMXRawValues()} è implementato direttamente in \lstinline{FixtureComponentBase} e scorre automaticamente la lista di canali dmx del componente (invece di avere la lista hard-coded). Inoltre viene fatto un overloading della funzione \lstinline{ApplyEffectToBeam()}: \lstinline{PushDMXRawValues()} chiamerà prima una versione intermedia di questa funzione che si occuperà di ottenere e di passare già precalcolati il tipo dell'attributo ed il valore fisico del canale ad un'altra versione della stessa funzione, che dovrà essere implementata da ciascun componente. Questa operazione in precedenza era svolta (e copia-incollata) dentro ogni implementazione di \lstinline{ApplyEffectToBeam()} in tutti i componenti che estendevano \lstinline{FixtureComponentBase}.
+Nella nuova implementazione così come nella vecchia \lstinline{PushNormalizedRawValues()} chiama \lstinline{PushDMXRawValues()} ogni volta che arriva un nuovo pacchetto DMX. Nella nuova però \lstinline{PushDMXRawValues()} è implementato direttamente in \lstinline{FixtureComponentBase} e scorre automaticamente la lista di canali dmx del componente (invece di avere la lista hard-coded). Inoltre viene fatto un overloading della funzione \lstinline{ApplyEffectToBeam()}: \lstinline{PushDMXRawValues()} chiamerà prima una versione intermedia di questa funzione che si occuperà di ottenere e di passare già pre-calcolati il tipo dell'attributo ed il valore fisico del canale ad un'altra versione della stessa funzione, che dovrà essere implementata da ciascun componente. Questa operazione in precedenza era svolta (e copia-incollata) dentro ogni implementazione di \lstinline{ApplyEffectToBeam()} in tutti i componenti che estendevano \lstinline{FixtureComponentBase}.
 
 \lstinline{SetTargetValue()}, precedentemente duplicata in ogni componente, è stata spostata nella logica di \lstinline{FixtureComponentBase}. Sia a \lstinline{SetTargetValue()} che a \lstinline{SetValueNoInterp()} è stato aggiunto in input l'id della interpolazione a cui vogliamo impostare il valore. 
 
@@ -213,7 +217,7 @@ Infine, viene modificata la funzione \lstinline{InterpolateComponent()}. Al post
 Per l'ottenimento dei valori default dei vari componenti di una luce è stato purtroppo impossibile ottenere dati direttamente dalle fixture reali. Non esiste un modo attualmente implementato dalle fixture Claypaky per ottenere la posizione dei vari motori, anche se ci si collega direttamente in seriale alla scheda di controllo del faro. La soluzione quindi adottata è stata quindi quella di filmare a rallentatore un faro ed inserire il video in un software di editing, in modo da contare con precisione il numero dei frame video che il faro impiega ad accelerare o decelerare ed il numero di frame che impiega a svolgere un movimento completo. Tramite questo metodo otteniamo una precisione pari a $\frac{1}{FPS}$, dove, sui telefoni moderni, FPS è uguale a 480 o addirittura 960.\newline
 
 Successivamente è stata scritta una utility molto semplice in python per convertire automaticamente un numero espresso in \lstinline{secondo.frame} (Che ci viene dato direttamente dal programma di editing) in secondi nel mondo reale.
-Innanzitutto vengono specificato gli FPS del timelapse e gli FPS del video rallentato
+Innanzitutto vengono specificato gli FPS del rallenty e gli FPS del video.
 \lstset{language=python}
 \begin{lstlisting}
 SLOWMOTION_FPS = 480

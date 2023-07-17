@@ -28,9 +28,9 @@ Per renderizzare un beam, viene utilizzato l'algoritmo \say{Beam RayMarching}. I
     \caption{Funzionamento dell'algoritmo di RayMarching}
     \label{fig:2_raymarchWikipedia} %taken from https://jamie-wong.com/2016/07/15/ray-marching-signed-distance-functions/
 \end{wrapfigure}
-Il Raymarching funziona lanciando, a partire dalla camera, un fotone per ogni pixel che deve renderizzare. Questo fotone, nell'implementazione standard, viene mosso iterativamente per un numero di step, fino a colpire un oggetto oppure fino alla fine delle iterazioni. La distanza percorsa ad ogni iterazione è uguale all'SDF tra la posizione del fotone all'iterazione precedente e la superfice della scena, in modo da essere sicuri di non registrare troppo tardi eventuali intersezioni.\newline
+Il RayMarching funziona lanciando, a partire dalla camera, un fotone per ogni pixel che deve renderizzare. Questo fotone, nell'implementazione standard, viene mosso iterativamente per un numero di step, fino a colpire un oggetto oppure fino alla fine delle iterazioni. La distanza percorsa ad ogni iterazione è uguale all'SDF tra la posizione del fotone all'iterazione precedente e la superficie della scena, in modo da essere sicuri di non registrare troppo tardi eventuali intersezioni.\newline
 
-Il RayMarching viene spesso usato per generare geometrie che si ripetono, ed è esattamente come viene usato all'interno di questo materiale: per disegnare un beam viene effettuata una operazione di sample più volte, a distanze regolari, della forma della luce che vogliamo proiettare lungo i raggi che escono da una fixture. La distanza tra un sample e l'altro (così come il numero di sample), a differenza da una implementazione pura di Raymarching, varia in base alla distanza dalla telecamera e dalla qualità di rendering scelta. Più sample faremo e più la luce risulterà uniforme. 
+Il RayMarching viene spesso usato per generare geometrie che si ripetono, ed è esattamente come viene usato all'interno di questo materiale: per disegnare un beam viene effettuata una operazione di sample più volte, a distanze regolari, della forma della luce che vogliamo proiettare lungo i raggi che escono da una fixture. La distanza tra un sample e l'altro (così come il numero di sample), a differenza da una implementazione pura di RayMarching, varia in base alla distanza dalla telecamera e dalla qualità di rendering scelta. Più sample faremo e più la luce risulterà uniforme. 
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/renderingPipeline/renderingQuality.jpg}
@@ -66,7 +66,7 @@ La prima operazione effettuata nel ciclo è ottenere la distanza e la posizione 
 float3 pos = NSlice + posOffset * i ;
 float depth = NDepth + StepSize * i ;
 \end{lstlisting}
-Successivamente la posizione viene ricalcolata per essere nel range [0, 1], in modo da poter effettuare sucessivamente le operazioni di sample. A questo punto la nostra posizione è stata convertita in coordinate UV.
+Successivamente la posizione viene ricalcolata per essere nel range [0, 1], in modo da poter effettuare successivamente le operazioni di sample. A questo punto la nostra posizione è stata convertita in coordinate UV.
 \begin{lstlisting}
 ///Domain Transform
 pos.z = -pos.z;
@@ -146,7 +146,9 @@ Come possiamo notare è molto basilare, abbiamo due MaterialFunctionCall che si 
     \caption{Grafo della Material Function DMXGobo}
     \label{fig:2_dmxGoboGraphFull}
 \end{figure}
-A sinistra riceviamo in input le coordinate UV che la camera sta renderizzando in quel momento. Successivamente passiamo in due blocchi, che svolgono l'operazione $UV.x * (1 / GoboNumMask) + (GoboIndex / GoboNumMask)$. Notiamo come questo calcolo sia lo stesso utilizzato per fare il sample delle gobo dentro il materiale Beam (\ref{subsec:2_1_beam}). Infatti il risultato viene poi utilizzato come input per due nodi Texture (\say{DMX Gobo Disk} e \say{DMX Gobo Disk Frosted}, uno contiene la texture originale, l'altro una versione sfocata della stessa texture) per effettuare il sample della ruota gobo. Successivamente i due sample vengono interpolati in base al valore del frost (sfocatura) ed infine viene restituito in output.
+A sinistra riceviamo in input le coordinate UV che la camera sta renderizzando in quel momento. Successivamente passiamo in due blocchi, che svolgono l'operazione:
+\[x_{UV} * \frac{1}{GoboNumMask} + \frac{GoboIndex}{GoboNumMask}\]
+Notiamo come questo calcolo sia lo stesso utilizzato per fare il sample delle gobo dentro il materiale Beam (\ref{subsec:2_1_beam}). Infatti il risultato viene poi utilizzato come input per due nodi Texture (\say{DMX Gobo Disk} e \say{DMX Gobo Disk Frosted}, uno contiene la texture originale, l'altro una versione sfocata della stessa texture) per effettuare il sample della ruota gobo. Successivamente i due sample vengono interpolati in base al valore del frost (sfocatura) ed infine viene restituito in output.
 
 Da notare come il nome dei parametri all'interno di questa MaterialFunction facciano riferimento solo alle ruote gobo, e come all'interno del Materiale originale sia presente solamente una MaterialFunctionCall a DMXGobo. Questo implica l'impossibilità di renderizzare sia ruote differenti da quelle gobo e l'impossibilità di avere più ruote gobo nella stessa fixture
 
@@ -163,10 +165,10 @@ Questo materiale si occupa di applicare l'effetto che stiamo renderizzando sulle
     \caption{Grafo del materiale Lens}
     \label{fig:2_lensGraphFull}
 \end{figure}
-Il grafo è in realtà molto simile a quello visto precedentemente per il materiale Light (\ref{subsec:2_1_light}). Si aggiungono solamente dei blocchi di nodi in più (\say{Lens}, \say{Lamp}) che servono a redere più fotorealistica la resa delle lenti. Anche in questo materiale è presente una MaterialFunctionCall a DMXGobo, ma notiamo come ce n'è un'altra a DMXColorWheel la quale implementazione è identica alla prima, creando così \say{codice} duplicato.
+Il grafo è in realtà molto simile a quello visto precedentemente per il materiale Light (\ref{subsec:2_1_light}). Si aggiungono solamente dei blocchi di nodi in più (\say{Lens}, \say{Lamp}) che servono a rendere più fotorealistica la resa delle lenti. Anche in questo materiale è presente una MaterialFunctionCall a DMXGobo, ma notiamo come ce n'è un'altra a DMXColorWheel la quale implementazione è identica alla prima, creando così \say{codice} duplicato.
 
 \subsection{Idea della pipeline}\label{subsec:2_pipelineIdea}
-Nelle precedenti sezioni abbiamo potuto vedere come allo stato attuale sia davvero difficile aggiungere nuove features e sia impossibile la presenza di più attributi contemporaneamente. Una buona idea per risolvere questi problemi è quella di astrarre il rendering delle varie features in moduli generici e realizzare una pipeline il più simile possibile ad una vera fixutre. Come spiegato nell'introduzione (\ref{subsec:1_1_modules}), in una vera luce è presente un emettitore che genera un fascio di luce che attraverserà ogni singolo modulo montato. Ogni modulo prende quindi il \say{risultato} del modulo precedente, ci applica un filtro sottrattivo e lo da in output al modulo successivo.
+Nelle precedenti sezioni abbiamo potuto vedere come allo stato attuale sia davvero difficile aggiungere nuove features e sia impossibile la presenza di più attributi contemporaneamente. Una buona idea per risolvere questi problemi è quella di astrarre il rendering delle varie features in moduli generici e realizzare una pipeline il più simile possibile ad una vera fixture. Come spiegato nell'introduzione (\ref{subsec:1_1_modules}), in una vera luce è presente un emettitore che genera un fascio di luce che attraverserà ogni singolo modulo montato. Ogni modulo prende quindi il \say{risultato} del modulo precedente, ci applica un filtro sottrattivo e lo da in output al modulo successivo.
 \begin{figure}[H]
     \centering
     \includegraphics[width=.8\linewidth]{img/renderingPipeline/modules.jpg}
@@ -179,7 +181,7 @@ Questa MaterialFunction contenente la nuova pipeline verrà quindi piazzata al p
 E per il rendering del Beam?
 
 \subsubsection{Problemi con le MaterialExpressionCustom e le MaterialFunction}\label{subsec:2_2_CM-MFproblems}
-Come spiegato nella sezione \ref{subsec:2_1_beam}, il rendering del Beam di luce viene effettuato con una funzione di Raymarching scritta in HLSL dentro una CustomExpression. Purtroppo Unreal Engine non mette a disposizione un modo \say{pulito} per eseguire una MaterialFunction all'interno del codice di una CustomExpression \cite{customExpressionMaterialFunction}. L'unica scelta rimane quindi di riscrivere l'implementazione dei vari moduli come funzioni in hlsl. Possiamo però dichiarare una funzione nel codice di una MaterialExpressionCustom? La risposta è no.
+Come spiegato nella sezione \ref{subsec:2_1_beam}, il rendering del Beam di luce viene effettuato con una funzione di RayMarching scritta in HLSL dentro una CustomExpression. Purtroppo Unreal Engine non mette a disposizione un modo \say{pulito} per eseguire una MaterialFunction all'interno del codice di una CustomExpression \cite{customExpressionMaterialFunction}. L'unica scelta rimane quindi di riscrivere l'implementazione dei vari moduli come funzioni in HLSL. Possiamo però dichiarare una funzione nel codice di una MaterialExpressionCustom? La risposta è no.
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/renderingPipeline/meCustomNoFunc.jpg}
@@ -204,7 +206,7 @@ struct Helper {
 Helper h;
 return h.x();
 \end{lstlisting}
-Come ci aspettavamo, questo metodo compila con successo. Possiamo quindi implementare i vari moduli come funzioni di una struct di Helper e poi richiamarli durante il loop del raymarching. \newline
+Come ci aspettavamo, questo metodo compila con successo. Possiamo quindi implementare i vari moduli come funzioni di una struct di Helper e poi richiamarli durante il loop del RayMarching. \newline
 
 Si sta preferendo mantenere una doppia implementazione dei vari moduli (Sia come materiali che come codice HLSL) perché nel momento in cui Unreal Engine va a compilare i materiali in codice HLSL effettua una prima, grossa, ottimizzazione in cui eventuali valori e calcoli che non cambiano durante il rendering di un materiale vengono automaticamente messi in una cache. La stessa cosa non accade al codice HLSL dentro le MaterialExpressionCustom che viene invece incapsulato senza essere toccato all'interno di una funzione nel sorgente HLSL del materiale di cui fa parte. \cite{hlslNoOptimize}
 
@@ -232,8 +234,8 @@ void CPGDTFRenderPipelineBuilder(
         Cast<UDMXImportGDTFFixtureType(
             gdtfDescription->FixtureType)->Name.ToString());
 
-    //Genera e salva il path in cui verranno
-    //salvati i materiali clonati e la pipeline
+    //Genera il path in cui verranno salvati
+    // i materiali clonati e la pipeline
 	if (fixturePathOnContentBrowser.EndsWith(TEXT("/")))
         fixturePathOnContentBrowser.RemoveAt(
             fixturePathOnContentBrowser.Len() - 1);
@@ -341,9 +343,11 @@ struct MeBlocksMover {
         movingYAxys(movingYAxys), x(x), y(y), defaultOffset(offset) {}
 
     void moveMaterialExpression(UMaterialExpression* me, int offset=0) {
+        //Sposta la MaterialExpression
         me->MaterialExpressionEditorX = x;
         me->MaterialExpressionEditorY = y;
 
+        //Aggiorna i valori di X/Y salvati
         if (offset == 0) offset = defaultOffset;
         if (movingYAxys) y += offset;
             else x += offset;
@@ -364,7 +368,7 @@ struct MeBlocksMover {
 
 Infine vengono create una serie di funzioni inline che generano i nomi dei parametri ed il nome delle variabili del codice HLSL in modo da standardizzare la nomenclatura all'interno dell'itero plugin CPGDTF-Importer. Con \lstinline{get*ParamName()} ci riferiamo a funzioni che generano il nome di parametri all'interno di materiali. Invece, con \lstinline{getInput*Name()} ci riferiamo alla generazione dei nomi per le variabili (e, conseguentemente, ai nomi per gli input) della CustomExpression responsabile di implementare la pipeline di rendering per il materiale Beam.
 
-Nelle successive sezioni andremo a vedere come viene effettivamente generata e linkata la pipeline di rendering, separatamente per il materiale Beam e per i materiali Light e Lens (che condividono la stessa pipeline). Viene anche affrontato il problema di come generare nuove MaterialExpressionParameter all'interno di un materiale, attività che comporta una serie di step ripetitivi riassumibili in una funzione. Il materiale Beam differisce nell'aggiunta di nuove MaterialExpressionParameter poiché devono anche essere automaticamente linkate alla CustomExpression responsabile del Raymarching.
+Nelle successive sezioni andremo a vedere come viene effettivamente generata e linkata la pipeline di rendering, separatamente per il materiale Beam e per i materiali Light e Lens (che condividono la stessa pipeline). Viene anche affrontato il problema di come generare nuove MaterialExpressionParameter all'interno di un materiale, attività che comporta una serie di step ripetitivi riassumibili in una funzione. Il materiale Beam differisce nell'aggiunta di nuove MaterialExpressionParameter poiché devono anche essere automaticamente linkate alla CustomExpression responsabile del RayMarching.
 
 \subsubsection{Custom Material (per Beam)}\label{subsec:2_3_CM}
 Come accennato sopra, generare un nuovo parametro per la pipeline del beam consiste in una serie di operazioni ripetitive:
@@ -387,21 +391,28 @@ UMaterialExpressionScalarParameter* addScalarInputToBeamPipeline(
         UMaterialExpressionCustom* meCustom,
         MeBlocksMover* mover = nullptr,
         float defaultValue = 0) {
+    //Genera un nuovo parametro
     UMaterialExpressionScalarParameter* param =
         generateMaterialExpression<UMaterialExpressionScalarParameter>(
         beamMaterial);
+    //Imposta le proprieta' di un parametro
     param->ParameterName = FName(*paramName);
     param->Group = FName(TEXT("Runtime Parameters"));
     param->SortPriority = 5;
     param->DefaultValue = defaultValue;
+    //Aggiunge il parametro al materiale
     beamMaterial->GetEditorOnlyData()->
         ExpressionCollection.AddExpression(param);
 
+    //Crea un input per le CustomExpression
     FCustomInput input;
     input.InputName = FName(*inputName);
+    //Connette il parametro all'input
     input.Input.Connect(0, param);
+    //Aggiunge l'input alla CustomExpression
     meCustom->Inputs.Add(input);
 
+    //Sposta il parametro appena generato
     if(mover)
         mover->moveMaterialExpression(param, SCALAR_PARAM_SIZE_Y);
     return param;
@@ -434,11 +445,13 @@ if(outputSample.x < 0) outputSample.x = 0;
 if(outputSample.y < 0) outputSample.y = 0;
 if(outputSample.z < 0) outputSample.z = 0;
 \end{lstlisting}
-Infine è stata modificata la funzione per il calcolo del risultato, in modo da usare la variabile \lstinline{outputSample} e rimuovendo \lstinline{DMXColor} poiché già inclusa nella precedente variabile:\newline \lstinline{cumul += (1.f / numSteps) * outputSample * dClip * invsqr * falloff;}\newline
+Infine è stata modificata la funzione per il calcolo del risultato, in modo da usare la variabile \lstinline{outputSample} e rimuovendo \lstinline{DMXColor} poiché già inclusa nella precedente variabile:
+\begin{lstlisting}
+cumul += (1.f / numSteps) * outputSample * dClip * invsqr * falloff;
+\end{lstlisting}
 
-
-La generazione del codice in se viene fatta attraverso l'uso di varie printf e StringFormat innestate. Vengono utilizzati entrambi i metodi poiché UnrealEngine presenta una discrita incompatibilità tra tipi di stringhe (Una printf non può prendersi come stringa di formattazione il risultato di un'altra printf). Per evitare di convergere a nero troppo velocemente quando si hanno troppi moduli, il risultato di ciascuno viene prima elevato alla $1/3$.
-\clearpage % TODO check if we really need this
+La generazione del codice in se viene fatta attraverso l'uso di varie printf e StringFormat innestate. Vengono utilizzati entrambi i metodi poiché UnrealEngine presenta una discreta incompatibilità tra tipi di stringhe (Una printf non può prendersi come stringa di formattazione il risultato di un'altra printf). Per evitare di convergere a nero troppo velocemente quando si hanno troppi moduli, il risultato di ciascuno viene prima elevato alla $1/3$.
+%\clearpage % TODO check if we really need this
 \lstset{language=UEcpp}
 \begin{lstlisting}
 FString generateHLSLCode() {
@@ -446,7 +459,7 @@ FString generateHLSLCode() {
     FString placeholderCode = TEXT("");
 
     //Separiamo la creazione del template per poterla modificare
-    //in maniera piu' semplice
+    // in maniera piu' semplice
     FString callText = TEXT("_fncs.{0}");
     FString powText = FString::Printf(
             TEXT("pow(%s, 0.66)"),
@@ -473,16 +486,20 @@ Attualmente, solamente le ruote colori e gobo sono implementate, ma in vista di 
 \begin{lstlisting}
 bool foundGobo = false;
 
+//Per ogni tipo di ruota
 for (int i = 0; i < FCPGDTFWheelImporter::WheelType::SIZE; i++) {
     FCPGDTFWheelImporter::WheelType wheelType = i;
     switch (i) {
     
     case FCPGDTFWheelImporter::WheelType::Color:
+    //Per ogni ruota colori
     for (int j = 0; j < this->mWheelsNo[i]; j++) {
+        //Ottieni i nomi degli input
         FString txtVarName = getInputTextureName(wheelType, false, j);
         FString numSlotVarName = getInputNumSlotsName(wheelType, j);
         FString indexVarName = getInputIndexName(wheelType, j);
 
+        //Genera il codice HLSL
         placeholderCode = placeholderCode + FString::Format(*textAdd, {
             FString::Printf(
                 TEXT("sampleWheel(%s, %sSampler, pos.xy, %s, %s)"),
@@ -491,16 +508,20 @@ for (int i = 0; i < FCPGDTFWheelImporter::WheelType::SIZE; i++) {
     }
     break;
     case FCPGDTFWheelImporter::WheelType::Gobo:
+    //Per ogni ruota gobo
     for (int j = 0; j < this->mWheelsNo[i]; j++) {
+        //Ottieni i nomi degli input
         FString txtVarName = getInputTextureName(wheelType, true, j);
         FString numSlotVarName = getInputNumSlotsName(wheelType, j);
         FString indexVarName = getInputIndexName(wheelType, j);
-        
+
+        //Genera il codice HLSL
         placeholderCode = placeholderCode + FString::Format(*textAdd, {
             FString::Printf(
                 TEXT("sampleWheel(%s, %sSampler, pos.xy, %s, %s)"),
             *txtVarName, *textureVarName, *txtVarName, *indexVarName)
         });
+        //Segna che e' stata trovata almeno una ruota gobo
         foundGobo = true;
     }
     break;
@@ -509,14 +530,17 @@ for (int i = 0; i < FCPGDTFWheelImporter::WheelType::SIZE; i++) {
     }
 }
 
-if (!foundGobo) //Filter the beam shape anyway if there's no gobo
+//Se non e' stata travata alcuna ruota gobo,
+// generane una con una texture di default
+// per mantenere la forma di un vero beam
+if (!foundGobo)
     placeholderCode = placeholderCode +
         TEXT("outputSample *=
         pow(TXTpGobo.SampleLevel(
         TXTpGoboSampler, pos.xy, 0).x, 0.66);");
 
 \end{lstlisting}
-Quando in futuro si vorranno fare aggiunte di nuovi tipi di ruota, basterà aggiungerli nel precedente loop. Se invece si vorranno implementare feature totalmente nuove, si potrnano scrivere semplicemente dopo questo codice.\newline
+Quando in futuro si vorranno fare aggiunte di nuovi tipi di ruota, basterà aggiungerli nel precedente loop. Se invece si vorranno implementare feature totalmente nuove, si potranno scrivere semplicemente dopo questo codice.\newline
 
 Una volta generato il codice HLSL bisogna inserirlo all'interno della relativa CustomExpression ed aggiungere gli input necessari alla stessa. Per fare ciò andiamo ad utilizzare la funzione \lstinline{cloneMaterialInterface} di cui abbiamo discusso prima. Come prima lambda, quella che si occupa di collegare le material expression all'output, abbiamo un codice molto semplice, che cerca i nodi corretti e li connette:
 \begin{lstlisting}
@@ -564,8 +588,10 @@ UTexture2D* defaultTexture = Cast<UTexture2D>(
 \end{lstlisting}
 E infine, per ogni tipo di ruota (saltando quelli non supportati) e per ogni ruota dello stesso tipo, andiamo ad aggiungere alla CustomExpression gli input ed i parametri per la texture, il numero di slot e l'indice:
 \begin{lstlisting}
+//Per ogni tipo di ruota
 for (int i = 0; i < FCPGDTFWheelImporter::WheelType::SIZE; i++) {
     FCPGDTFWheelImporter::WheelType wheelType = i;
+    //Per ogni ruota di quel tipo
     for (int j = 0; j < this->mWheelsNo[wheelType]; j++) {
 
         //Salta tipi non supportati
@@ -597,6 +623,7 @@ for (int i = 0; i < FCPGDTFWheelImporter::WheelType::SIZE; i++) {
 }
 \end{lstlisting}
 Come per la generazione del codice HLSL, aggiungere nuove features che non siano ruote alla pipeline è una operazione facile: Basta semplicemente aggiungerne il codice dopo questo for.\newline
+\clearpage %TODO check if still needed
 
 Il risultato dell'esecuzione di questo codice a seguito di una importazione è il seguente: 
 \begin{wrapfigure}{r}{0.4\textwidth}
@@ -630,7 +657,7 @@ if(outputSample.x < 0)outputSample.x = 0;
 if(outputSample.y < 0)outputSample.y = 0;
 if(outputSample.z < 0)outputSample.z = 0;
 \end{lstlisting}
-\clearpage
+\clearpage %LEAVE THIS HERE DONT YOU DARE
 
 \subsubsection{Material Function (per Light e Lens)}\label{subsec:2_3_MF}
 Come per la costruzione della pipeline per il Beam, aggiungere parametri ad un materiale è una operazione ripetitiva. Per questo motivo è stata creata una funzione \lstinline{addScalarParameterToMiPipeline} che però, al posto della sua corrispondente, si ferma a generare e spostare la MaterialExpressionParameter senza effettuare nessun'altra operazione. \newline
@@ -651,7 +678,7 @@ auto dstMaterialData = dstMaterial->GetEditorOnlyData();
 \end{lstlisting}
 Andiamo anche a caricarci la MaterialFunction che si occuperà di fare il rendering delle ruote. Nota: Va scinto il concetto di MaterialFunction e MaterialFunctionCall: La prima rappresenta il \say{codice} in se da eseguire, la seconda rappresenta un nodo all'interno del grafo di un materiale che andrà a chiamare la MaterialFunction impostata. In informatica, è come se la prima fosse una funzione e la seconda una chiamata a funzione. Una volta generata una MaterialFunctionCall bisognerà impostargli quale MaterialFunction dovrà richiamare.
 
-Quando verrà aggiunto il supporto a nuove features qui dovrà essere aggiunto il precaricamento delle loro MaterialFunctions.
+Quando verrà aggiunto il supporto a nuove features qui dovrà essere aggiunto il pre-caricamento delle loro MaterialFunctions.
 \begin{lstlisting}
 FString mfDmxWheelPath = FCPGDTFImporterUtils::BASEPATH;
 mfDmxWheelPath +=
@@ -673,7 +700,7 @@ input->Function = dstMaterial;
 UMaterialExpression* previousNode = input;
 dstMaterialData->ExpressionCollection.AddExpression(previousNode);
 \end{lstlisting}
-Prima di procedere all'aggiunta dei vari moduli, si genera il parametro di frost, lo si sposta e si carica una texture di default 
+Prima di procedere all'aggiunta dei vari moduli, si genera il parametro di frost, lo si sposta e si carica una texture di default.
 \begin{lstlisting}
 UMaterialExpressionScalarParameter* frostParam =
     addScalarParameterToMiPipeline(dstMaterial, getFrostParamName());
@@ -692,11 +719,13 @@ UTexture2D* defaultTexture = Cast<UTexture2D>(
 );
 \end{lstlisting}
 
-Analogalmente a come abbiamo fatto nella generazione del materiale Beam, per creare i moduli per renderizzare le ruote, usiamo due cicli for: uno itera sui tipi differenti di ruote, e l'altro scorre sulla quantità di ruote di quel tipo. 
+Analogamente a come abbiamo fatto nella generazione del materiale Beam, per creare i moduli per renderizzare le ruote, usiamo due cicli for: uno itera sui tipi differenti di ruote, e l'altro scorre sulla quantità di ruote di quel tipo. 
 \begin{lstlisting}
+//Per ogni tipo di ruota
 for (int i = 0; i < FCPGDTFWheelImporter::WheelType::SIZE; i++) {
     FCPGDTFWheelImporter::WheelType wheelType = i;
 
+    //Per ogni ruota di quel tipo
     for (int j = 0; j < this->mWheelsNo[wheelType]; j++) {
         MI_INIT_BLOCKS_MOVER
         switch (wheelType) {

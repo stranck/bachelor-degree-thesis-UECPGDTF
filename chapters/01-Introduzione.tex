@@ -14,7 +14,7 @@ Lo scopo del progetto CPGDTF-Importer è quello di realizzare un Previsualizer o
 CPGDTF-Importer è una fork di DMXEngine ed è, in particolare, un plugin per l'\say{editor} di UE, ovvero quella sezione che permette la creazione di mondi che, nel nostro caso, consisterebbero in palcoscenici virtuali. Il plugin lavorerà principalmente su 3 livelli:
 \begin{itemize}
     \item Importazione di luci da un formato standard (GDTF \cite{GDTF}, spiegato nella sezione \ref{subsec:1_gdtf}), negli \say{Actor} di UE
-    \item Importazione di luci sottoforma di Attori all'interno di mondi e gestione delle loro impostazioni
+    \item Importazione di luci sotto forma di Attori all'interno di mondi e gestione delle loro impostazioni
     \item Simulazione in real-time del comportamento delle fixture, il più possibile vicino alla realtà
 \end{itemize}
 
@@ -52,7 +52,7 @@ I moduli solitamente funzionano sottrattivamente: per ogni modulo a partire dall
     \centering
     \includegraphics[width=0.8\linewidth]{img/introduzione/fixtureModules.jpg}
     \caption{Fotografia di una vecchia fixture aperta, in cui sono visibili in maniera chiara la sorgente luminosa ed i vari moduli che la compongono}
-    \label{fig:1_DynamicFixture}
+    \label{fig:1_FixtureModules}
 \end{figure}
 
 \subsubsection{Protocollo DMX}\label{subsec:1_1_dmx}
@@ -68,10 +68,10 @@ Alcune fixture possono supportare più modalità di controllo, che possono andar
 
 
 \subsection{GDTF}\label{subsec:1_gdtf}
-GDTF - \textit{General Device Type Format} - è un formato per descrivere fixture nella maniera più accurata possibile. È stato sviluppato da MAlighting (azienda produttrice del sistema di controllo luci attualmente più usato in show medio-grandi), Robe (Uno dei leader mondiali nello sviluppo e realizzazione di luci per l'eventistica) e Vectorworks (Un software di CAD/Deisgn anch'esso molto usato nella progettazione e previsualizzazione di palcoscenici). 
+GDTF - \textit{General Device Type Format} - è un formato per descrivere fixture nella maniera più accurata possibile. È stato sviluppato da MAlighting (azienda produttrice del sistema di controllo luci attualmente più usato in show medio-grandi), Robe (Uno dei leader mondiali nello sviluppo e realizzazione di luci per l'eventistica) e Vectorworks (Un software di CAD/Design anch'esso molto usato nella progettazione e previsualizzazione di palcoscenici). 
 \newline
 
-Un file GDTF è essenzialmente un pacchetto contenente all'interno i modelli 3D delle varie geometrie che compongono un faro, le texture delle sue gobo/animazioni/prismi/etc ed un file in formato XML contentente una descrizione esaustiva delle caratteristiche del faro. \newline
+Un file GDTF è essenzialmente un pacchetto contenente all'interno i modelli 3D delle varie geometrie che compongono un faro, le texture delle sue gobo/animazioni/prismi/etc ed un file in formato XML contenente una descrizione esaustiva delle caratteristiche del faro. \newline
 Dei vari dati contenuti in questo XML a noi ci interessano principalmente:
 \begin{itemize}
     \item Informazioni e texture delle ruote colori e gobo.
@@ -123,7 +123,7 @@ Il nodo \lstinline{DMXMode} raccoglie tutte le modalità di funzionamento di un 
             \item \lstinline{Name}: Nome della ChannelFunction
             \item \lstinline{Attribute}: Feature specifica di questo ChannelFunction, che riguarda comunque la feature generale specificata nel nodo LogicalChannel padre.
             \item \lstinline{DMXFrom}: Valore DMX in cui questa ChannelFunction inizia nel DMXChannel. Non esiste un attributo DMXTo indicato esplicitamente in GDTF; viene calcolato utilizzando il valore DMXFrom della ChannelFunction successiva, oppure, se è l'ultima ChannelFunction nella lista, il valore massimo che può assumere il DMXChannel.
-            \item \lstinline{Default}: Valore default quando questa ChanenlFunction viene richiamata.
+            \item \lstinline{Default}: Valore default quando questa ChannelFunction viene richiamata.
             \item \lstinline{PhysicalFrom}: Valore fisico di partenza che questo attributo può raggiungere in un faro vero. Esempio: se l'attributo è \lstinline{Zoom}, corrisponde all'apertura che il fascio di luce avrà quando il valore DMX è uguale a DMXFrom.
             \item \lstinline{PhysicalTo}: Valore fisico di arrivo che questo attributo può raggiungere in un faro vero. Esempio: se l'attributo è \lstinline{Zoom}, corrisponde all'apertura che il fascio di luce avrà quando il valore DMX è uguale a DMXTo.
             \item \lstinline{RealFade}: Tempo in secondi che questa feature impiega su un faro vero per passare da PhysicalFrom a PhysicalTo, usato per l'interpolazione
@@ -132,7 +132,7 @@ Il nodo \lstinline{DMXMode} raccoglie tutte le modalità di funzionamento di un 
         \end{itemize}
     \item Infine abbiamo i \lstinline{ChannelSet} che rappresentano delle macro o valori precisi che una ChannelFunction può assumere. Gli attributi di un ChannelSet sono: \begin{itemize}
             \item \lstinline{Name}: Nome/DisplayName del channel set
-            \item \lstinline{DMXFrom}: Valore DMX in cui questo ChannelSet inizia nel DMXChannel. Analogalmente alle ChannelFunction, non esiste un attributo DMXTo, che verrà calcolato allo stesso modo loro, eccezion fatta che come valore massimo non si userà quello del DMXChannel, bensì quello della ChannelFunction. 
+            \item \lstinline{DMXFrom}: Valore DMX in cui questo ChannelSet inizia nel DMXChannel. Analogamente alle ChannelFunction, non esiste un attributo DMXTo, che verrà calcolato allo stesso modo loro, eccezion fatta che come valore massimo non si userà quello del DMXChannel, bensì quello della ChannelFunction. 
             \item \lstinline{PhysicalFrom}: Funzionamento analogo alle ChannelFunction. Se non viene specificato, può essere calcolato come proporzione \[CS.PysicalFrom : CF.PhysicalRange = CS.DMXFrom : CS.DMXRange\] dove $PhysicalRange$ e $DMXRange$ si ottengono calcolando il rispettivo valore To meno il rispettivo valore From
             \item \lstinline{PhysicalTo}: Funzionamento analogo alle ChannelFunction. Se non viene specificato, può essere calcolato come proporzione \[CS.PysicalTo : CF.PhysicalRange = CS.DMXTo : CS.DMXRange\] dove $PhysicalRange$ e $DMXRange$ si ottengono calcolando il rispettivo valore To meno il rispettivo valore From
             \item \lstinline{WheelSlotIndex}: Se la ChannelFunction padre è collegata ad una ruota, è l'identificativo dello slot nella ruota che dovrà essere attivo quando il valore del canale DMX fisico si trova nel range di questo ChannelSet 
@@ -161,11 +161,11 @@ Qui sotto elencate tutti tutti i termini che si riferiscono a concetti e oggetti
 
 
 \subsection{Informazioni sul tirocinio}\label{subsec:1_tirocinio}
-CPGDTF-Importer è un progetto sviluppato dalla \say{Clay Paky}, azienda italiana leader mondiale nella progettazione e realizzazione di luci per concerti, architettura e teatri, per cui ho svolto il tirocinio curriculare. Lo sviluppo ha avuto inizio nel Maggio 2022 da un altro tirocinante che ha fatto un fork del plugin originale sviluppato dalla Epic Games ed ha iniziato ad aggiungere funzioni che, nonostante fossero basilari, mancavano totalmente. Il plugin originale leggeva solamente quali fossero i componenti di una fixture, i suoi canali e poche altre informazioni. Utilizzava sempre modelli 3D e ruote gobo predefinite, non importava i valori di fade e accellerazione per l'interpolazione, mancavano moltissime features delle fixture, quelle esistenti funzionavano male, e molto altro ancora. Il tirocinante precedente, dopo aver speso quasi tutto il periodo del suo tirocinio a fare ricerca su come funzionasse il plugin originale, ha gettato delle basi per iniziare ad estenderlo e per completare l'importazione di tutti i dati e file da un GDTF. Ha infine scritto delle documentazioni abbastanza esaustive dell'intero plugin.\newline
+CPGDTF-Importer è un progetto sviluppato dalla \say{Clay Paky}, azienda italiana leader mondiale nella progettazione e realizzazione di luci per concerti, architettura e teatri, per cui ho svolto il tirocinio curricolare. Lo sviluppo ha avuto inizio nel Maggio 2022 da un altro tirocinante che ha fatto un fork del plugin originale sviluppato dalla Epic Games ed ha iniziato ad aggiungere funzioni che, nonostante fossero basilari, mancavano totalmente. Il plugin originale leggeva solamente quali fossero i componenti di una fixture, i suoi canali e poche altre informazioni. Utilizzava sempre modelli 3D e ruote gobo predefinite, non importava i valori di fade e accelerazione per l'interpolazione, mancavano moltissime features delle fixture, quelle esistenti funzionavano male, e molto altro ancora. Il tirocinante precedente, dopo aver speso quasi tutto il periodo del suo tirocinio a fare ricerca su come funzionasse il plugin originale, ha gettato delle basi per iniziare ad estenderlo e per completare l'importazione di tutti i dati e file da un GDTF. Ha infine scritto delle documentazioni abbastanza esaustive dell'intero plugin.\newline
 
-Al mio arrivo in Claypaky mi è stato affidato il progetto con l'obiettivo di implementare nuove funzionalità delle fixtures in modo da poter arrivare a simulare completamente tutti i fari dell'azienda.
+Al mio arrivo in ClayPaky mi è stato affidato il progetto con l'obiettivo di implementare nuove funzionalità delle fixtures in modo da poter arrivare a simulare completamente tutti i fari dell'azienda.
 
-Dopo aver speso un primo periodo a prendere conoscenza con la codebase mi sono reso conto di quanto buona parte del codice necessitasse di un refactoring. In particolare ho riscontrato difficoltà nell'implementare nuove features, sia perché il codice che si occupava del rendering dell'illuminazione non fosse in alcun modo modulare e sia perché la gerarchia di classi che le gestisce fosse maldisegnata e con tanto codice duplicato. 
+Dopo aver speso un primo periodo a prendere conoscenza con la codebase mi sono reso conto di quanto buona parte del codice necessitasse di un refactoring. In particolare ho riscontrato difficoltà nell'implementare nuove features, sia perché il codice che si occupava del rendering dell'illuminazione non fosse in alcun modo modulare e sia perché la gerarchia di classi che le gestisce fosse mal disegnata e con tanto codice duplicato. 
 
 Solamente dopo aver risolto questi grossi problemi strutturali nel codice (e dopo aver fatto funzionare correttamente l'interpolazione) ho potuto dedicarmi all'implementazione effettiva di nuove features. 
 
@@ -177,7 +177,7 @@ L'elaborato è articolato come segue. Ogni capitolo rappresenta una milestone de
     \item \textbf{Capitolo \ref{sec:FixtureComponentHierachy}, Redesign gerarchia dei FixtureComponent}: Tratta l'analisi della vecchia gerarchia dei FixtureComponent, ovvero quelle classi responsabili di controllare ogni singola feature che compone una fixture. Vengono proposte nuove idee di implementazione e mostrati quali dati e metodi servirebbe mettere a disposizione alle classi che implementano la singola feature.
     \item \textbf{Capitolo \ref{sec:Interpolation}, Reimplementazione dell'interpolazione}: All'interno di questo capitolo vengono velocemente esposti i problemi dell'attuale classe che controlla l'interpolazione, ovvero il controllo del movimento dei motori virtuali. Successivamente viene mostrata la nuova implementazione della classe, esponendo i vari problemi che si sono verificati durante la scrittura del codice e come sono stati risolti.
     \item \textbf{Capitolo \ref{sec:NewFeatures}, Implementazione di nuove funzionalità alle fixtures}: Una volta sistemata la struttura del plugin e reso comodo e meno error-prone l'implementazione di nuove feature, viene descritta come sono state pensate e implementate le due funzionalità che sono state aggiunte a CPGDTF-Importer.
-    \item \textbf{Capitolo \ref{sec:End}, Conclusioni}: In questo capitolo conclusivo, vengono sintetizzati i problemi generali, emersi durante lo sviluppo con GDTF ed Unreal Engine. Inoltre, vengono valutati futuri sviluppi con Arri (l'azienda che ha acquisito Claypaky lo scorso Marzo, durante il mio periodo di tirocinio) e con Epic Games stessa.
+    \item \textbf{Capitolo \ref{sec:End}, Conclusioni}: In questo capitolo conclusivo, vengono sintetizzati i problemi generali, emersi durante lo sviluppo con GDTF ed Unreal Engine. Inoltre, vengono valutati futuri sviluppi con Arri (l'azienda che ha acquisito ClayPaky lo scorso Marzo, durante il mio periodo di tirocinio) e con Epic Games stessa.
 \end{itemize}
 
 

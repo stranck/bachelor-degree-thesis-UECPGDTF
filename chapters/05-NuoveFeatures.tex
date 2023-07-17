@@ -15,7 +15,7 @@ Una volta creata una pipeline di rendering, sistemata la gerarchia dei component
 	\item Aggiungerla al generatore della pipeline per il rendering del materiale Light e Lens.
     \item Creare il FixtureComponent che la gestisce.
 \end{itemize}
-In questo capitolo non tratteremo mai il secondo punto poiché consiste nella rimplementazione come MaterialExpression del codice già visto in HLSL.
+In questo capitolo non tratteremo mai il secondo punto poiché consiste nella reimplementazione come MaterialExpression del codice già visto in HLSL.
 
 \subsection{Sagomatori}\label{subsec:5_shaper}
 \begin{figure}[H]
@@ -25,8 +25,7 @@ In questo capitolo non tratteremo mai il secondo punto poiché consiste nella ri
     \label{fig:5_shaper}
 \end{figure}
 Il sistema dei sagomatori (detto anche \say{framing system} oppure \say{shaper}) consiste in un modulo composto da 4 lame (dette anche \say{bandiere}) che possono immettersi ed inclinasi singolarmente all'interno del fascio di luce. Inoltre, l'intero modulo può roteare, muovendo contemporaneamente la direzione in cui si immettono tutte le lame si immettono.
-%TODO Esempi con foto
-Il controllo della lama può avvenie in due modi:
+Il controllo della lama può avvenire in due modi:
 \begin{itemize}
 	\item \textbf{A+B}: Controlliamo singolarmente l'immissione dei due punti estremi della lama ($A$ e $B$). Per avere la lama \say{dritta} Dovremmo avere $A = B$, per inclinarla da un lato basta avere uno dei due valori maggiori dell'altro.
 	\item \textbf{A+Rot}: Controlliamo l'immissione della lama ($A$) e separatamente la sua inclinazione ($R$).
@@ -55,7 +54,7 @@ Per trovare l'equazione della retta quando facciamo il sample A+B, possiamo rico
 \[m = \frac{y_2 - y_1}{x_2 - x_1}\]
 Immaginiamo che i valori di $A$ e $B$ corrispondano alle loro y, che $A$ si trovi a coordinate $x = 0$ (completamente a sinistra della texture) e che $B$ si trovi a $x = 1$ (completamente a destra della texture). La formula sarà uguale a:
 \[m = \frac{y_B - y_A}{x_B - x_A} = \frac{B - A}{1 - 0} = B - A\]
-In questo modo generiamo il coefficiente di una retta che però ha sempre origine in $(0, 0)$. Nella realtà, ciò che abbiamo appena creato è un sagomatore in cui solamente il valore B \say{funziona}. Per far \say{funzionare} anche il valore $A$, basta aggiungerlo come termine noto del'equazione.
+In questo modo generiamo il coefficiente di una retta che però ha sempre origine in $(0, 0)$. Nella realtà, ciò che abbiamo appena creato è un sagomatore in cui solamente il valore B \say{funziona}. Per far \say{funzionare} anche il valore $A$, basta aggiungerlo come termine noto dell'equazione.
 
 Come scritto sopra, per generare una flag bisogna controllare quando stiamo \say{sopra} questa equazione, rendendola quindi uguale a:
 \[y > x(B - A) + A\]
@@ -68,7 +67,7 @@ Come le ruote, anche il framing system deve implementare il frost. Piuttosto di 
 \[d = \abs{y - g(x)}\]
 Dove $g(x)$ è la funzione matematica scelta per effettuare il sample della flag.
 
-Lo step suguente è trasformare il valore di frost ($f$) dentro una semplice funzione di remapping:
+Lo step seguente è trasformare il valore di frost ($f$) dentro una semplice funzione di remapping:
 \[remapFrost(f) \coloneqq f * 0.05 + 0.002\]
 Dove $0.05$ e $0.002$ sono valori magici trovati dopo discreti tentativi di try and error.
 
@@ -133,7 +132,7 @@ Dove $a$ corrisponde ai gradi di rotazione in input.
 
 \subsubsection{Generazione codice HLSL ed inserimento nel materiale Beam}\label{subsec:5_1_ShaperHlsl}
 \lstset{language=glsl}
-Le funzioni $fade$, $sCurve$ e $rotateUV$ sono state scritte in maniera generica poiché sono utili anche nel sample di altre features (Ad esempio, l'iris \ref{subsec:5_Iris}). Le funzioni di remapping sono state, invece, accorpate tra di loro. Le condizioni sono implementate con la formula \lstinline{float b = /*boolean expression*/; float f = b * x + (1 - b) * y;} per ridurre la branch divergence nell'esecuzione del codice hlsl.
+Le funzioni $fade$, $sCurve$ e $rotateUV$ sono state scritte in maniera generica poiché sono utili anche nel sample di altre features (Ad esempio, l'iris \ref{subsec:5_Iris}). Le funzioni di remapping sono state, invece, accorpate tra di loro. Le condizioni sono implementate con la formula \lstinline{float b = /*boolean expression*/; float f = b * x + (1 - b) * y;} per ridurre la branch divergence nell'esecuzione del codice HLSL.
 \begin{lstlisting}
 float sCurve(float f){
 	const float exp = -4;
@@ -192,9 +191,11 @@ if (shaper != nullptr) {
 }
 \end{lstlisting}
 
-Il codice per la generazione del codice HLSL in se è molto semplice. Si prende in input un array di ShaperFixtureComponent già instanziati e per ciascuno controlla se sono in modalità A+B oppure A+Rot, e seleziona la relativa chiamata a funzione corretta.
+Il codice per la generazione del codice HLSL in se è molto semplice. Si prende in input un array di ShaperFixtureComponent già istanziati e per ciascuno controlla se sono in modalità A+B oppure A+Rot, e seleziona la relativa chiamata a funzione corretta.
 \begin{lstlisting}
+//Per ogni shaper presente nella fixture
 for (int i = 0; i < mShapers.Num(); i++) {
+    //Ottieni il nome delle variabili nel codice HLSL
     FString orientationVarName =
         CPGDTFRenderPipelineBuilder::getInputBladeOrientationName(
             mShapers[i]->getOrientation()
@@ -208,13 +209,16 @@ for (int i = 0; i < mShapers.Num(); i++) {
             true, mShapers[i]->getOrientation()
         );
 
-    if (mShapers[i]->isInAbMode()) { //a+b mode
+    //Controlla la modalita'
+    if (mShapers[i]->isInAbMode()) {
+        //Genera il codice HLSL per la modalita' A+B
         placeholderCode = placeholderCode + FString::Format(*textAdd, {
             FString::Printf(
                 TEXT("sampleBladeAB(pos.xy, %s, %s, %s, %s)"),
             *aVarName, *bRotVarName, *orientationVarName, *frostVarName)
         });
-    } else { //a + rot mode
+    } else {
+        //Genera il codice HLSL per la modalita' A+Rot
         placeholderCode = placeholderCode + FString::Format(*textAdd, {
             FString::Printf(
                 TEXT("sampleBladeARot(pos.xy, %s, %s, %s, %s)"),
@@ -224,7 +228,7 @@ for (int i = 0; i < mShapers.Num(); i++) {
 }
 \end{lstlisting}
 
-La funzione $remapABposition$ è stata implementata come MaterialFunction invece che come codice hlsl, in modo che possa venire ottimizzata automaticamente da UnrealEngine \cite{hlslNoOptimize}. Inoltre è stata creata un'altra MaterialFunction (ConvertRot) che si occupa di convertire i gradi in radianti e di ottenerne il valore della tangente. L'inserimento degli input e dei parametri nel materiale Beam inizia caricandosi queste due MaterialFunction.
+La funzione $remapABposition$ è stata implementata come MaterialFunction invece che come codice HLSL, in modo che possa venire ottimizzata automaticamente da UnrealEngine \cite{hlslNoOptimize}. Inoltre è stata creata un'altra MaterialFunction (ConvertRot) che si occupa di convertire i gradi in radianti e di ottenerne il valore della tangente. L'inserimento degli input e dei parametri nel materiale Beam inizia caricandosi queste due MaterialFunction.
 \begin{lstlisting}
 UMaterialFunctionInterface* mfShaperConvertBladePosition =
     Cast<UMaterialFunctionInterface>(
@@ -277,37 +281,47 @@ Dove \lstinline{getBladeABRotParamName()} e \lstinline{getInputBladeABRotName()}
 
 La lambda citata sopra si occupa come prima cosa di generare il parametro effettivo.
 \begin{lstlisting}
-    UMaterialExpressionScalarParameter* param =
-        generateMaterialExpression<UMaterialExpressionScalarParameter>(
-            dstMaterial
-        );
-    param->ParameterName = FName(*paramName);
-    param->Group = FName(TEXT("Runtime Parameters"));
-    param->SortPriority = 5;
-    param->DefaultValue = 0;
-    dstMaterial->GetEditorOnlyData()->ExpressionCollection.
-        AddExpression(param);
+//Generazione del parametro
+UMaterialExpressionScalarParameter* param =
+    generateMaterialExpression<UMaterialExpressionScalarParameter>(
+        dstMaterial
+    );
+//Impostazione dei valori del parametro
+param->ParameterName = FName(*paramName);
+param->Group = FName(TEXT("Runtime Parameters"));
+param->SortPriority = 5;
+param->DefaultValue = 0;
+//Aggiunta del parametro al materiale
+dstMaterial->GetEditorOnlyData()->ExpressionCollection.
+    AddExpression(param);
 \end{lstlisting}
 Successivamente crea, imposta, collega e sposta la MaterialFunctionCall in base alla modalità selezionata.
 \begin{lstlisting}
+//Creazione della MaterialExpressionFunctionCall
 UMaterialExpressionMaterialFunctionCall* mfCall = 
     generateMaterialExpression<UMaterialExpressionMaterialFunctionCall>(
         dstMaterial
     );
+//Aggiunta della MaterialExpression al materiale
 dstMaterial->GetEditorOnlyData()->ExpressionCollection.
     AddExpression(mfCall);
+//Impostiamo la funzione corretta controllando se stiamo generando 
+// il parametro di rotazione o meno
 if (isRot) {
     mfCall->SetMaterialFunction(mfShaperConvertRot);
 } else {
     mfCall->SetMaterialFunction(mfShaperConvertBladePosition);
-    mfCall->FunctionInputs[1].Input.Connect(0, scalarFrost); //Frost
+    //Colleghiamo il parametro del frost alla funzione
+    mfCall->FunctionInputs[1].Input.Connect(0, scalarFrost);
 }
 mfCall->FunctionInputs[0].Input.Connect(0, param); //Value
 
+//Spostiamo la MaterialExpressionFunctionCall
 mfCall->MaterialExpressionEditorX =
     meBlocksMover->getCurrentX()+ BEAM_EDITOR_BLOCK_DISTANCE_X;
 mfCall->MaterialExpressionEditorY =
     meBlocksMover->getCurrentY() + EDITOR_MINI_BLOCK_SIZE;
+//Spostiamo il parametro
 meBlocksMover->moveMaterialExpression(param, EDITOR_SCALAR_PARAM_SIZE);
 \end{lstlisting}
 Infine, genera un input sulla CustomExpression e lo collega alla precedente MaterialFunctionCall.
@@ -324,12 +338,15 @@ Come per la generazione del materiale Beam anche qui le varie funzioni descritte
 Si effettua un ciclo su tutti gli ShaperFixtureComponent che dobbiamo aggiungere alla pipeline. Per ciascuno, iniziamo con lo generare una MaterialFunctionCall ed impostarne la MaterialFunction in base alla modalità della flag.
 \begin{lstlisting}
 int orientation = shaper->getOrientation();
+//Creiamo la MaterialFunctionCall
 UMaterialExpressionMaterialFunctionCall* currentNode =
     generateMaterialExpression<UMaterialExpressionMaterialFunctionCall>(
         dstMaterial
     );
+//Aggiungiamo la MaterialFunctionCall al materiale
 dstMaterialData->ExpressionCollection.AddExpression(currentNode);
 
+//Impostiamo la funzione in base alla modalita' dello shaper
 if (shaper->isInAbMode()) currentNode->SetMaterialFunction(mfShaperAB);
     else currentNode->SetMaterialFunction(mfShaperARot);
 \end{lstlisting}
@@ -369,23 +386,26 @@ L'implementazione del componente è molto semplice, vista la gerarchia dei compo
 
 Questa operazione viene effettuata scorrendo tutta la lista di ChannelFunction assegnate al componente, e viene impostata la modalità \say{A+B} ogni qualvolta si incontra un componente B, oppure la modalità \say{A+Rot} ogni qualvolta si incontra un componente Rot.
 \begin{lstlisting}
-for (Per ogni ChannelFunction cf) {
+for (/*Per ogni ChannelFunction cf*/) {
     auto attrType =
         CPGDTFDescription::GetGDTFAttributeTypeValueFromString(
             cf.Attribute.Name.ToString()
         );
 
     if (attrType == ECPGDTFAttributeType::Blade_n_Rot) {
+        //Abbiamo trovato un attributo Rot
         abMode = false;
     } else if (
                attrType == ECPGDTFAttributeType::Blade_n_B
             || attrType == ECPGDTFAttributeType::BladeSoft_n_B
             ) {
+        //Abbiamo trovato un attributo B
         abMode = true;
     }
 }
 \end{lstlisting}
 
+\clearpage %TODO CHECK IF STILL NEEDED
 Di seguito, degli screenshot della classe per mostrare quanto sia semplice implementare nuovi componenti ora che la gerarchia di FixtureComponent è stata rivoluzionata.
 \begin{figure}[H]
     \centering
@@ -400,13 +420,6 @@ Di seguito, degli screenshot della classe per mostrare quanto sia semplice imple
 
 
 \subsection{Iris}\label{subsec:5_Iris}
-%\begin{wrapfigure}{r}{0.6\textwidth}
-%    \centering
-%    \captionsetup{justification=centering}
-%    \includegraphics[scale=0.2]{img/newFeatures/Iris.jpg}
-%    \caption{Modulo iris di una fixture.}
-%    \label{fig:5_iris}
-%\end{wrapfigure}
 L'iris è una feature atta a restringere un fascio di luce. Differisce dallo zoom, poiché quest'ultimo definisce di quanto si allarga una immagine che vogliamo proiettare rispetto alla distanza, mentre l'iris definisce la dimensione in se dell'immagine. In generale, è come se fosse un sagomatore di forma circolare che entra nel fascio di luce da tutte le direzioni contemporaneamente. Così come per i sagomatori, renderizziamo questa feature attraverso formule matematiche.
 \begin{figure}[H]
     \centering
@@ -454,7 +467,7 @@ float sampleIris(float2 texCoor, float irisVal, float frost) {
 \end{lstlisting}
 Tale funzione è stata inserita nella struct di helper utilizzata all'interno dell'algoritmo BeamRayMarch. \newline
 
-Nel for finale del costruttore della \lstinline{CPGDTFRenderPipelineBuilder} è stata inserita una ricerca per i componenti di tipo IrisFixtureComponent. Se vengono trovati, segnamo come vero un flag che ci dice se nella pipeline deve essere presente un iris.
+Nel for finale del costruttore della \lstinline{CPGDTFRenderPipelineBuilder} è stata inserita una ricerca per i componenti di tipo IrisFixtureComponent. Se vengono trovati, segniamo come vero un flag che ci dice se nella pipeline deve essere presente un iris.
 \lstset{language=UEcpp}
 \begin{lstlisting}
 auto iris = Cast<UCPGDTFIrisFixtureComponent>(components[i]);
@@ -478,7 +491,7 @@ if (mIrisEnabled) {
 }
 \end{lstlisting}
 
-Anche l'aggiunta alla CustomExpression del materiale Beam è molto seplice: Basta semplicemente aggiungere il parametro relativo al valore dell'iris se questo è presente.
+Anche l'aggiunta alla CustomExpression del materiale Beam è molto semplice: Basta semplicemente aggiungere il parametro relativo al valore dell'iris se questo è presente.
 \begin{lstlisting}
 if (this->hasIris)
     addScalarInputToBeamPipeline(
@@ -490,7 +503,7 @@ if (this->hasIris)
 \end{lstlisting}
 
 \subsubsection{Generazione nella RenderingPipeline}\label{subsec:5_2_IrisRenderingPipeline}
-Come in precedenza, la funzione $sampleIris$ è stata riportata sottoforma di MaterialFunction che prende in input il risultato del modulo precedente. Il codice che la inserisce all'interno della pipeline inizia col controllare se deve essere presente un iris.
+Come in precedenza, la funzione $sampleIris$ è stata riportata sotto forma di MaterialFunction che prende in input il risultato del modulo precedente. Il codice che la inserisce all'interno della pipeline inizia col controllare se deve essere presente un iris.
 \begin{lstlisting}
 if (this->hasIris) {
     //...
@@ -528,7 +541,7 @@ delete meParamsMover;
 \end{lstlisting}
 
 \subsubsection{IrisFixtureComponent}\label{subsec:5_1_IrisFixtureComponent}
-Il componente di gestione dell'iris, per le stesse ragioni di quello che gestisce i sagomatori, è davvero molto semplice e simile al precedente, per tanto non è necessario soffermarsi su una spiegazione generale dello stesso. L'unica cosa da tener conto è che esistono degli effetti preprogrammati all'interno delle fixture reali legati all'iris:
+Il componente di gestione dell'iris, per le stesse ragioni di quello che gestisce i sagomatori, è davvero molto semplice e simile al precedente, per tanto non è necessario soffermarsi su una spiegazione generale dello stesso. L'unica cosa da tener conto è che esistono degli effetti pre-programmati all'interno delle fixture reali legati all'iris:
 \begin{itemize}
     \item \textbf{Pulse}: $y = \sin^{-1}(\sin(x))$
     \item \textbf{PulseOpen}: $y = \tan^{-1}(\tan(x))$
