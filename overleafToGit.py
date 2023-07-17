@@ -83,11 +83,20 @@ def gitPush(gitPath, commitMessage):
 
 
 args = sys.argv.copy()
+pyName = args[0]
 args = args[1:]
+pushToGit = True
+if(args[0] == "-d"): #download only
+	pushToGit = False
+	args = args[1:]
+elif(args[0] == "-h" or args[0] == "--help"):
+	print(f"{pyName} [-d download only without committing] [-h --help show help]")
+	exit(0)
 commitMessage = " ".join(args)
 
 downloadLink = PROJECT_LINK + "/download/zip"
 download(downloadLink)
-gitPath = path / Path(".git/")
-gitPush(gitPath, commitMessage)
+if(pushToGit):
+	gitPath = path / Path(".git/")
+	gitPush(gitPath, commitMessage)
 print("Bye bye")
