@@ -33,7 +33,7 @@ L'aggiornamento dello stato dell'interpolazione viene effettuato dentro la funzi
 Prima di iniziare, enuncio dei concetti ricorrenti all'interno di questo capitolo:
 \begin{itemize}
     \item L'interpolazione funziona in entrambe le direzioni, ma noi, all'interno della spiegazione, consideriamo solamente il caso in cui andiamo avanti (\say{FORWARD}). Se \lstinline{float currentAcceleration;} è positiva vuol dire che stiamo accelerando, altrimenti stiamo decelerando. Se la nostra direzione fosse opposta, \lstinline{currentAcceleration} e \lstinline{currentSpeed} avrebbero i segni invertiti.
-    \item $timeToFullyAccelerate$ (\say{TTFA}): È il tempo richiesto per raggiungere maxSpeed a partire da fermi e viceversa. Per ottenere quanto tempo ci mettiamo a raggiungere velocità massima o minima a partire da una velocita intermediaria, basta moltiplicare tale velocità per TTFA, poiché tutti i nostri calcoli sono nel range [0, 1].
+    \item $timeToFullyAccelerate$ (\say{TTFA}): È il tempo richiesto per raggiungere maxSpeed a partire da fermi e viceversa. Per ottenere quanto tempo ci mettiamo a raggiungere velocità massima o minima a partire da una velocità intermediaria, basta moltiplicare tale velocità per TTFA, poiché tutti i nostri calcoli sono nel range [0, 1].
     \[TimeToAccelerate = \frac{TTFA * (1 - currentSpeed)}{1} = TTFA * (1 - currentSpeed)\]
     \[TimeToStop = \frac{TTFA * currentSpeed}{1} = TTFA * currentSpeed\]
     \begin{figure}[H]
@@ -101,7 +101,7 @@ Quasi sempre accade che il momento esatto in cui dovremmo iniziare a decelerare 
     \label{fig:4_compensateLateCall}
 \end{figure}
 
-Questa correzione viene effettuata quando iniziamo a decelerare e se la stopDistance supera TargetValue (Chiameremo la differenza tra i due valori \say{distanceDifference}), ma non abbiamo ancora superato TargetValue. Viene effettuata tra le operazioni in cui viene deciso che dobbiamo iniziare a decelerare e immediatamente prima di cambiare il valore di accelerazione (Tra i punti \textbf{12} e \textbf{13} della funzione di \lstinline{Update()}). La prima cosa che fa è effettuare un rollback di qualsiasi movimento svolto durante questo frame e successivamente viene controllato se nel tick precedente stavamo accelerando e se nel tick corrente stiamo a velocità costante. Se si vuol dire che tra i due frame abbiamo raggiunto la velocità massima e dobbiamo scoprire se avremmo dovuto iniziare a decelerare prima o dopo averla raggiunta. Per eseguire questo controllo usiamo \lstinline{__calcNextMovement_internal()} per calcolarci lo spazio percorso fino a raggiungere maxSpeed e sommiamo questo valore a quello ottenuto da una chiamata a \lstinline{getStopDistance()} con velocità pari ad 1. Se questa distanza appena calcolata sommata a CurrentValue è più grande di TargetValue vuol dire che avremmo dovuto iniziare a decelerare prima di raggiungere la velocità massima, e viceversa. Nel primo caso ricalcoliamo la distanceDifference come la differenza tra la precedente somma e Target Value, nel secondo caso faremo semplicemente finta di essere a velocità costante già dal frame precedente.
+Questa correzione viene effettuata quando iniziamo a decelerare e se la stopDistance supera TargetValue (Chiameremo la differenza tra i due valori \say{distanceDifference}), ma non abbiamo ancora superato TargetValue. Viene effettuata tra le operazioni in cui viene deciso che dobbiamo iniziare a decelerare e immediatamente prima di cambiare il valore di accelerazione (Tra i punti \textbf{12} e \textbf{13} della funzione di \lstinline{Update()}). La prima cosa che fa è effettuare un rollback di qualsiasi movimento svolto durante questo frame e successivamente viene controllato se nel tick precedente stavamo accelerando e se nel tick corrente stiamo a velocità costante. Se si vuol dire che tra i due frame abbiamo raggiunto la velocità massima e dobbiamo scoprire se avremmo dovuto iniziare a decelerare prima o dopo averla raggiunta. Per eseguire questo controllo usiamo \lstinline{__calcNextMovement_internal()} per calcolarci lo spazio percorso fino a raggiungere maxSpeed e sommiamo questo valore a quello ottenuto da una chiamata a \lstinline{getStopDistance()} con velocità pari ad 1. Se questa distanza appena calcolata sommata a CurrentValue è più grande di TargetValue vuol dire che avremmo dovuto iniziare a decelerare prima di raggiungere la velocità massima, e viceversa. Nel primo caso ricalcoliamo la distanceDifference come la differenza tra la precedente somma e TargetValue, nel secondo caso faremo semplicemente finta di essere a velocità costante già dal frame precedente.
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/interpolazione/compensateLateCall3Case.png}
@@ -111,11 +111,11 @@ Questa correzione viene effettuata quando iniziamo a decelerare e se la stopDist
 
 Per calcolare il momento esatto in cui avremmo dovuto iniziare a decelerare avremo due casi possibili: 
 \begin{itemize}
-    \item \textbf{Siamo a velocità costante}: La differenza di spazio percorso è un parallelogramma (Vedi la seconda immagine di \ref{fig:4_compensateLateCall3Case}) di cui sappiamo l'area (distanceDifference) e l'altezza (1, ovvero maxSpeed). Possiamo calcolarci la base (ovvero la differenza tra DeltaTime ed il momento in cui avremmo dovuto iniziare a decelerare) con una semplice formula inversa:
+    \item \textbf{Siamo a velocità costante}: La differenza di spazio percorso è un parallelogramma (Vedi la seconda immagine di \ref{fig:4_compensateLateCall3Case}) di cui sappiamo l'area (distanceDifference) e l'altezza (1, ovvero maxSpeed). Possiamo calcolarci la base (ovvero la differenza tra DeltaSeconds ed il momento in cui avremmo dovuto iniziare a decelerare) con una semplice formula inversa:
     \[timeDifference = \frac{distanceDifference}{speed}\]
     
     \begin{minipage}{.45\textwidth}
-        \item \textbf{Stiamo accelerando}: Poiché in questo caso stiamo trattando un poligono irregolare (Vedi figura \ref{fig:4_compensateLateCallAccel1}), non possiamo applicare direttamente formule inverese. Scomponiamo quindi tale quadrilatero in un triangolo ed un quadrato come nella figura \ref{fig:4_compensateLateCallAccel2} e mettiamo a sistema tutte le dimensioni che sappiamo di tale figura.
+        \item \textbf{Stiamo accelerando}: Poiché in questo caso stiamo trattando un poligono irregolare (Vedi figura \ref{fig:4_compensateLateCallAccel1}), non possiamo applicare direttamente formule inverse. Scomponiamo quindi tale quadrilatero in un triangolo ed un quadrato come nella figura \ref{fig:4_compensateLateCallAccel2} e mettiamo a sistema tutte le dimensioni che sappiamo di tale figura.
     \end{minipage}
     \hfill%
     \begin{minipage}{.475\textwidth}
@@ -239,7 +239,7 @@ Successivamente avviene il controllo per scoprire se durante l'interpolazione ra
 \[A = \frac{2BH}{2}\]
 Risolvendo per $B$ arriviamo quindi a:
 \[B = \sqrt{\frac{A}{a}}\]
-Come detto sopra, $B$ fa riferimento solamente alla base di uno dei due triangoli. Per ottenere quindi il tempo totale bisogna moltiplicare $B$ per 2. Inoltre, se $currentSpeed > 0$ allora bisogna aggiungere il \say{pezzo} di $T_1$ che viene tagliato fuori all'area totale, e togliere da $2B$ il TTRCS. La formula finale è quindi la suegente:
+Come detto sopra, $B$ fa riferimento solamente alla base di uno dei due triangoli. Per ottenere quindi il tempo totale bisogna moltiplicare $B$ per 2. Inoltre, se $currentSpeed > 0$ allora bisogna aggiungere il \say{pezzo} di $T_1$ che viene tagliato fuori all'area totale, e togliere da $2B$ il TTRCS. La formula finale è quindi la seguente:
 \[B = 2\sqrt{\frac{A + prevArea}{a}} - TTRCS\]
 \begin{figure}[H]
     \centering
@@ -250,11 +250,11 @@ Come detto sopra, $B$ fa riferimento solamente alla base di uno dei due triangol
 
 Come detto sopra, vogliamo che il tempo impiegato da una interpolazione a completare il suo ciclo sia pari almeno a quello di una soglia prestabilita. Se dal nostro calcolo il tempo risultasse inferiore, dobbiamo trovare una velocità massima ($x$) in modo da percorrere il movimento esattamente in quel limite di tempo. Andiamo ad impostare un'equazione con le seguenti variabili:
 \begin{itemize}
-    \item $x$: Valore finale dello speedcap.
+    \item $x$: Valore finale dello speedCap.
     \item $t$: Alias di TTFA (\textbf{Valore noto}).
     \item $s$: Alias di currentSpeed (\textbf{Valore noto}).
     \item $T$: Tempo totale, ovvero in quanto tempo l'interpolazione deve essere completata (\textbf{Valore noto}).
-    \item $B_1$: Base di $T_1$, ottenuta dalla differenza tra TTRCS e TimeToReachX, ovvero il tempo per raggiungere lo speedcap (Abbreviato con \say{TTRX}). Poiché la velocità iniziale può essere superiore allo speedcap, questa differenza deve essere assoluta: \[B_1 = t\abs{x - s} = \abs{tx - ts}\]
+    \item $B_1$: Base di $T_1$, ottenuta dalla differenza tra TTRCS e TimeToReachX, ovvero il tempo per raggiungere lo speedCap (Abbreviato con \say{TTRX}). Poiché la velocità iniziale può essere superiore allo speedCap, questa differenza deve essere assoluta: \[B_1 = t\abs{x - s} = \abs{tx - ts}\]
     \item $B_2$: Base di $T_2$ definita semplicemente come TTRX: \[B_2 = tx\]
     \item $B_r$: Base di $R$ definita come la base totale meno quella dei due triangoli: \[B_r = T - B_1 - B_2 = T - B_1 - tx\]
     \item $A_1$: Area di $T_1$ ottenuta in maniera simile a \lstinline{__calcNextMovementInternal()}, ovvero la somma tra l'area di un rettangolo con l'altezza uguale a currentSpeed e quella di un triangolo con la stessa base e l'altezza uguale alla differenza tra $x$ e la currentSpeed: \[A_1 = sB_1 + \frac{(x - s)B_1}{2}\]
@@ -270,7 +270,7 @@ Possiamo avere 3 possibili casi:\newline
     \begin{figure}[H]
         \centering
         \includegraphics[width=.9\linewidth]{img/interpolazione/speedCapCalcGE.png}
-        \caption{In rosso l'andamento velocità senza imporre uno speedcap, che ci fa raggiungere TargetValue troppo velocemente. In verde la velocità con uno speedcap  minore alla velocità corrente che ci farà raggiungere TargetValue nel tempo corretto. Le due aree si equivalgono.}
+        \caption{In rosso l'andamento velocità senza imporre uno speedCap, che ci fa raggiungere TargetValue troppo velocemente. In verde la velocità con uno speedCap  minore alla velocità corrente che ci farà raggiungere TargetValue nel tempo corretto. Le due aree si equivalgono.}
         \label{fig:4_speedCapCalcGE}
     \end{figure}
 \clearpage %TODO CHECK IF THIS IS REALLY NEEDED
@@ -285,22 +285,22 @@ Possiamo avere 3 possibili casi:\newline
 \item $s = x$: currentSpeed è già allo stesso valore di speedCap. Possiamo precedere come uno dei due precedenti casi. \newline
 \end{itemize}
 
-Le equazioni finali per ottenere lo speedcap a partire dalla nostra velocità, l'accelerazione e il tempo in cui dobbiamo percorrere l'interpolazione, sono:
+Le equazioni finali per ottenere lo speedCap a partire dalla nostra velocità, l'accelerazione e il tempo in cui dobbiamo percorrere l'interpolazione, sono:
 \[tx^2 + (ts + T)x + (\frac{ts^2}{2} + A) = 0 \quad\text{quando}\qquad x \geq p\]
 \[(-ts + T)x + (\frac{ts^2}{2} - A) = 0 \quad\text{quando}\qquad x \leq p\]
 
 Il codice inizialmente risolverà prima il secondo caso (poiché più rapido, visto che non implica risolvere un'equazione di secondo grado) e controllerà la validità del risultato. Se il risultato non rispetta la condizione, allora procederà con la risoluzione del primo caso. \newline
 
-Una volta mostrato come lo speedcap viene calcolato ed impostato, la funzione \lstinline{Update()} si dovrà occupare di mantenerlo ed interverrà solamente se non stiamo già decelerando per raggiungere TargetValue. Lo speedCap è implementato impostando l'override dell'accelerazione (Lo stesso usato da OverrideDeceleration \ref{subsubsec:4_2_OverrideDeceleration}) a 0. Il codice si occuperà di rimuovere l'override quando lo speedcap viene disattivato dentro \lstinline{TargetValue} e si occuperà di impostarlo o forzare la decelerazione quando viene invece attivato.
+Una volta mostrato come lo speedCap viene calcolato ed impostato, la funzione \lstinline{Update()} si dovrà occupare di mantenerlo ed interverrà solamente se non stiamo già decelerando per raggiungere TargetValue. Lo speedCap è implementato impostando l'override dell'accelerazione (Lo stesso usato da OverrideDeceleration \ref{subsubsec:4_2_OverrideDeceleration}) a 0. Il codice si occuperà di rimuovere l'override quando lo speedCap viene disattivato dentro \lstinline{TargetValue} e si occuperà di impostarlo o forzare la decelerazione quando viene invece attivato.
 
-\noindent Più specificatamente, abbiamo 3 casi da gestire (Visualizzati anche nella fiugra \ref{fig:4_speedCapThreeCases}):
+\noindent Più specificatamente, abbiamo 3 casi da gestire (Visualizzati anche nella figura \ref{fig:4_speedCapThreeCases}):
 \begin{enumerate}
     \item \textbf{La nostra velocità ha raggiunto lo speedCap}: Sovrascriviamo l'accelerazione con 0 in modo che la velocità non venga più aggiornata.
     \item \textbf{La nostra velocità è superiore allo speedCap}: Forziamo una decelerazione fino a che non raggiungiamo lo speedCap, ricadendo nel caso \textbf{1}. Questo caso copre anche la situazione in cui eravamo già fermi su uno speedCap e nel mentre \textbf{cambia verso un valore più piccolo}.
-    \item \textbf{Avevamo già raggiunto uno speedCap e nel mentre cambia verso un valore più grande}: Disabilitamo l'override dell'accelerazione in modo da tornare a guadagnare velocità, fino a che non ricadiamo nel caso \textbf{1}.
+    \item \textbf{Avevamo già raggiunto uno speedCap e nel mentre cambia verso un valore più grande}: Disabilitiamo l'override dell'accelerazione in modo da tornare a guadagnare velocità, fino a che non ricadiamo nel caso \textbf{1}.
 \end{enumerate}
 
-Ci sono due casi che sono trattati implicitamente dal resto della funzione \lstinline{Update()} e quindi non servere prendere particolari misure:
+Ci sono due casi che sono trattati implicitamente dal resto della funzione \lstinline{Update()} e quindi non serve prendere particolari misure:
 \begin{itemize}
     \item Il caso in cui la nostra velocità è inferiore ad uno speedCap e non ne abbiamo ancora mai raggiunto uno, non è coperto perché stiamo normalmente già accelerando. Eventualmente ricadremo nel caso \textbf{1}.
     \item Il caso in cui dobbiamo iniziare a decelerare perché stiamo raggiungendo TargetValue non è coperto perché impostando una nuova accelerazione (operazione che viene fatta per iniziare a decelerare) l'override della stessa viene automaticamente disattivato.
@@ -324,7 +324,7 @@ Questa funzione si occupa di convertire i parametri GDTF \lstinline{RealFade} e 
     \caption{Differenza tra \textit{acceleration} e \textit{RealAcceleration}}
     \label{fig:4_RealAccelerationVSacceleration}
 \end{wrapfigure}
-Il parametro \lstinline{RealAcceleration} rappresenta il tempo in secondi utilizzati per passare da 0 a maxSpeed, mentre \lstinline{acceleration} rappresenta quanta velocità guadagnamo ogni secondo. Poiché \lstinline{acceleration} è il reciproco di \lstinline{RealAcceleration}, possiamo ottenerlo semplicemente facendo \[acceleration = \frac{1}{RealAcceleration}\] \newline
+Il parametro \lstinline{RealAcceleration} rappresenta il tempo in secondi utilizzati per passare da 0 a maxSpeed, mentre \lstinline{acceleration} rappresenta quanta velocità guadagniamo ogni secondo. Poiché \lstinline{acceleration} è il reciproco di \lstinline{RealAcceleration}, possiamo ottenerlo semplicemente facendo \[acceleration = \frac{1}{RealAcceleration}\] \newline
 %\clearpage %TODO CHECK IF STILL NEEDED
 
 Il parametro \lstinline{RealFade} considera anche i tempi di accelerazione e decelerazione di un movimento, per cui non possiamo usarlo direttamente come valore di \lstinline{maxPhysicalSpeed} che, ricordiamo, rappresenta quanto movimento facciamo ogni secondo quando siamo a maxSpeed. Per ottenere questo valore dobbiamo quindi fare una proporzione (RealAcceleration è abbreviato in $a$ e RealFade è abbreviato in $f$):
