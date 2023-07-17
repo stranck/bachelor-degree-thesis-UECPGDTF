@@ -9,12 +9,13 @@
 \section{Implementazione di nuove funzionalità alle fixtures}\label{sec:NewFeatures}
 Una volta creata una pipeline di rendering, sistemata la gerarchia dei componenti e fatta funzionare l'interpolazione è possibile finalmente aggiungere nuove features alle fixture virtuali. Come visto nel capitolo \ref{sec:RenderingPipeline}, per aggiungere una nuova feature bisogna:
 \begin{itemize}
-	\item Implementarla come codice HLSL
-	\item Implementarla come MaterialFunction
-	\item Aggiungerla al generatore di codice HLSL
-	\item Aggiungerla al generatore della pipeline per il rendering del materiale Light e Lens
+	\item Implementarla come codice HLSL.
+	\item Implementarla come MaterialFunction.
+	\item Aggiungerla al generatore di codice HLSL.
+	\item Aggiungerla al generatore della pipeline per il rendering del materiale Light e Lens.
+    \item Creare il FixtureComponent che la gestisce.
 \end{itemize}
-In questo capitolo non tratteremo mai il secondo punto poiché rappresenta la trasposizione in MaterialExpression del codice già visto in HLSL.
+In questo capitolo non tratteremo mai il secondo punto poiché consiste nella rimplementazione come MaterialExpression del codice già visto in HLSL.
 
 \subsection{Sagomatori}\label{subsec:5_shaper}
 \begin{figure}[H]
@@ -37,8 +38,9 @@ Il controllo della lama può avvenie in due modi:
     \label{fig:5_shaperDifferentModes}
 \end{figure}
 
-Effettuare il rendering di una funzionalità come lo shaper attraverso texture è davvero oneroso in termini computazionali. La scelta migliore è fare il rendering immaginandoci il framing system come delle equazioni matematiche. In generale, il rendering di un material avviene effettuando il rendering di varie coordinate UV, ovvero coordinate bidimensionali normalizzate tra [0, 1]. Possiamo immaginare il nostro codice come se fosse inserito in un ciclo for che si scorre \say{tutte} le x e le y comprese tra 0 ed 1. Il nostro codice però si occupa di renderizzare una sola UV alla volta. 
+Effettuare il rendering di una funzionalità come lo shaper attraverso texture che vengono roteate e spostate è davvero oneroso in termini computazionali. La scelta migliore è fare il rendering immaginandoci il framing system come delle equazioni matematiche. In generale, il rendering di un materiale avviene effettuando lo stesso calcolo con, in input, differenti coordinate UV, ovvero coordinate bidimensionali normalizzate tra [0, 1] che rappresentano un punto all'interno di una texture. Possiamo immaginare il nostro codice come se fosse inserito in un ciclo for che si scorre \say{tutte} le x e le y comprese tra 0 ed 1, codice che però si occupa di renderizzare una sola UV alla volta. 
 
+\clearpage %TODO CHECK IF IT'S STILL NEEDED
 \subsubsection{Idea come formula matematica}\label{subsec:5_1_ShaperMath}
 \begin{wrapfigure}{r}{0.45\textwidth}
     \centering
@@ -51,16 +53,18 @@ Se immaginiamo quindi una singola lama come una equazione matematica, possiamo r
 
 Per trovare l'equazione della retta quando facciamo il sample A+B, possiamo ricorrere alla formula per ottenere l'equazione di una retta passante per due punti:
 \[m = \frac{y_2 - y_1}{x_2 - x_1}\]
-Immaginiamo che i valori di $A$ e $B$ corrispondano alle loro y, che $A$ si trovi a coordinate $x = 0$ e che $B$ si trovi a $x = 1$. La formula sarà uguale a
+Immaginiamo che i valori di $A$ e $B$ corrispondano alle loro y, che $A$ si trovi a coordinate $x = 0$ (completamente a sinistra della texture) e che $B$ si trovi a $x = 1$ (completamente a destra della texture). La formula sarà uguale a:
 \[m = \frac{y_B - y_A}{x_B - x_A} = \frac{B - A}{1 - 0} = B - A\]
-In questo modo generiamo il coefficiente una retta che però ha sempre origine in $(0, 0)$. Nella realtà, ciò che abbiamo appena creato è una bandiare in cui solamente il valore B \say{funziona}. Per far \say{funzionare} anche il valore $A$, basta aggiungerlo come termine noto del'equazione. Come scritto sopra, per generare una flag bisogna controllare quando stiamo \say{sopra} questa equazione, rendendola quindi uguale a:
+In questo modo generiamo il coefficiente di una retta che però ha sempre origine in $(0, 0)$. Nella realtà, ciò che abbiamo appena creato è un sagomatore in cui solamente il valore B \say{funziona}. Per far \say{funzionare} anche il valore $A$, basta aggiungerlo come termine noto del'equazione.
+
+Come scritto sopra, per generare una flag bisogna controllare quando stiamo \say{sopra} questa equazione, rendendola quindi uguale a:
 \[y > x(B - A) + A\]
 \newline
 
-Per effettuare, invece, il sampling di una flag A+Rot, possiamo utilizzare $A$ come termine noto, e convertire $R$ da gradi alla relativa tangente trigonometrica in modo da avere direttamente il coefficiente della retta. Poiché vogliamo però inclinare questa retta usando come punto di rotazione il suo centro ($x = 0.5$) e non la sua origine ($x = 0$), dobbiamo modificare il termine noto in base al coefficiente: più il coefficiente zè elevato (e più la retta sarà quindi inclinata crescendo da sinistra verso destra) e più il termine noto dovrà calare. Considerando la sezione della retta compresa tra $x = [0, 1]$, la tangente di $R$, essendo direttamente uguale al coefficiente della retta, è anche uguale alla differenza tra il valore della $y$ quando la retta avrà $x = 0$ e quando avrà $x = 1$. Al centro di questa sezione (quando $x = 0.5$) la differenza con i due estremi sarà quindi uguale a $\frac{tan(R)}{2}$, ovvero esattamente il valore da sottrarre al termine noto per mantenere centrale il punto di rotazione della retta. La formula finale dell'equazione sarà quindi:
+Per effettuare, invece, il sampling di una flag A+Rot, possiamo utilizzare $A$ come termine noto, e convertire $R$ da gradi alla relativa tangente trigonometrica in modo da avere direttamente il coefficiente della retta. Poiché vogliamo però inclinare questa retta usando come punto di rotazione il suo centro ($x = 0.5$) e non la sua origine ($x = 0$), dobbiamo modificare il termine noto in base al coefficiente: più il coefficiente è elevato (e più la retta sarà quindi inclinata crescendo da sinistra verso destra) e più il termine noto dovrà calare. Considerando la sezione della retta compresa tra $x = [0, 1]$, la tangente di $R$, essendo direttamente uguale al coefficiente della retta, è anche uguale alla differenza tra il valore della $y$ quando la retta avrà $x = 0$ e quando avrà $x = 1$ (Visibile nella seconda immagine della figura \ref{fig:5_shaperDifferentModes}). Al centro di questa sezione (quando $x = 0.5$) la differenza con i due estremi sarà quindi uguale a $\frac{tan(R)}{2}$, ovvero esattamente il valore da sottrarre al termine noto per mantenere centrale il punto di rotazione della retta. La formula finale dell'equazione sarà quindi:
 \[y > \tan(R)x + (a - \frac{\tan(R)}{2})\]
 
-Come anche le ruote, anche il framing system deve implementare il frost. Piuttosto di applicare un filtro di blur al framing system già renderizzato, è preferibile in termini di peso computazionale implementare una sfocatura come formula matematica direttamente nel precedente rendering. L'idea è quella di utilizzare il valore del frost per definire la dimensione di una zona di sfumatura intorno alla retta. La prima operazione che viene effettuata è trovare la distanza della coordinata UV che stiamo renderizzando dalla retta. Questa operazione viene approssimata come la distanza assoluta ($d$) tra la $y$ della coordinata UV e la $y$ della retta per ogni $x$.
+Come le ruote, anche il framing system deve implementare il frost. Piuttosto di applicare un filtro di blur al framing system già renderizzato, è preferibile in termini di peso computazionale implementare una sfocatura come formula matematica direttamente nel precedente rendering. L'idea è quella di utilizzare il valore del frost per definire la dimensione di una zona di sfumatura intorno alla retta. La prima operazione che viene effettuata è trovare la distanza della coordinata UV che stiamo renderizzando dalla retta. Questa operazione viene approssimata come la distanza assoluta ($d$) tra la $y$ della coordinata UV e la $y$ della retta per ogni $x$.
 \[d = \abs{y - g(x)}\]
 Dove $g(x)$ è la funzione matematica scelta per effettuare il sample della flag.
 
@@ -76,7 +80,7 @@ Successivamente viene applicata un'altra funzione di remapping sulla distanza, i
 	\end{dcases}
 \]
 
-Poiché $d$ all'inizio viene calcolata come distanza assoluta dalla retta, con quanto definito fin'ora avremo una figura nera si dissolve andando verso il bianco quando siamo abbastanza vicini alla retta stessa. Dobbiamo invece fare in modo che la dissolvenza parta da bianco, diventi grigia in corrispondenza della retta, e nera dopo la stessa:
+Poiché $d$ all'inizio viene calcolata come distanza assoluta dalla retta, con quanto definito fin'ora avremo una figura nera che si dissolve andando verso il bianco quando siamo abbastanza vicini alla retta stessa. Dobbiamo invece fare in modo che la dissolvenza parta da bianco, diventi grigia in corrispondenza della retta, e nera dopo la stessa:
 \[fade(d, f) \coloneqq 
 	\begin{dcases}
 		\hfil	 \frac{remapDist(d, f)}{2} & \text{se } y > g(x)\\
@@ -92,18 +96,18 @@ Poiché $d$ all'inizio viene calcolata come distanza assoluta dalla retta, con q
     \caption{Funzione $sCurve(v)$}
     \label{fig:5_sCurve}
 \end{wrapfigure}
-Per un effetto ottico in cui è molto più semplice distinguere gradazioni differenti di colori scuri rispetto a gradazioni differenti di colori chiari, applicando il frost sembrerà che la sagomatura si sposti verso il basso, come in figura \ref{fig:5_shaperFixes}. Per compensare ciò, il risultato finale calcolato in precedenza, viene passato all'interno di un'ultima funzione di remapping: quello che vogliamo è creare una curva ad S (figura \ref{fig:5_sCurve}), in modo che la dissolvenza avvenga repentinamente al centro dei nostri valori piuttosto che linearmente da 0 ad 1.
+Per un effetto ottico in cui è molto più semplice distinguere gradazioni differenti di colori scuri rispetto a gradazioni differenti di colori chiari, applicando il frost sembrerà che il valore del sagomatore si sposti verso il basso, come in figura \ref{fig:5_shaperFixes}. Per compensare ciò, il risultato finale calcolato in precedenza, viene passato all'interno di un'ultima funzione di remapping: quello che vogliamo è creare una curva ad S (figura \ref{fig:5_sCurve}), in modo che la dissolvenza avvenga repentinamente al centro dei nostri valori piuttosto che linearmente da 0 ad 1.
 \[sCurve(v) \coloneqq \frac{1}{1 + (\frac{v}{1.125 - v})^{-4}}\]
 Dove i valori all'interno della frazione e l'esponenziale sono ottenuti via try ed error. Il valore $1.125$ serve per sbilanciare verso destra la curva, l'esponenziale per regolarne l'ampiezza.
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/newFeatures/shaperFixes.jpg}
-    \caption{Da destra verso sinistra: flag senza frost, flag con frost e passaggio dei valori lineare tra 0 ed 1, flag con frost e con la funzione $sCurve(v)$ applicata.}
+    \caption{Da destra verso sinistra: flag senza frost; flag con frost e passaggio dei valori lineare tra 0 ed 1; flag con frost e con la funzione $sCurve(v)$ applicata.}
     \label{fig:5_shaperFixes}
 \end{figure}
 
 
-Con il frost abilitato si verifica anche un altro problema: Quando una flag è completamente aperta oppure è completamente chiusa, vedremo comunque renderizzata la sfumatura del frost. Le fixture reali risolvono questo problema facendo muovere le bandiere oltre i limiti di apertura e chiusura. Creiamo quindi una funzione da anteporre a tutti i calcoli per questa feature, che modifichi il valore di $A$ e di $B$. 
+Con il frost abilitato si verifica anche un altro problema: Quando una flag è completamente aperta oppure è completamente chiusa, vedremo comunque renderizzata la sfumatura del frost, piuttosto che avere una figura completamente bianca o nera. Le fixture reali risolvono questo problema facendo muovere le bandiere oltre i limiti di apertura e chiusura. Creiamo quindi due funzioni da anteporre a tutti i calcoli per questa feature, che modifichino il valore di $A$ e di $B$. 
 \[frostLimit(f) \coloneqq 
 	\begin{dcases}
 		\hfil f & \text{se } f < 0.2\\
@@ -113,7 +117,7 @@ Con il frost abilitato si verifica anche un altro problema: Quando una flag è c
 \[remapABposition(x, f) \coloneqq x(2 * frostLimit(f) + 1) - frostLimit(f)\]
 % x = max(frost, 0.2)
 % res = (inp * (x * 2 + 1)) - x
-Questa funzione si occupa di rimappare il valore di $A$ o di $B$ all'interno di un range più piccolo, al variare del valore di frost. Questa rimapperà tutti i valori in un range via via più piccolo man mano che cresce il valore di frost. Viene anche imposto un valore minimo di frost, in modo da emulare l'effetto della lama che supera i limiti di apertura e chiusura anche quando è disattivato.
+Questa funzione si occupa di rimappare il valore di $A$ o di $B$ all'interno di un range via via più piccolo man mano che cresce il valore di frost. Viene anche imposto un valore minimo di frost, in modo da emulare l'effetto della lama che supera i limiti di apertura e chiusura anche quando è disattivato.
 \newline
 
 La direzione di ogni singola bandiera, così come la rotazione dell'intero framing system viene implementata come un'unica funzione \cite{UVrotation} che prende in input la somma dei due valori:
@@ -417,12 +421,11 @@ L'idea per il rendering di questa feature è di utilizzare delle formule simili 
 Per implementare l'iris, in cui abbiamo bisogno di stringere ed allargare questo cerchio, basterà controllare se la distanza è inferiore al nostro valore $i$.
 \[i > \sqrt{x^2 + y^2}\]
 Questa formula può essere approssimata rimuovendo interamente la radice quadrata, in modo da guadagnare un discreto incremento prestazionale. Visivamente l'iris si chiuderà in maniera esponenziale piuttosto che lineare, ma l'effetto è difficilmente notabile ad occhio nudo su un faro simulato. 
-
 Inoltre, le coordinate UV in input sono limitate solamente al range [0, 1]. È necessario portarle nel range [-1, 1] per poter usare la formula sopra. L'equazione finale sarà quindi
 \[i > (2x - 1)^2 + (2y - 1)^2\]
 \newline
 
-Per quanto riguarda il frost, si procede nella stessa maniera dei sagomatori. Si utilizza di nuovo la funzione $fade$ per ottenere l'effetto. La distanza ($d$) questa volta è calcolata come la differenza assoluta tra il valore dell'iris e la distanza della coordinata UV dal centro.
+Per quanto riguarda il frost, si procede nella stessa maniera dei sagomatori. Si utilizza di nuovo la funzione $fade$ per ottenere l'effetto della sfocatura. La distanza ($d$) questa volta è calcolata come la differenza assoluta tra il valore dell'iris e la distanza della coordinata UV dal centro.
 \[d = \abs{(2x - 1)^2 + (2y - 1)^2 - i}\]
 Insorge lo stesso problema riscontrato con i sagomatori: Quando l'iris è chiuso del tutto, avere il frost attivo fa comunque apparire della sfumatura al centro del rendering. Questo problema viene risolto aggiungendo un parametro ($m$) alla $remapFrost$, che moltiplica l'intero valore della funzione:
 \[remapFrost(f, m) \coloneqq m(f * 0.05 + 0.002)\]
@@ -576,13 +579,14 @@ switch (channel.RunningEffectTypeChannel) {
 \subsection{RenderingPipeline finale}\label{subsec:5_final}
 Abbiamo mostrato nei precedenti due capitoli come l'implementazione di nuove funzionalità sia, finalmente, una operazione molto semplice e chiara, in cui definire solamente i comportamenti specifici del singolo componente.
 
-Le seguenti immagini mostrano il risultato della generazione \say{finale} della pipeline di rendering, sia all'interno della MaterialFunction per quanto riguarda Light e Lens e sia all'interno del materiale Beam.
+Le seguenti immagini mostrano il risultato della generazione \say{finale} della pipeline di rendering, sia all'interno della MaterialFunction per quanto riguarda Light e Lens e sia all'interno della CustomExpression per quanto riguarda il materiale Beam.
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/newFeatures/renderPipeline.jpg}
     \caption{Rendering pipeline finale generata per i materiali Light e Lens}
     \label{fig:5_finalRenderingPipeline}
 \end{figure}
+\clearpage %TODO CHECK IF IT'S STILL NEEDED
 
 Mentre il codice HLSL generato per il rendering del materiale Beam è il seguente:
 \begin{lstlisting}
