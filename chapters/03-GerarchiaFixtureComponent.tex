@@ -113,7 +113,7 @@ UPROPERTY(VisibleDefaultsOnly, Category = "Internal")
 TArray<F__SingleAttributeData> attributeList;
 \end{lstlisting}
 L'inserimento di un nuovo attributeGroup viene fatto aggiungendo prima uno \lstinline{F__SingleAttributeData} dentro la rispettiva lista e successivamente aggiungendo nella mappa ogni elemento del gruppo associato all'indice del precedente inserimento nella lista.\newline
-Il costruttore di un \lstinline{FAttributesData} TODO CONTROLLARE SE LA CLASSE è GIUSTA chiamerà due metodi: \lstinline{initAttributeGroups()} e \lstinline{analizeDMXChannels()}. Il primo dei due metodi si occupa di preallocare tutti gli attributeGroups con dei dati vuoti:
+La funzione \lstinline{FixtureComponentBase::Setup()} chiamerà due metodi: \lstinline{initAttributeGroups()} e \lstinline{analizeDMXChannels()}. Il primo dei due metodi si occupa di preallocare tutti gli attributeGroups con dei dati vuoti:
 \begin{lstlisting}
 void initAttributeGroups(
         TArray<TSet<ECPGDTFAttributeType>> attributeGroups
