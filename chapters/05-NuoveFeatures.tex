@@ -24,7 +24,8 @@ In questo capitolo non tratteremo mai il secondo punto poiché consiste nella re
     \caption{Sagomatore in azione.}
     \label{fig:5_shaper}
 \end{figure}
-Il sistema dei sagomatori (detto anche \say{framing system} oppure \say{shaper}) consiste in un modulo composto da 4 lame (dette anche \say{bandiere}) che possono immettersi ed inclinasi singolarmente all'interno del fascio di luce. Inoltre, l'intero modulo può roteare, muovendo contemporaneamente la direzione in cui si immettono tutte le lame si immettono.
+Il sistema dei sagomatori (detto anche \say{framing system} oppure \say{shaper}) consiste in un modulo composto da 4 lame (dette anche \say{bandiere}) che possono immettersi ed inclinasi singolarmente all'interno del fascio di luce. Inoltre, l'intero modulo può roteare, muovendo contemporaneamente la direzione in cui si immettono tutte le lame si immettono. \newline
+\clearpage %TODO CHECK IF THIS IS STILL NEEDED
 Il controllo della lama può avvenire in due modi:
 \begin{itemize}
 	\item \textbf{A+B}: Controlliamo singolarmente l'immissione dei due punti estremi della lama ($A$ e $B$). Per avere la lama \say{dritta} Dovremmo avere $A = B$, per inclinarla da un lato basta avere uno dei due valori maggiori dell'altro.
@@ -33,7 +34,7 @@ Il controllo della lama può avvenire in due modi:
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/newFeatures/abVSarot.png}
-    \caption{A sinistra, la modalità di controllo \textit{A+B}. A destra, \textit{A+Rot}}
+    \caption{A sinistra, la modalità di controllo \textit{A+B}. A destra, \textit{A+Rot}.}
     \label{fig:5_shaperDifferentModes}
 \end{figure}
 
@@ -92,7 +93,7 @@ Poiché $d$ all'inizio viene calcolata come distanza assoluta dalla retta, con q
     \centering
     \captionsetup{justification=centering}
     \includegraphics[scale=0.35]{img/newFeatures/sCurve.png}
-    \caption{Funzione $sCurve(v)$}
+    \caption{Funzione $sCurve(v)$.}
     \label{fig:5_sCurve}
 \end{wrapfigure}
 Per un effetto ottico in cui è molto più semplice distinguere gradazioni differenti di colori scuri rispetto a gradazioni differenti di colori chiari, applicando il frost sembrerà che il valore del sagomatore si sposti verso il basso, come in figura \ref{fig:5_shaperFixes}. Per compensare ciò, il risultato finale calcolato in precedenza, viene passato all'interno di un'ultima funzione di remapping: quello che vogliamo è creare una curva ad S (figura \ref{fig:5_sCurve}), in modo che la dissolvenza avvenga repentinamente al centro dei nostri valori piuttosto che linearmente da 0 ad 1.
@@ -433,8 +434,9 @@ L'idea per il rendering di questa feature è di utilizzare delle formule simili 
 \[1 > \sqrt{x^2 + y^2}\]
 Per implementare l'iris, in cui abbiamo bisogno di stringere ed allargare questo cerchio, basterà controllare se la distanza è inferiore al nostro valore $i$.
 \[i > \sqrt{x^2 + y^2}\]
-Questa formula può essere approssimata rimuovendo interamente la radice quadrata, in modo da guadagnare un discreto incremento prestazionale. Visivamente l'iris si chiuderà in maniera esponenziale piuttosto che lineare, ma l'effetto è difficilmente notabile ad occhio nudo su un faro simulato. 
-Inoltre, le coordinate UV in input sono limitate solamente al range [0, 1]. È necessario portarle nel range [-1, 1] per poter usare la formula sopra. L'equazione finale sarà quindi
+Questa formula può essere approssimata rimuovendo interamente la radice quadrata, in modo da guadagnare un discreto incremento prestazionale. Visivamente l'iris si chiuderà in maniera esponenziale piuttosto che lineare, ma l'effetto è difficilmente notabile ad occhio nudo su un faro simulato. \newline
+Inoltre, le coordinate UV in input sono limitate solamente al range [0, 1]. È necessario portarle nel range [-1, 1] per poter usare la formula sopra. \newline
+L'equazione finale sarà quindi:
 \[i > (2x - 1)^2 + (2y - 1)^2\]
 \newline
 
@@ -533,7 +535,7 @@ currentNode->FunctionInputs[1].Input.Connect(0, previousParameter);
 currentNode->FunctionInputs[2].Input.Connect(0, frostParam);
 currentNode->FunctionInputs[3].Input.Connect(0, irisVal);
 \end{lstlisting}
-Infine viene spostata la MaterialFunction ed impostata come ultimo nodo generato
+Infine viene spostata la MaterialFunction ed impostata come ultimo nodo generato:
 \begin{lstlisting}
 meModulesMover->moveMaterialExpression(currentNode);
 previousParameter = currentNode;
@@ -573,7 +575,7 @@ switch (AttributeType) {
     default: break; // Not supported behaviour
 }
 \end{lstlisting}
-    Dove \lstinline{StartPulseEffect()} è una funzione che si prende in input il tipo di effetto (Pulse, PulseOpen, PulseClose) selezionato
+    Dove \lstinline{StartPulseEffect()} è una funzione che si prende in input il tipo di effetto (Pulse, PulseOpen, PulseClose) selezionato.
     \item \textbf{Aggiornare lo stato di un effetto}: Operazione che viene effettuata ad ogni tick dentro \lstinline{InterpolateComponent_BeamInternal}. Il nuovo stato dell'effetto viene anche usato per impostare un nuovo target dell'interpolazione.
     \begin{lstlisting}
 switch (channel.RunningEffectTypeChannel) {
@@ -596,10 +598,10 @@ Le seguenti immagini mostrano il risultato della generazione \say{finale} della 
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/newFeatures/renderPipeline.jpg}
-    \caption{Rendering pipeline finale generata per i materiali Light e Lens}
+    \caption{Rendering pipeline finale generata per i materiali Light e Lens.}
     \label{fig:5_finalRenderingPipeline}
 \end{figure}
-\clearpage %TODO CHECK IF IT'S STILL NEEDED
+%\clearpage %TODO CHECK IF IT'S STILL NEEDED
 
 Mentre il codice HLSL generato per il rendering del materiale Beam è il seguente:
 \begin{lstlisting}
@@ -632,7 +634,7 @@ outputSample = outputSample - 1 + pow(_fncs.sampleBladeARot(
 \begin{figure}[H]
     \centering
     \includegraphics[width=.445\linewidth]{img/newFeatures/BeamGeneratedFull.jpg}
-    \caption{Parametri per la CustomExpression per il rendering del materiale Beam}
+    \caption{Parametri per la CustomExpression per il rendering del materiale Beam.}
     \label{fig:5_finalBeamCEparams}
 \end{figure}
 

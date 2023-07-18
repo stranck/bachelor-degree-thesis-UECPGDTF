@@ -13,9 +13,9 @@ Lo scopo del progetto CPGDTF-Importer è quello di realizzare un Previsualizer o
 \newline
 CPGDTF-Importer è una fork di DMXEngine ed è, in particolare, un plugin per l'\say{editor} di UE, ovvero quella sezione che permette la creazione di mondi che, nel nostro caso, consisterebbero in palcoscenici virtuali. Il plugin lavorerà principalmente su 3 livelli:
 \begin{itemize}
-    \item Importazione di luci da un formato standard (GDTF \cite{GDTF}, spiegato nella sezione \ref{subsec:1_gdtf}), negli \say{Actor} di UE
-    \item Importazione di luci sotto forma di Attori all'interno di mondi e gestione delle loro impostazioni
-    \item Simulazione in real-time del comportamento delle fixture, il più possibile vicino alla realtà
+    \item Importazione di luci da un formato standard (GDTF \cite{GDTF}, spiegato nella sezione \ref{subsec:1_gdtf}), negli \say{Actor} di UE.
+    \item Importazione di luci sotto forma di Attori all'interno di mondi e gestione delle loro impostazioni.
+    \item Simulazione in real-time del comportamento delle fixture, il più possibile vicino alla realtà.
 \end{itemize}
 
 \subsection{Anatomia di una fixture}\label{subsec:1_fixtureAnatomy}
@@ -26,14 +26,14 @@ Le fixture possono essere classificabili come statiche o dinamiche. Le fixture d
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.4\linewidth]{img/introduzione/staticFixtureExample.jpg}
-    \caption{Esempio di fixture statica}
+    \caption{Esempio di fixture statica.}
     \label{fig:1_staticFixture}
 \end{figure}
-Le fixture dette invece \say{dinamiche} (chiamate anche \say{Teste mobili}) sono composte da più geometrie collegate tra loro da motori, in modo che quella responsabile di emettere il fascio di luce possa roteare, di solito su due assi. La geometria che viene poggiata per terra o appesa viene chiamata \say{base}, quella che emette luce \say{testa}
+Le fixture dette invece \say{dinamiche} (chiamate anche \say{Teste mobili}) sono composte da più geometrie collegate tra loro da motori, in modo che quella responsabile di emettere il fascio di luce possa roteare, di solito su due assi. La geometria che viene poggiata per terra o appesa viene chiamata \say{base}, quella che emette luce \say{testa}.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.75\linewidth]{img/introduzione/dynamicFixtureAnatomy.jpg}
-    \caption{Geometrie di un faro dinamico}
+    \caption{Geometrie di un faro dinamico.}
     \label{fig:1_DynamicFixture}
 \end{figure}
 
@@ -41,17 +41,17 @@ Le fixture dette invece \say{dinamiche} (chiamate anche \say{Teste mobili}) sono
 All'interno della testa, così come all'interno delle fixture statiche, è presente una sorgente luminosa che può essere sia bianca se il faro utilizza una sintesi colore sottrattiva, che colorata se il faro utilizza una sintesi colore additiva. La luce viene fatta passare attraverso vari moduli che ne alterano il colore, la messa a fuoco e la forma fino ad uscire dalla lente principale collocata ad una estremità della testa. Su praticamente tutti i fari in commercio non è possibile montare moduli custom o invertirli con quelli di un altro faro. \newline
 I moduli che verranno toccati in questo progetto sono i seguenti:
 \begin{itemize}
-    \item \textbf{Ruote colori e gobo}: Sono delle ruote in cui sono presenti degli slot contenenti dei filtri colori o delle forme. Hanno sempre uno slot libero in cui la luce può passare senza essere modificata e, girando, possono mettere in mezzo alla luce uno slot alla volta
+    \item \textbf{Ruote colori e gobo}: Sono delle ruote in cui sono presenti degli slot contenenti dei filtri colori o delle forme. Hanno sempre uno slot libero in cui la luce può passare senza essere modificata e, girando, possono mettere in mezzo alla luce uno slot alla volta.
     \item \textbf{Sintesi e correzione dei colori}: Nelle luci a sintesi additiva troviamo LED di colori differenti (RGB + Bianco, Ambra, Lime, UV, etc); nelle luci a sintesi sottrattiva invece abbiamo una luce bianca e delle flag CMY che vengono inserite davanti per regolarne il colore. Esistono anche dei filtri (sempre sottrattivi) per effettuare color correction.
     \item \textbf{Sagomatore}: È un sistema composto da quattro lame che possono essere inserite nel fascio di luce da direzioni differenti e possono essere inclinate, in modo da ritagliare in maniera precisa triangoli e quadrilateri per fare puntamenti.
-    \item \textbf{Iris}: Sono delle lame circolari che entrano nel fascio di luce da tutte le direzioni e si occupano di ridurne la dimensione. Il funzionamento è analogo al diaframma di una fotocamera
-    \item \textbf{Frost}: È un filtro atto a rendere soffusa la luce, smorzando i bordi di eventuali figure che si stanno proiettando
+    \item \textbf{Iris}: Sono delle lame circolari che entrano nel fascio di luce da tutte le direzioni e si occupano di ridurne la dimensione. Il funzionamento è analogo al diaframma di una fotocamera.
+    \item \textbf{Frost}: È un filtro atto a rendere soffusa la luce, smorzando i bordi di eventuali figure che si stanno proiettando.
 \end{itemize}
 I moduli solitamente funzionano sottrattivamente: per ogni modulo a partire dalla fonte luminosa, andiamo ad occluderla mano a mano per disegnare la forma che vogliamo ottenere.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\linewidth]{img/introduzione/fixtureModules.jpg}
-    \caption{Fotografia di una vecchia fixture aperta, in cui sono visibili in maniera chiara la sorgente luminosa ed i vari moduli che la compongono}
+    \caption{Fotografia di una vecchia fixture aperta, in cui sono visibili in maniera chiara la sorgente luminosa ed i vari moduli che la compongono.}
     \label{fig:1_FixtureModules}
 \end{figure}
 
@@ -113,39 +113,39 @@ Il nodo \lstinline{DMXMode} raccoglie tutte le modalità di funzionamento di un 
             \item \lstinline{Offset}: Offset del canale fisico rispetto all'indirizzo di partenza di una fixture.
             \item \lstinline{Highlight}: Valore dmx applicato al canale quando la fixture viene messa in modalità \say{Highlight}, ovvero una modalità usata per evidenziare e trovare una determinato faro tra i tanti montati su un palcoscenico.
             \item \lstinline{Geometry}: Nome della geometria controllata da questo canale.
-            \item \lstinline{InitialFunction}: Nome della \lstinline{ChannelFunction} da eseguire come valore default del canale, espresso nella forma \lstinline{NomeGeometria_AttributoLogicalChannel.AttributoChannelFunction.NomeChannelFunction}
+            \item \lstinline{InitialFunction}: Nome della \lstinline{ChannelFunction} da eseguire come valore default del canale, espresso nella forma: \lstinline{NomeGeometria_AttributoLogicalChannel.AttributoChannelFunction.NomeChannelFunction}
         \end{itemize}
     \item I figli di un DMXChannel sono i nodi \lstinline{LogicalChannel}. Su alcune fixture un canale dmx fisico può controllare funzionalità differenti, per questo motivo esiste una distinzione tra DMXChannel (Ovvero il canale fisico) e LogicalChannel. I LogicalChannel all'interno dello stesso DMXChannel sono mutualmente esclusivi. Gli attributi principali di un LogicalChannel sono: \begin{itemize}
             \item \lstinline{Snap}: Se lo snap è abilitato vuol dire che questo attributo non deve essere interpolato quando andiamo a fare la preview del faro, ma deve saltare direttamente a quel valore, poiché, fisicamente su una fixture vera, la feature non è controllata da un motore. Un esempio è il controllo della luminosità di un LED, che è istantaneo.
             \item \lstinline{Attribute}: Feature controllata da questo LogicalChannel.
         \end{itemize}
     \item Sotto i LogicalChannel abbiamo i \lstinline{ChannelFunction}, che rappresentano una funzionalità specifica dell'attributo indicato nel LogicalChannel padre. Ad esempio, l'attributo del padre potrebbe essere \lstinline{Shutter} e come figli potrebbe avere due ChannelFunction di tipo \lstinline{StrobeRandom} e \lstinline{LinearStrobe}: Entrambi i ChannelFunction fanno uso dello stesso attributo fisico (lo shutter), ma di fatto sono due funzionalità differenti. Gli attributi principali di una ChannelFunction sono: \begin{itemize}
-            \item \lstinline{Name}: Nome della ChannelFunction
+            \item \lstinline{Name}: Nome della ChannelFunction.
             \item \lstinline{Attribute}: Feature specifica di questo ChannelFunction, che riguarda comunque la feature generale specificata nel nodo LogicalChannel padre.
             \item \lstinline{DMXFrom}: Valore DMX in cui questa ChannelFunction inizia nel DMXChannel. Non esiste un attributo DMXTo indicato esplicitamente in GDTF; viene calcolato utilizzando il valore DMXFrom della ChannelFunction successiva, oppure, se è l'ultima ChannelFunction nella lista, il valore massimo che può assumere il DMXChannel.
             \item \lstinline{Default}: Valore default quando questa ChannelFunction viene richiamata.
             \item \lstinline{PhysicalFrom}: Valore fisico di partenza che questo attributo può raggiungere in un faro vero. Esempio: se l'attributo è \lstinline{Zoom}, corrisponde all'apertura che il fascio di luce avrà quando il valore DMX è uguale a DMXFrom.
             \item \lstinline{PhysicalTo}: Valore fisico di arrivo che questo attributo può raggiungere in un faro vero. Esempio: se l'attributo è \lstinline{Zoom}, corrisponde all'apertura che il fascio di luce avrà quando il valore DMX è uguale a DMXTo.
-            \item \lstinline{RealFade}: Tempo in secondi che questa feature impiega su un faro vero per passare da PhysicalFrom a PhysicalTo, usato per l'interpolazione
-            \item \lstinline{RealAcceleration}: Tempo in secondi che questa feature impiega su un faro vero per passare dall'essere ferma a raggiungere la velocità di movimento massima, usato per l'interpolazione
-            \item \lstinline{Wheel}: Opzionale, nome della ruota a cui questo attributo fa riferimento
+            \item \lstinline{RealFade}: Tempo in secondi che questa feature impiega su un faro vero per passare da PhysicalFrom a PhysicalTo, usato per l'interpolazione.
+            \item \lstinline{RealAcceleration}: Tempo in secondi che questa feature impiega su un faro vero per passare dall'essere ferma a raggiungere la velocità di movimento massima, usato per l'interpolazione.
+            \item \lstinline{Wheel}: Opzionale, nome della ruota a cui questo attributo fa riferimento.
         \end{itemize}
     \item Infine abbiamo i \lstinline{ChannelSet} che rappresentano delle macro o valori precisi che una ChannelFunction può assumere. Gli attributi di un ChannelSet sono: \begin{itemize}
-            \item \lstinline{Name}: Nome/DisplayName del channel set
+            \item \lstinline{Name}: Nome/DisplayName del channel set.
             \item \lstinline{DMXFrom}: Valore DMX in cui questo ChannelSet inizia nel DMXChannel. Analogamente alle ChannelFunction, non esiste un attributo DMXTo, che verrà calcolato allo stesso modo loro, eccezion fatta che come valore massimo non si userà quello del DMXChannel, bensì quello della ChannelFunction. 
             \item \lstinline{PhysicalFrom}: Funzionamento analogo alle ChannelFunction. Se non viene specificato, può essere calcolato come proporzione:
             \[PysicalFrom_{CS} : PhysicalRange_{CF} = DMXFrom_{CS} : DMXRange_{CS}\]
-            Dove $PhysicalRange$ e $DMXRange$ si ottengono calcolando il rispettivo valore To meno il rispettivo valore From
+            Dove $PhysicalRange$ e $DMXRange$ si ottengono calcolando il rispettivo valore To meno il rispettivo valore From.
             \item \lstinline{PhysicalTo}: Funzionamento analogo alle ChannelFunction. Se non viene specificato, può essere calcolato come proporzione:
             \[PysicalTo_{CS} : PhysicalRange_{CF} = DMXTo_{CS} : DMXRange_{CS}\]
-            Dove $PhysicalRange$ e $DMXRange$ si ottengono calcolando il rispettivo valore To meno il rispettivo valore From
-            \item \lstinline{WheelSlotIndex}: Se la ChannelFunction padre è collegata ad una ruota, è l'identificativo dello slot nella ruota che dovrà essere attivo quando il valore del canale DMX fisico si trova nel range di questo ChannelSet 
+            Dove $PhysicalRange$ e $DMXRange$ si ottengono calcolando il rispettivo valore To meno il rispettivo valore From.
+            \item \lstinline{WheelSlotIndex}: Se la ChannelFunction padre è collegata ad una ruota, è l'identificativo dello slot nella ruota che dovrà essere attivo quando il valore del canale DMX fisico si trova nel range di questo ChannelSet.
         \end{itemize}
 \end{itemize}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/introduzione/GDTFdmxExample.jpg}
-    \caption{Esempio di nodi rappresentanti la descrizione di un canale DMX in un file GDTF}
+    \caption{Esempio di nodi rappresentanti la descrizione di un canale DMX in un file GDTF.}
     \label{fig:1_gdtfDmxExample}
 \end{figure}
 
@@ -173,10 +173,11 @@ Dopo aver speso un primo periodo a prendere conoscenza con la codebase mi sono r
 
 Solamente dopo aver risolto questi grossi problemi strutturali nel codice (e dopo aver fatto funzionare correttamente l'interpolazione) ho potuto dedicarmi all'implementazione effettiva di nuove features. 
 
+\clearpage %TODO CHECK IF THIS IS STILL NEEDED
 \subsection{Struttura della tesi}\label{subsec:1_thesisInfo}
 L'elaborato è articolato come segue. Ogni capitolo rappresenta una milestone del progetto:
 \begin{itemize}
-    \item \textbf{Capitolo \ref{sec:Intro}, Introduzione} %We like recurion
+    \item \textbf{Capitolo \ref{sec:Intro}, Introduzione}. %We like recurion
     \item \textbf{Capitolo \ref{sec:RenderingPipeline}, Design di una pipeline di rendering}: In questo capitolo verrà analizzata l'implementazione originale con la quale veniva effettuato il rendering dell'illuminazione di ogni singola fixture. Verranno evidenziati i problemi e mostrate idee per risolverli. Infine verrà anche esposta l'implementazione per la generazione di una pipeline vera e propria per il rendering dei vari moduli di una luce. 
     \item \textbf{Capitolo \ref{sec:FixtureComponentHierachy}, Redesign gerarchia dei FixtureComponent}: Tratta l'analisi della vecchia gerarchia dei FixtureComponent, ovvero quelle classi responsabili di controllare ogni singola feature che compone una fixture. Vengono proposte nuove idee di implementazione e mostrati quali dati e metodi servirebbe mettere a disposizione alle classi che implementano la singola feature.
     \item \textbf{Capitolo \ref{sec:Interpolation}, Reimplementazione dell'interpolazione}: All'interno di questo capitolo vengono velocemente esposti i problemi dell'attuale classe che controlla l'interpolazione, ovvero il controllo del movimento dei motori virtuali. Successivamente viene mostrata la nuova implementazione della classe, esponendo i vari problemi che si sono verificati durante la scrittura del codice e come sono stati risolti.
