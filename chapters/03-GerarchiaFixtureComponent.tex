@@ -57,8 +57,8 @@ void UCPGDTFShutterFixtureComponent::PushDMXRawValues(
 	if (DMXValuePtr) this->ApplyEffectToBeam(*DMXValuePtr);
 }
 \end{lstlisting}
-    \item \textbf{Virtualizzazione delle funzioni quasi assente}: Molte funzioni sono presenti su vari componenti della gerarchia, ma non sono mai dichiarate su una classe padre, nonostante facciano la stessa cosa ed è giusto che siano esposte agli altri componenti. Un esempio sono \lstinline{ApplyEffectToBeam()} e \lstinline{SetTargetValue()} che sono implementate da molti componenti, ma mai definiti in un padre (E sono anche un altro esempio di codice completamente duplicato) 
-    \item \textbf{Elementi superflui nella gerarchia}: Elementi come Simple o Multiple AttributeBeamFixtureComponent sono essenzialmente vuoti e non contribuiscono ad arricchire le sottoclassi, né ne aumentano la generalizzabilità
+    \item \textbf{Virtualizzazione delle funzioni quasi assente}: Molte funzioni sono presenti su vari componenti della gerarchia, ma non sono mai dichiarate su una classe padre, nonostante facciano la stessa cosa ed è giusto che siano esposte agli altri componenti. Un esempio sono \lstinline{ApplyEffectToBeam()} e \lstinline{SetTargetValue()} che sono implementate da molti componenti, ma mai definiti in un padre (E sono anche un altro esempio di codice completamente duplicato) .
+    \item \textbf{Elementi superflui nella gerarchia}: Elementi come Simple o Multiple AttributeBeamFixtureComponent sono essenzialmente vuoti e non contribuiscono ad arricchire le sottoclassi, né ne aumentano la generalizzabilità.
     \item \textbf{Nessuna centralizzazione della gestione delle features}: La gerarchia viene definita attraverso delle classi che di fatto sono quasi delle interfacce. Questo comporta che la gestione di tutto che ci sta attorno ad una feature è a carico dei singoli componenti finali. Ogni volta che si implementa un nuovo componente si è quindi obbligati a reimplementare tutta la logica che sta dietro la gestione degli stessi.
     \item \textbf{Bassa chiarezza su cosa deve essere implementato nella singola feature}: Visti i punti precedenti, se si vuole implementare un nuovo componente (senza avere conoscenze pregresse) si rimane interdetti poiché non si capisce esattamente cosa bisogna fare. Non è presente una lista ben definita di funzionalità in cui il singolo componente deve specializzarsi.
     \item \textbf{Errori veri e propri nel calcolo di valori}: In generale, sono state riscontrate grosse mancanze con il calcolo di valori utili ad un componente. Ad esempio, il valore di minimo e massimo di una ChannelFunction viene calcolato solamente su quella corrente, piuttosto di avere un valore globale per tutti gli attributi dello stesso tipo. Oppure, i valori di fade e accelerazione per l'interpolazione non vengono proprio calcolati né presi dal GDTF originale.
@@ -80,7 +80,7 @@ Idealmente un componente dovrebbe definire pochi comportamenti specializzanti:
     \item \lstinline{SetValueNoInterp_BeamInternal()} per definire come inviare i dati elaborati dal componente, verso il materiale. A differenza di prima questa funzione dovrà supportare più feature differenti, invece di avere un SetValueNoInterp per ogni feature differente.
 \end{itemize}
 
-Tutto il resto invece dovrebbe essere appannaggio \say{automatico} dei padri, principalmente di \lstinline{FixtureComponentBase}\newline
+Tutto il resto invece dovrebbe essere appannaggio \say{automatico} dei padri, principalmente di \lstinline{FixtureComponentBase}. \newline
 
 Nella nuova implementazione ogni FixtureComponent ha a disposizione 3 strutture dati principali: 
 \begin{itemize}
@@ -216,7 +216,7 @@ Infine, viene modificata la funzione \lstinline{InterpolateComponent()}. Al post
 \subsubsection{Ottenimento valori di default per le varie funzionalità di una fixture}\label{subsec:3_1_defaultValues}
 Per l'ottenimento dei valori default dei vari componenti di una luce è stato purtroppo impossibile ottenere dati direttamente dalle fixture reali. Non esiste un modo attualmente implementato dalle fixture Claypaky per ottenere la posizione dei vari motori, anche se ci si collega direttamente in seriale alla scheda di controllo del faro. La soluzione quindi adottata è stata quindi quella di filmare a rallentatore un faro ed inserire il video in un software di editing, in modo da contare con precisione il numero dei frame video che il faro impiega ad accelerare o decelerare ed il numero di frame che impiega a svolgere un movimento completo. Tramite questo metodo otteniamo una precisione pari a $\frac{1}{FPS}$, dove, sui telefoni moderni, FPS è uguale a 480 o addirittura 960.\newline
 
-Successivamente è stata scritta una utility molto semplice in python per convertire automaticamente un numero espresso in \lstinline{secondo.frame} (Che ci viene dato direttamente dal programma di editing) in secondi nel mondo reale.
+Successivamente è stata scritta una utility molto semplice in python per convertire automaticamente un numero espresso in \lstinline{secondo.frame} (Che ci viene dato direttamente dal programma di editing) in secondi nel mondo reale. \newline
 Innanzitutto vengono specificato gli FPS del rallenty e gli FPS del video.
 \lstset{language=python}
 \begin{lstlisting}
@@ -235,7 +235,7 @@ realFadeFrames = convertFrames(sys.argv[1])
 realAccelFrames = convertFrames(sys.argv[2])
 \end{lstlisting}
 
-Infine ci calcoliamo quanti secondi dura un frame del video in slowmotion ed otteniamo i valori finali moltiplicando il numero di frame per la durata di ciascuno
+Infine ci calcoliamo quanti secondi dura un frame del video in slowmotion ed otteniamo i valori finali moltiplicando il numero di frame per la durata di ciascuno.
 \begin{lstlisting}
 #Calcoliamo quanto dura un frame
 frameTime = 1 / SLOWMOTION_FPS

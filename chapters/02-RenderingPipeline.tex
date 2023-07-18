@@ -16,7 +16,7 @@ Questo materiale si occupa del rendering del fascio di luce visibile in aria, ch
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/renderingPipeline/BeamMaterialFull.jpg}
-    \caption{Grafo del materiale Beam}
+    \caption{Grafo del materiale Beam.}
     \label{fig:2_beamGraphFull}
 \end{figure}
 Per renderizzare un beam, viene utilizzato l'algoritmo \say{Beam RayMarching}. In generale, gli algoritmi di RayMarching \cite{RayMarching} sono degli algoritmi per effettuare il sample di scene tridimensionali che vengono descritte in termini di \textit{SDF}, invece che esplicitamente con geometrie. SDF - \textit{Signed Distance Functions} - sono delle funzioni che ritornano la distanza minima tra un punto ed una superficie e che ci indicano, attraverso il segno, se tale punto si trovi all'interno o all'esterno della superficie stessa.\newline
@@ -25,7 +25,7 @@ Per renderizzare un beam, viene utilizzato l'algoritmo \say{Beam RayMarching}. I
     \centering
     \captionsetup{justification=centering}
     \includegraphics[scale=0.65]{img/renderingPipeline/spheretrace.jpg}
-    \caption{Funzionamento dell'algoritmo di RayMarching}
+    \caption{Funzionamento dell'algoritmo di RayMarching.}
     \label{fig:2_raymarchWikipedia} %taken from https://jamie-wong.com/2016/07/15/ray-marching-signed-distance-functions/
 \end{wrapfigure}
 Il RayMarching funziona lanciando, a partire dalla camera, un fotone per ogni pixel che deve renderizzare. Questo fotone, nell'implementazione standard, viene mosso iterativamente per un numero di step, fino a colpire un oggetto oppure fino alla fine delle iterazioni. La distanza percorsa ad ogni iterazione è uguale all'SDF tra la posizione del fotone all'iterazione precedente e la superficie della scena, in modo da essere sicuri di non registrare troppo tardi eventuali intersezioni.\newline
@@ -114,7 +114,7 @@ ColorSample = ColorSample * DMXColor;
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/renderingPipeline/Wheel_Rotating_Gobo_Wheel.jpg}
-    \caption{Esempio della texture di una ruota gobo. Il motivo per cui viene modificata la coordinata X delle UV è perché la texture di una ruota generica è formata dai singoli slot posti orizzontalmente l'uno accanto all'altro. Modificando la coordinata X si fa scorrere una "finestra" di output quadrata lungo la texture}
+    \caption{Esempio della texture di una ruota gobo. Il motivo per cui viene modificata la coordinata X delle UV è perché la texture di una ruota generica è formata dai singoli slot posti orizzontalmente l'uno accanto all'altro. Modificando la coordinata X si fa scorrere una "finestra" di output quadrata lungo la texture.}
     \label{fig:2_goboWheel}
 \end{figure}
 Infine viene calcolato il valore di decadenza della luce e vengono combinati insieme tutti i valori calcolati fin'ora.
@@ -132,25 +132,25 @@ cumul +=
 Nell'implementazione attuale non esiste la possibilità di avere più ruote dello stesso tipo: lo evinciamo semplicemente dal fatto che gli input della CustomExpression sono solo uno per tipo di ruota. Inoltre notiamo come nel codice il sampling della ruota colore e di quella gobo viene essenzialmente fatto allo stesso modo, eppure non è stata creata una funzione generalizzata per farlo, bensì due codici specifici per ciascuna. 
 
 \subsubsection{Light}\label{subsec:2_1_light}
-Questo materiale si occupa della proiezione della luce su altri materiali
+Questo materiale si occupa della proiezione della luce su altri materiali.
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/renderingPipeline/LightMaterialFull.jpg}
-    \caption{Grafo del materiale Light}
+    \caption{Grafo del materiale Light.}
     \label{fig:2_lightGraphFull}
 \end{figure}
 Come possiamo notare è molto basilare, abbiamo due MaterialFunctionCall che si occupano dell'elaborazione del dimmer e della strobo, che vengono moltiplicati con il risultato di una terza MaterialFunctionCall chiamata \say{DMXGobo}. Aprendo quest'ultima possiamo notare un grafo più interessante, che è quello con cui vengono renderizzate le ruote.
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/renderingPipeline/DMXGoboMFFull.jpg}
-    \caption{Grafo della Material Function DMXGobo}
+    \caption{Grafo della Material Function DMXGobo.}
     \label{fig:2_dmxGoboGraphFull}
 \end{figure}
 A sinistra riceviamo in input le coordinate UV che la camera sta renderizzando in quel momento. Successivamente passiamo in due blocchi, che svolgono l'operazione:
 \[x_{UV} * \frac{1}{GoboNumMask} + \frac{GoboIndex}{GoboNumMask}\]
 Notiamo come questo calcolo sia lo stesso utilizzato per fare il sample delle gobo dentro il materiale Beam (\ref{subsec:2_1_beam}). Infatti il risultato viene poi utilizzato come input per due nodi Texture (\say{DMX Gobo Disk} e \say{DMX Gobo Disk Frosted}, uno contiene la texture originale, l'altro una versione sfocata della stessa texture) per effettuare il sample della ruota gobo. Successivamente i due sample vengono interpolati in base al valore del frost (sfocatura) ed infine viene restituito in output.
 
-Da notare come il nome dei parametri all'interno di questa MaterialFunction facciano riferimento solo alle ruote gobo, e come all'interno del Materiale originale sia presente solamente una MaterialFunctionCall a DMXGobo. Questo implica l'impossibilità di renderizzare sia ruote differenti da quelle gobo e l'impossibilità di avere più ruote gobo nella stessa fixture
+Da notare come il nome dei parametri all'interno di questa MaterialFunction facciano riferimento solo alle ruote gobo, e come all'interno del Materiale originale sia presente solamente una MaterialFunctionCall a DMXGobo. Questo implica l'impossibilità di renderizzare sia ruote differenti da quelle gobo e l'impossibilità di avere più ruote gobo nella stessa fixture.
 
 \subsubsection{Lens}\label{subsec:2_1_lens}
 \begin{figure}[H]
@@ -158,11 +158,11 @@ Da notare come il nome dei parametri all'interno di questa MaterialFunction facc
     \includegraphics[width=0.5\linewidth]{img/renderingPipeline/Lens.jpg}
     \label{fig:2_Lens}
 \end{figure}
-Questo materiale si occupa di applicare l'effetto che stiamo renderizzando sulle lenti (virtuali) di un faro
+Questo materiale si occupa di applicare l'effetto che stiamo renderizzando sulle lenti (virtuali) di un faro.
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/renderingPipeline/LensMaterialFull.jpg}
-    \caption{Grafo del materiale Lens}
+    \caption{Grafo del materiale Lens.}
     \label{fig:2_lensGraphFull}
 \end{figure}
 Il grafo è in realtà molto simile a quello visto precedentemente per il materiale Light (\ref{subsec:2_1_light}). Si aggiungono solamente dei blocchi di nodi in più (\say{Lens}, \say{Lamp}) che servono a rendere più fotorealistica la resa delle lenti. Anche in questo materiale è presente una MaterialFunctionCall a DMXGobo, ma notiamo come ce n'è un'altra a DMXColorWheel la quale implementazione è identica alla prima, creando così \say{codice} duplicato.
@@ -185,7 +185,7 @@ Come spiegato nella sezione \ref{subsec:2_1_beam}, il rendering del Beam di luce
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/renderingPipeline/meCustomNoFunc.jpg}
-    \caption{Compilare una funzione dentro una CustomExpression ci darà errore}
+    \caption{Compilare una funzione dentro una CustomExpression ci darà errore.}
     \label{fig:2_funcCompileError}
 \end{figure}
 
@@ -212,7 +212,7 @@ Si sta preferendo mantenere una doppia implementazione dei vari moduli (Sia come
 
 \lstset{language=UEcpp}
 \subsection{Generazione dinamica del codice e delle MaterialExpression}\label{subsec:2_codeGeneration}
-Non tutte fixture hanno gli stessi moduli. Alcune, ad esempio, potrebbero avere il sagomatore, mentre altre no. Inoltre alcune luci possono avere un numero variabile di una stessa feature. Per far fronte a queste differenze, al posto di usare un unico materiale in ogni tipo di fixture, si è scelto di generare programmaticamente una pipeline di rendering per ogni tipo di faro importato. Purtroppo, per poter usare una MaterialFunction (E quindi una pipeline) specifica per ogni attore (rappresentante un tipo di fixture) che viene creato, bisogna che ciascuno abbia anche i propri materiali univoci. Ad ogni import viene quindi prima generata la pipeline, successivamente vengono clonati i materiali Light, Beam e Lens, poi viene inserita una MaterialFunctionCall alla pipeline (o inserito il codice HLSL) nei materiali, ed infine vengono assegnati questi nuovi materiali all'attore. 
+Non tutte fixture hanno gli stessi moduli. Alcune, ad esempio, potrebbero avere il sagomatore, mentre altre no. Inoltre alcune luci possono avere un numero variabile di una stessa feature. Per far fronte a queste differenze, al posto di usare un unico materiale in ogni tipo di fixture, si è scelto di generare programmaticamente una pipeline di rendering per ogni tipo di faro importato. Purtroppo, per poter usare una MaterialFunction (E quindi una pipeline) specifica per ogni attore (rappresentante un tipo di fixture) che viene creato, bisogna che ciascuno abbia anche i propri materiali univoci. Ad ogni import viene quindi prima generata la pipeline, successivamente vengono clonati i materiali Light, Beam e Lens, poi viene inserita una MaterialFunctionCall alla pipeline (o inserito il codice HLSL) nei materiali, ed infine vengono assegnati questi nuovi materiali all'attore. \newline
 Poiché modalità differenti di una fixture possono avere feature (ed in realtà anche geometrie) differenti, questa operazione va fatta per ciascuna modalità e dovranno essere salvate tutte le pipeline e tutti i materiali separatamente. \newline
 
 Viene quindi creata una classe \lstinline{CPGDTFRenderPipelineBuilder} il quale costruttore si occuperà di analizzare i componenti in input per individuare quali e quante features dovranno essere inserite all'interno della pipeline.
@@ -305,7 +305,7 @@ bool cloneMaterialInterface(
     \centering
     \captionsetup{justification=centering}
     \includegraphics[scale=0.65]{img/renderingPipeline/descLink.jpg}
-    \caption{Esempio di descrizione dentro il nodo che si collega all'out}
+    \caption{Esempio di descrizione dentro il nodo che si collega all'out.}
     \label{fig:2_searchDesc}
 \end{wrapfigure}
 Unreal Engine permette di impostare una descrizione o commento per ogni nodo. Questa descrizione verrà usata per trovare i nodi da collegare agli output dei materiali o da collegare alla pipeline di rendering, poiché ci serve un modo deterministico per ottenere sempre i nodi corretti. Viene quindi inserito un identificativo nella descrizione di ogni nodo che deve essere collegato in output o alla pipeline e verrà creata una funzione templatizzata per ricercare un nodo di un determinato tipo con un determinato identificativo all'interno di un materiale:
@@ -328,7 +328,7 @@ CheckType* searchMaterialExpressionByDesc(
 }
 \end{lstlisting}
 
-Ogni volta che viene creato un nuovo nodo, esso viene inserito a coordinate (0, 0) all'interno del grafo del materiale. Andare ad effettuare del debugging su un materiale in cui sono stati generati tante MaterialExpression può essere pesante per via del disordine che si crea nell'avere tutti i nodi l'uno sull'altro. È nata quindi la necessità di creare una nuova classe di helper specializzata nel posizionare automaticamente i nuovi nodi ad intervalli regolari l'uno dall'altro. 
+Ogni volta che viene creato un nuovo nodo, esso viene inserito a coordinate (0, 0) all'interno del grafo del materiale. Andare ad effettuare del debugging su un materiale in cui sono stati generati tante MaterialExpression può essere pesante per via del disordine che si crea nell'avere tutti i nodi l'uno sull'altro. È nata quindi la necessità di creare una nuova classe di helper specializzata nel posizionare automaticamente i nuovi nodi ad intervalli regolari l'uno dall'altro. \newline
 Questa classe ha bisogno di sapere l'asse sul quale ci stiamo muovendo, le coordinate dell'ultima MaterialExpression spostata, ed lo spiazzamento tra l'una e l'altra. Il costruttore è molto semplice, si prende queste 4 informazioni e se le salva. Il metodo \lstinline{moveMaterialExpression()} (Responsabile di muovere i nodi) banalmente imposterà l'x e la y della MaterialExpression in input a quelli correnti, sceglierà una coordinata in base all'asse che stiamo percorrendo e la aggiornerà dell'offset prestabilito (o uno specificato alla funzione).
 \clearpage % TODO check if we really need this
 \begin{lstlisting}
@@ -373,14 +373,14 @@ Nelle successive sezioni andremo a vedere come viene effettivamente generata e l
 \subsubsection{Custom Material (per Beam)}\label{subsec:2_3_CM}
 Come accennato sopra, generare un nuovo parametro per la pipeline del beam consiste in una serie di operazioni ripetitive:
 \begin{itemize}
-    \item Generare un nuovo MaterialExpressionParameter
-    \item Impostargli informazioni quali nome, gruppo di parametri, priorità, valore default
-    \item Aggiungerlo alla lista delle MaterialExpression del materiale a cui lo stiamo aggiungendo
-    \item Generare un nuovo input per le CustomExpression
-    \item Dargli un nome (Che verrà utilizzato anche come nome della variabile nel codice HLSL)
-    \item Connettergli la MaterialExpressionParameter
-    \item Aggiungere l'input alla custom expression che contiene il codice HLSL
-    \item Riposizionare l'input usando un oggetto \lstinline{MeBlocksMover}
+    \item Generare un nuovo MaterialExpressionParameter.
+    \item Impostargli informazioni quali nome, gruppo di parametri, priorità, valore default.
+    \item Aggiungerlo alla lista delle MaterialExpression del materiale a cui lo stiamo aggiungendo.
+    \item Generare un nuovo input per le CustomExpression.
+    \item Dargli un nome (Che verrà utilizzato anche come nome della variabile nel codice HLSL).
+    \item Connettergli la MaterialExpressionParameter.
+    \item Aggiungere l'input alla custom expression che contiene il codice HLSL.
+    \item Riposizionare l'input usando un oggetto \lstinline{MeBlocksMover}.
 \end{itemize}
 Il codice che si occupa di queste operazioni è il seguente:
 \begin{lstlisting}
@@ -482,7 +482,7 @@ FString generateHLSLCode() {
 }
 \end{lstlisting}
 
-Attualmente, solamente le ruote colori e gobo sono implementate, ma in vista di eventuali aggiunte future scorriamo lo stesso l'enum di tutti i tipi possibili di ruote. Per ciascun tipo, andiamo a generare un numero di ruote pari a quanti componenti di quel tipo esistono nella fixture. Se in una luce non è presente alcuna ruota gobo, andiamo comunque ad aggiungere un sample di una ruota contenente un singolo slot aperto, in modo da applicare comunque una texture circolare realistica al beam
+Attualmente, solamente le ruote colori e gobo sono implementate, ma in vista di eventuali aggiunte future scorriamo lo stesso l'enum di tutti i tipi possibili di ruote. Per ciascun tipo, andiamo a generare un numero di ruote pari a quanti componenti di quel tipo esistono nella fixture. Se in una luce non è presente alcuna ruota gobo, andiamo comunque ad aggiungere un sample di una ruota contenente un singolo slot aperto, in modo da applicare comunque una texture circolare realistica al beam.
 \begin{lstlisting}
 bool foundGobo = false;
 
@@ -557,8 +557,7 @@ if (meEmissiveColor)
     dstMaterialData->EmissiveColor.Connect(0, meEmissiveColor);
 \end{lstlisting}
 
-Per quanto riguarda invece la seconda lambda, abbiamo un codice un po' più elaborato, poiché si occupa anche di generare gli input per la CustomExpression.
-
+Per quanto riguarda invece la seconda lambda, abbiamo un codice un po' più elaborato, poiché si occupa anche di generare gli input per la CustomExpression. \newline
 Inizialmente andiamo a cercare la CustomExpression. Se esiste, generiamo il codice HLSL e glielo impostiamo. Successivamente creiamo l'input per il valore di frost e lo piazziamo dentro il materiale usando un \lstinline{MeBlocksMover}.
 \begin{lstlisting}
 UMaterialExpressionCustom* meCustom =
@@ -785,16 +784,15 @@ previousParameter = currentNode;
     \centering
     \captionsetup{justification=centering}
     \includegraphics[scale=0.26]{img/renderingPipeline/SubtractiveCalcFull.jpg}
-    \caption{MaterialFunction SubtractiveCalc}
+    \caption{MaterialFunction SubtractiveCalc.}
     \label{fig:2_SubtractiveCalc}
 \end{wrapfigure}
-Il rendering effettivo delle ruote viene spostato in una MaterialFunction unica sia per le ruote gobo che colori, quasi identica alle originali. Prima dell'output è stato posto un nodo \say{SubtractiveCalc} (Figura \ref{fig:2_SubtractiveCalc}) che si occupa di \say{potenziare} (attraverso una potenza alla $1/3$, effettuata per le stesse ragioni spiegate nel materiale Beam) ed invertire il valore del nodo precedente, sottrarlo al valore del nodo corrente e clampare il risultato. 
-
+Il rendering effettivo delle ruote viene spostato in una MaterialFunction unica sia per le ruote gobo che colori, quasi identica alle originali. Prima dell'output è stato posto un nodo \say{SubtractiveCalc} (Figura \ref{fig:2_SubtractiveCalc}) che si occupa di \say{potenziare} (attraverso una potenza alla $1/3$, effettuata per le stesse ragioni spiegate nel materiale Beam) ed invertire il valore del nodo precedente, sottrarlo al valore del nodo corrente e clampare il risultato. \newline
 Inoltre tutti i parametri della MaterialFunction della ruota sono stati sostituiti con degli input, in modo che possa essere utilizzata in più occasioni per scopi differenti.
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/renderingPipeline/DMXWheelFuul.jpg}
-    \caption{MaterialFunction DMXWheel}
+    \caption{MaterialFunction DMXWheel.}
     \label{fig:2_dmxWheel}
 \end{figure}
 
