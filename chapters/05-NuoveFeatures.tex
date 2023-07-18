@@ -38,7 +38,7 @@ Il controllo della lama può avvenire in due modi:
     \label{fig:5_shaperDifferentModes}
 \end{figure}
 
-Effettuare il rendering di una funzionalità come lo shaper attraverso texture che vengono roteate e spostate è davvero oneroso in termini computazionali. La scelta migliore è fare il rendering immaginandoci il framing system come delle equazioni matematiche. In generale, il rendering di un materiale avviene effettuando lo stesso calcolo con, in input, differenti coordinate UV, ovvero coordinate bidimensionali normalizzate tra [0, 1] che rappresentano un punto all'interno di una texture. Possiamo immaginare il nostro codice come se fosse inserito in un ciclo for che si scorre \say{tutte} le x e le y comprese tra 0 ed 1, codice che però si occupa di renderizzare una sola UV alla volta. 
+\noindent Effettuare il rendering di una funzionalità come lo shaper attraverso texture che vengono roteate e spostate è davvero oneroso in termini computazionali. La scelta migliore è fare il rendering immaginandoci il framing system come delle equazioni matematiche. In generale, il rendering di un materiale avviene effettuando lo stesso calcolo con, in input, differenti coordinate UV, ovvero coordinate bidimensionali normalizzate tra [0, 1] che rappresentano un punto all'interno di una texture. Possiamo immaginare il nostro codice come se fosse inserito in un ciclo for che si scorre \say{tutte} le x e le y comprese tra 0 ed 1, codice che però si occupa di renderizzare una sola UV alla volta. 
 
 \clearpage %TODO CHECK IF IT'S STILL NEEDED
 \subsubsection{Idea come formula matematica}\label{subsec:5_1_ShaperMath}
@@ -61,7 +61,7 @@ Come scritto sopra, per generare una flag bisogna controllare quando stiamo \say
 \[y > x(B - A) + A\]
 \newline
 
-Per effettuare, invece, il sampling di una flag A+Rot, possiamo utilizzare $A$ come termine noto, e convertire $R$ da gradi alla relativa tangente trigonometrica in modo da avere direttamente il coefficiente della retta. Poiché vogliamo però inclinare questa retta usando come punto di rotazione il suo centro ($x = 0.5$) e non la sua origine ($x = 0$), dobbiamo modificare il termine noto in base al coefficiente: più il coefficiente è elevato (e più la retta sarà quindi inclinata crescendo da sinistra verso destra) e più il termine noto dovrà calare. Considerando la sezione della retta compresa tra $x = [0, 1]$, la tangente di $R$, essendo direttamente uguale al coefficiente della retta, è anche uguale alla differenza tra il valore della $y$ quando la retta avrà $x = 0$ e quando avrà $x = 1$ (Visibile nella seconda immagine della figura \ref{fig:5_shaperDifferentModes}). Al centro di questa sezione (quando $x = 0.5$) la differenza con i due estremi sarà quindi uguale a $\frac{tan(R)}{2}$, ovvero esattamente il valore da sottrarre al termine noto per mantenere centrale il punto di rotazione della retta. La formula finale dell'equazione sarà quindi:
+Per effettuare, invece, il sampling di una flag A+Rot, possiamo utilizzare $A$ come termine noto, e convertire $R$ da gradi alla relativa tangente trigonometrica in modo da avere direttamente il coefficiente della retta. Poiché vogliamo però inclinare questa retta usando come punto di rotazione il suo centro ($x = 0.5$) e non la sua origine ($x = 0$), dobbiamo modificare il termine noto in base al coefficiente: più il coefficiente è elevato (e più la retta sarà quindi inclinata crescendo da sinistra verso destra) e più il termine noto dovrà calare. Considerando la sezione della retta compresa tra $x = [0, 1]$, la tangente di $R$, essendo direttamente uguale al coefficiente della retta, è anche uguale alla differenza tra il valore della $y$ quando la retta avrà $x = 0$ e quando avrà $x = 1$ (visibile nella seconda immagine della figura \ref{fig:5_shaperDifferentModes}). Al centro di questa sezione (quando $x = 0.5$) la differenza con i due estremi sarà quindi uguale a $\frac{tan(R)}{2}$, ovvero esattamente il valore da sottrarre al termine noto per mantenere centrale il punto di rotazione della retta. La formula finale dell'equazione sarà quindi:
 \[y > \tan(R)x + (a - \frac{\tan(R)}{2})\]
 
 Come le ruote, anche il framing system deve implementare il frost. Piuttosto di applicare un filtro di blur al framing system già renderizzato, è preferibile in termini di peso computazionale implementare una sfocatura come formula matematica direttamente nel precedente rendering. L'idea è quella di utilizzare il valore del frost per definire la dimensione di una zona di sfumatura intorno alla retta. La prima operazione che viene effettuata è trovare la distanza della coordinata UV che stiamo renderizzando dalla retta. Questa operazione viene approssimata come la distanza assoluta ($d$) tra la $y$ della coordinata UV e la $y$ della retta per ogni $x$.
@@ -93,16 +93,16 @@ Poiché $d$ all'inizio viene calcolata come distanza assoluta dalla retta, con q
     \centering
     \captionsetup{justification=centering}
     \includegraphics[scale=0.35]{img/newFeatures/sCurve.png}
-    \caption{Funzione $sCurve(v)$.}
+    \caption{Funzione $sigmoid(v)$.}
     \label{fig:5_sCurve}
 \end{wrapfigure}
-Per un effetto ottico in cui è molto più semplice distinguere gradazioni differenti di colori scuri rispetto a gradazioni differenti di colori chiari, applicando il frost sembrerà che il valore del sagomatore si sposti verso il basso, come in figura \ref{fig:5_shaperFixes}. Per compensare ciò, il risultato finale calcolato in precedenza, viene passato all'interno di un'ultima funzione di remapping: quello che vogliamo è creare una curva ad S (figura \ref{fig:5_sCurve}), in modo che la dissolvenza avvenga repentinamente al centro dei nostri valori piuttosto che linearmente da 0 ad 1.
-\[sCurve(v) \coloneqq \frac{1}{1 + (\frac{v}{1.125 - v})^{-4}}\]
-Dove i valori all'interno della frazione e l'esponenziale sono ottenuti via try ed error. Il valore $1.125$ serve per sbilanciare verso destra la curva, l'esponenziale per regolarne l'ampiezza.
+Per un effetto ottico in cui è molto più semplice distinguere gradazioni differenti di colori scuri rispetto a gradazioni differenti di colori chiari, applicando il frost sembrerà che il valore del sagomatore si sposti verso il basso, come in figura \ref{fig:5_shaperFixes}. Per compensare ciò, il risultato finale calcolato in precedenza, viene passato all'interno di un'ultima funzione di remapping: quello che vogliamo è creare una sigmoide (figura \ref{fig:5_sCurve}), in modo che la dissolvenza avvenga repentinamente al centro dei nostri valori piuttosto che linearmente da 0 ad 1.
+\[sigmoid(v) \coloneqq \frac{1}{1 + (\frac{v}{1.125 - v})^{-4}}\]
+Dove i valori all'interno della frazione e l'esponenziale sono ottenuti via try ed error. Il valore $1.125$ serve per sbilanciare verso destra la sigmoide, l'esponenziale per regolarne l'ampiezza.
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/newFeatures/shaperFixes.jpg}
-    \caption{Da destra verso sinistra: flag senza frost; flag con frost e passaggio dei valori lineare tra 0 ed 1; flag con frost e con la funzione $sCurve(v)$ applicata.}
+    \caption{Da destra verso sinistra: flag senza frost; flag con frost e passaggio dei valori lineare tra 0 ed 1; flag con frost e con la funzione $sigmoid(v)$ applicata.}
     \label{fig:5_shaperFixes}
 \end{figure}
 
@@ -133,9 +133,9 @@ Dove $a$ corrisponde ai gradi di rotazione in input.
 
 \subsubsection{Generazione codice HLSL ed inserimento nel materiale Beam}\label{subsec:5_1_ShaperHlsl}
 \lstset{language=glsl}
-Le funzioni $fade$, $sCurve$ e $rotateUV$ sono state scritte in maniera generica poiché sono utili anche nel sample di altre features (Ad esempio, l'iris \ref{subsec:5_Iris}). Le funzioni di remapping sono state, invece, accorpate tra di loro. Le condizioni sono implementate con la formula \lstinline{float b = /*boolean expression*/; float f = b * x + (1 - b) * y;} per ridurre la branch divergence nell'esecuzione del codice HLSL.
+Le funzioni $fade$, $sigmoid$ e $rotateUV$ sono state scritte in maniera generica poiché sono utili anche nel sample di altre features (ad esempio, l'iris \ref{subsec:5_Iris}). Le funzioni di remapping sono state, invece, accorpate tra di loro. Le condizioni sono implementate con la formula \lstinline{float b = /*boolean expression*/; float f = b * x + (1 - b) * y;} per ridurre la branch divergence nell'esecuzione del codice HLSL.
 \begin{lstlisting}
-float sCurve(float f){
+float sigmoid(float f){
 	const float exp = -4;
 	f = saturate(f);
 	return 1 / (1 + pow((f / (1.125 - f)), exp));
@@ -153,7 +153,7 @@ float fade(float passed, float d, float frost){
 	float clamp = d > max;
 	d = clamp + (1 - clamp) * (d / max);
 
-	return sCurve((passed * 2 - 1) * (d / 2) + 0.5);
+	return sigmoid((passed * 2 - 1) * (d / 2) + 0.5);
 }
 \end{lstlisting}
 
@@ -278,7 +278,7 @@ for (UCPGDTFShaperFixtureComponent *shaper : shapers) {
     );
 }
 \end{lstlisting}
-Dove \lstinline{getBladeABRotParamName()} e \lstinline{getInputBladeABRotName()} prendono \lstinline{true} se stiamo generando il parametro A o \lstinline{false} se stiamo generando il parametro B o Rot (I due valori condividono lo stesso parametro). \newline
+Dove \lstinline{getBladeABRotParamName()} e \lstinline{getInputBladeABRotName()} prendono \lstinline{true} se stiamo generando il parametro A o \lstinline{false} se stiamo generando il parametro B o Rot (i due valori condividono lo stesso parametro). \newline
 
 La lambda citata sopra si occupa come prima cosa di generare il parametro effettivo.
 \begin{lstlisting}
@@ -334,7 +334,7 @@ meCustom->Inputs.Add(input);
 \end{lstlisting}
 
 \subsubsection{Generazione nella RenderingPipeline per Light e Lens}\label{subsec:5_1_ShaperRenderingPipeline}
-Come per la generazione del materiale Beam anche qui le varie funzioni descritte nel capitolo \ref{subsec:5_1_ShaperMath} sono state trasformate in MaterialFunctions. Come spiegato nella sezione \ref{sec:RenderingPipeline} tali MaterialFunctions prenderanno in input l'output della precedente, per formare la pipeline di rendering. L'implementazione in se delle MaterialFunctions non viene vista poiché è identica al codice HLSL spiegato nel capitolo precedente, bensì vedremo comunque la parte di generazione della pipeline. \newline
+Come per la generazione del materiale Beam anche qui le varie funzioni descritte nel capitolo \ref{subsec:5_1_ShaperMath} sono state trasformate in MaterialFunctions. Come esposto nella sezione \ref{sec:RenderingPipeline} tali MaterialFunctions prenderanno in input l'output della precedente, per formare la pipeline di rendering. L'implementazione in se delle MaterialFunctions non viene vista poiché è identica al codice HLSL mostrato nel capitolo precedente, bensì vedremo comunque la parte di generazione della pipeline. \newline
 
 Si effettua un ciclo su tutti gli ShaperFixtureComponent che dobbiamo aggiungere alla pipeline. Per ciascuno, iniziamo con lo generare una MaterialFunctionCall ed impostarne la MaterialFunction in base alla modalità della flag.
 \begin{lstlisting}
@@ -411,11 +411,13 @@ Di seguito, degli screenshot della classe per mostrare quanto sia semplice imple
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/newFeatures/ShaperComponentCode1.jpg}
+    \caption{Prima parte dell'implementazione della classe ShpaerFixtureComponent.}
     \label{fig:5_ShaperComponentCode1}
 \end{figure}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/newFeatures/ShaperComponentCode2.jpg}
+    \caption{Seconda parte dell'implementazione della classe ShpaerFixtureComponent.}
     \label{fig:5_ShaperComponentCode2}
 \end{figure}
 
@@ -603,7 +605,7 @@ Le seguenti immagini mostrano il risultato della generazione \say{finale} della 
 \end{figure}
 %\clearpage %TODO CHECK IF IT'S STILL NEEDED
 
-Mentre il codice HLSL generato per il rendering del materiale Beam è il seguente:
+\noindent Mentre il codice HLSL generato per il rendering del materiale Beam è il seguente:
 \begin{lstlisting}
 float3 outputSample = DMXColor; FunctionsWrapper _fncs;
 outputSample = outputSample - 1 + pow(_fncs.sampleIris(

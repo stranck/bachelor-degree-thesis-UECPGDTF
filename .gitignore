@@ -3,3 +3,7 @@ overleafLogin.*
 
 .vs/*
 .vscode/*
+
+~*.docx
+~*.doc
+~*.tmp

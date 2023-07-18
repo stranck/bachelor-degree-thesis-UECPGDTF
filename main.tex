@@ -104,6 +104,15 @@
 \let\thedate\@date
 \makeatother
 
+\renewcommand{\contentsname}{Indice}
+\renewcommand{\figurename}{Figura}
+
+%\setlist[itemize]{noitemsep}
+%\setlist[itemize]{noitemsep, nolistsep}
+\setlist[itemize]{itemsep=0.001cm}
+%\setlist[enumerate]{noitemsep}
+\setlist[enumerate]{itemsep=0.001cm}
+
 \begin{document}
 \sloppy
 
@@ -166,6 +175,7 @@
 \clearpage
 \newpage
 \blankpage
-\addcontentsline{toc}{section}{References}
+\addcontentsline{toc}{section}{Bibliografia}
+\renewcommand\refname{Bibliografia}
 \printbibliography
 \end{document}

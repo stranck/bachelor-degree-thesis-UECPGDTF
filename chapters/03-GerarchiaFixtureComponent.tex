@@ -7,12 +7,12 @@
 \vspace{1.0cm}
 
 \section{Redesign gerarchia dei FixtureComponent}\label{sec:FixtureComponentHierachy}
-I FixtureComponent formano uno strato che si pone tra i dati DMX che arrivano ad UnrealEngine ed i materiali visti nel capitolo precedente. Mentre i materiali Light/Lens/Beam definiscono come effettuare il rendering della luce emessa da un faro, i FixtureComponent ne controllano i comportamenti e comunicano con i primi attraverso i parametri presenti nei vari moduli della pipeline che abbiamo creato in precedenza. Un altro modo che i FixtureComponent hanno per interagire con un faro istanziato in un mondo virtuale è andando direttamente a modificarne le proprietà (Ad esempio la rotazione delle varie geometrie). \newline
+I FixtureComponent formano uno strato che si pone tra i dati DMX che arrivano ad UnrealEngine ed i materiali visti nel capitolo precedente. Mentre i materiali Light/Lens/Beam definiscono come effettuare il rendering della luce emessa da un faro, i FixtureComponent ne controllano i comportamenti e comunicano con i primi attraverso i parametri presenti nei vari moduli della pipeline che abbiamo creato in precedenza. Un altro modo che i FixtureComponent hanno per interagire con un faro istanziato in un mondo virtuale è andando direttamente a modificarne le proprietà (ad esempio la rotazione delle varie geometrie). \newline
 
 In questo capitolo analizzeremo i problemi riscontrati nell'implementazione di un nuovo componente e proporremo una nuova gerarchia atta all'aggiunta di nuove features nella maniera più semplice possibile.
 
-\subsection{Vecchia implementazione}\label{subsec:3_oldImplementation}
-I FixtureComponent sono, realmente, delle classi organizzate in una struttura gerarchica. Alla base abbiamo \lstinline{FixtureComponentBase}, esteso da \lstinline{SimpleAttributeFixtureComponent} (Ovvero singole features che vengono controllate in maniera diretta) e da \lstinline{MultipleAttributeFixtureComponent} (Ovvero features che vengono controllate da più canali, oppure che possono avere comportamenti avanzati).
+\subsection{Stato preliminare}\label{subsec:3_oldImplementation}
+I FixtureComponent sono, realmente, delle classi organizzate in una struttura gerarchica. Alla base abbiamo \lstinline{FixtureComponentBase}, esteso da \lstinline{SimpleAttributeFixtureComponent} (ovvero singole features che vengono controllate in maniera diretta) e da \lstinline{MultipleAttributeFixtureComponent} (ovvero features che vengono controllate da più canali, oppure che possono avere comportamenti avanzati).
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\linewidth]{img/fixtureComponent/FixtureComponentOLD.drawio.png}
@@ -20,10 +20,10 @@ I FixtureComponent sono, realmente, delle classi organizzate in una struttura ge
     \label{fig:3_fixtureComponentOld}
 \end{figure}
 
-I FixtureComponent vengono istanziati dalla classe \lstinline{FCPFActorComponentsLoader}, che si occupa anche di chiamare \lstinline{Setup()}. Setup è un metodo che viene essenzialmente duplicato in ogni componente e che si occupa di salvarsi il DMXChannel in cui il componente è presente, costruire un albero di LogicalChannel, salvarsi la geometria a cui si fa riferimento e ottenere il Canale DMX in cui è presente il componente. Quando una fixture istanziata in un mondo inizia ad essere emulata, viene chiamato \lstinline{BeginPlay()} su ogni suo componente che, attraverso del codice parzialmente duplicato, inizializzerà di nuovo l'albero dei LogicalChannel e inizializzerà l'interpolazione con dei valori hard-coded. A questo punto la fixture sarà \say{in esecuzione} e risponderà a due tipi di eventi:
+\noindent I FixtureComponent vengono istanziati dalla classe \lstinline{FCPFActorComponentsLoader}, che si occupa anche di chiamare \lstinline{Setup()}. Setup è un metodo che viene essenzialmente duplicato in ogni componente e che si occupa di salvarsi il DMXChannel in cui il componente è presente, costruire un albero di LogicalChannel, salvarsi la geometria a cui si fa riferimento e ottenere il Canale DMX in cui è presente il componente. Quando una fixture istanziata in un mondo inizia ad essere emulata, viene chiamato \lstinline{BeginPlay()} su ogni suo componente che, attraverso del codice parzialmente duplicato, inizializzerà di nuovo l'albero dei LogicalChannel e inizializzerà l'interpolazione con dei valori hard-coded. A questo punto la fixture sarà \say{in esecuzione} e risponderà a due tipi di eventi:
 \begin{itemize}
     \item \textbf{Nuovo pacchetto DMX}: Ogni volta che arriva un nuovo pacchetto DMX viene chiamata la funzione \lstinline{PushNormalizedRawValues()} (implementata dentro \lstinline{FixtureComponentBase}) che chiama a sua volta \lstinline{PushDMXRawValues()}. Quest'ultima funzione è implementata allo stesso identico modo su ogni singolo componente. Quello che fa è chiamare \lstinline{ApplyEffectToBeam()} con il valore dmx del canale. Se un componente riceve input da più DMXChannel, ci sarà una chiamata hard-coded (senza alcun ciclo che li scorra) per ciascuno. \lstinline{ApplyEffectToBeam()} si occupa di interpretare i dati in arrivo. L'output di questo processo viene effettuato attraverso 3 funzioni: \lstinline{SetTargetValue()}, \lstinline{SetValueNoInterp()} e \lstinline{interp.SetValueNoInterp()}.
-    \item \textbf{Viene eseguito un nuovo tick}: Viene chiamata \lstinline{InterpolateComponent()} che viene reimplementata da ogni componente ed in ciascuno si occupa di aggiornare lo stato interno degli effetti delle feature (Esempio: FrostPulseOpen) controllate dallo stesso, utilizzando anche qui le funzioni \lstinline{SetTargetValue()}, \lstinline{SetValueNoInterp()} e \lstinline{interp.SetValueNoInterp()}. Successivamente aggiorna lo stato dell'interpolazione.
+    \item \textbf{Viene eseguito un nuovo tick}: Viene chiamata \lstinline{InterpolateComponent()} che viene reimplementata da ogni componente ed in ciascuno si occupa di aggiornare lo stato interno degli effetti delle feature (esempio: FrostPulseOpen) controllate dallo stesso, utilizzando anche qui le funzioni \lstinline{SetTargetValue()}, \lstinline{SetValueNoInterp()} e \lstinline{interp.SetValueNoInterp()}. Successivamente aggiorna lo stato dell'interpolazione.
 \end{itemize}
 \lstinline{SetTargetValue()} è una funzione, attualmente reimplementata in maniera identica da tutti i componenti, che serve ad impostare un nuovo valore di destinazione all'interpolazione. Prima di impostare un nuovo target, controlla se l'interpolazione è attiva e se è già stato impostato un primo valore. In caso negativo, viene chiamata direttamente la funzione \lstinline{SetValueNoInterp()}, implementata dentro \lstinline{MultipleAttributeBeamFixtureComponent}, che si occupa di chiamare \lstinline{SetValueNoInterp_BeamInternal()} con un for su ogni geometria, che manda in output verso i materiali i valori elaborati dal componente.
 
@@ -32,11 +32,11 @@ I FixtureComponent vengono istanziati dalla classe \lstinline{FCPFActorComponent
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/fixtureComponent/CallOrderScheme.png}
-    \caption{Schema creato in corso d'opera mentre svolgevo reverse-engineering sulla vecchia implementazione dei FixtureComponent. Le funzioni in azzurro sono triggerate da eventi esterni, quelle in rosso sono le funzioni interne. I quadrati verdi sono gli unici che, in una implementazione ideale, dovrebbero essere specializzati da ogni singolo componente.}
+    \caption{Schema creato in corso d'opera mentre svolgevo reverse-engineering sulla implementazione preesistente dei FixtureComponent. Le funzioni in azzurro sono triggerate da eventi esterni, quelle in rosso sono le funzioni interne. I quadrati verdi sono gli unici che, in una implementazione ideale, dovrebbero essere specializzati da ogni singolo componente.}
     \label{fig:3_CallOrderOld}
 \end{figure}
 
-Analizzando l'implementazione di questa gerarchia sono sorte delle criticità:
+\noindent Analizzando l'implementazione di questa gerarchia sono sorte delle criticità:
 \begin{itemize}
     \item \textbf{Codice duplicato}: Nonostante alcune funzioni siano state dichiarate (come virtuali) in una classe padre, molte classi figlie le reimplementano in maniera identica l'una dall'altra. Un esempio è la funzione \lstinline{PushDMXRawValues()} che viene definita nello stesso identico modo da tutti i figli diretti di \lstinline{MultipleAttributeFixtureComponent}:
 \lstset{language=UEcpp}
@@ -57,18 +57,18 @@ void UCPGDTFShutterFixtureComponent::PushDMXRawValues(
 	if (DMXValuePtr) this->ApplyEffectToBeam(*DMXValuePtr);
 }
 \end{lstlisting}
-    \item \textbf{Virtualizzazione delle funzioni quasi assente}: Molte funzioni sono presenti su vari componenti della gerarchia, ma non sono mai dichiarate su una classe padre, nonostante facciano la stessa cosa ed è giusto che siano esposte agli altri componenti. Un esempio sono \lstinline{ApplyEffectToBeam()} e \lstinline{SetTargetValue()} che sono implementate da molti componenti, ma mai definiti in un padre (E sono anche un altro esempio di codice completamente duplicato) .
+    \item \textbf{Virtualizzazione delle funzioni quasi assente}: Molte funzioni sono presenti su vari componenti della gerarchia, ma non sono mai dichiarate su una classe padre, nonostante facciano la stessa cosa ed è giusto che siano esposte agli altri componenti. Un esempio sono \lstinline{ApplyEffectToBeam()} e \lstinline{SetTargetValue()} che sono implementate da molti componenti, ma mai definiti in un padre (e sono anche un altro esempio di codice completamente duplicato) .
     \item \textbf{Elementi superflui nella gerarchia}: Elementi come Simple o Multiple AttributeBeamFixtureComponent sono essenzialmente vuoti e non contribuiscono ad arricchire le sottoclassi, né ne aumentano la generalizzabilità.
     \item \textbf{Nessuna centralizzazione della gestione delle features}: La gerarchia viene definita attraverso delle classi che di fatto sono quasi delle interfacce. Questo comporta che la gestione di tutto che ci sta attorno ad una feature è a carico dei singoli componenti finali. Ogni volta che si implementa un nuovo componente si è quindi obbligati a reimplementare tutta la logica che sta dietro la gestione degli stessi.
     \item \textbf{Bassa chiarezza su cosa deve essere implementato nella singola feature}: Visti i punti precedenti, se si vuole implementare un nuovo componente (senza avere conoscenze pregresse) si rimane interdetti poiché non si capisce esattamente cosa bisogna fare. Non è presente una lista ben definita di funzionalità in cui il singolo componente deve specializzarsi.
     \item \textbf{Errori veri e propri nel calcolo di valori}: In generale, sono state riscontrate grosse mancanze con il calcolo di valori utili ad un componente. Ad esempio, il valore di minimo e massimo di una ChannelFunction viene calcolato solamente su quella corrente, piuttosto di avere un valore globale per tutti gli attributi dello stesso tipo. Oppure, i valori di fade e accelerazione per l'interpolazione non vengono proprio calcolati né presi dal GDTF originale.
-    \item \textbf{Interpolazione mancante su molti componenti}: L'interpolazione non è gestita nella maniera corretta, di conseguenza è completamente mancante su molte feature di un faro (Ad esempio zoom, o rotazione di una gobo). Più specificatamente, è presente solamente sui componenti che estendono \lstinline{MultipleAttributesFixtureComponent} e se uno stesso componente controlla più features è attiva solo su una di esse.
+    \item \textbf{Interpolazione mancante su molti componenti}: L'interpolazione non è gestita nella maniera corretta, di conseguenza è completamente mancante su molte feature di un faro (ad esempio zoom, o rotazione di una gobo). Più specificatamente, è presente solamente sui componenti che estendono \lstinline{MultipleAttributesFixtureComponent} e se uno stesso componente controlla più features è attiva solo su una di esse.
     \item \textbf{Gestione di $N > 1$ canali hard-coded}: Se un componente gestisce più features oppure se riceve dati da più DMXChannel, la gestione di ogni singolo viene fatta copiando ed incollando il codice di uno più volte, piuttosto che avere dei for che li scorrono.
 \end{itemize}
 
 Per risolvere queste criticità è stato deciso un redesign dei vari FixtureComponent. A livello gerarchico non ci saranno molte differenze; esse saranno presenti maggiormente lato implementazione.
 
-\subsection{Idea di reimplementazione}\label{subsec:3_idea}
+\subsection{Nuovo approccio}\label{subsec:3_idea}
 Idealmente un componente dovrebbe definire pochi comportamenti specializzanti:
 \begin{itemize}
     \item Costruttore del componente (in cui, ad esempio, possono essere caricate eventuali texture o altre informazioni).
@@ -216,7 +216,7 @@ Infine, viene modificata la funzione \lstinline{InterpolateComponent()}. Al post
 \subsubsection{Ottenimento valori di default per le varie funzionalità di una fixture}\label{subsec:3_1_defaultValues}
 Per l'ottenimento dei valori default dei vari componenti di una luce è stato purtroppo impossibile ottenere dati direttamente dalle fixture reali. Non esiste un modo attualmente implementato dalle fixture Claypaky per ottenere la posizione dei vari motori, anche se ci si collega direttamente in seriale alla scheda di controllo del faro. La soluzione quindi adottata è stata quindi quella di filmare a rallentatore un faro ed inserire il video in un software di editing, in modo da contare con precisione il numero dei frame video che il faro impiega ad accelerare o decelerare ed il numero di frame che impiega a svolgere un movimento completo. Tramite questo metodo otteniamo una precisione pari a $\frac{1}{FPS}$, dove, sui telefoni moderni, FPS è uguale a 480 o addirittura 960.\newline
 
-Successivamente è stata scritta una utility molto semplice in python per convertire automaticamente un numero espresso in \lstinline{secondo.frame} (Che ci viene dato direttamente dal programma di editing) in secondi nel mondo reale. \newline
+Successivamente è stata scritta una utility molto semplice in python per convertire automaticamente un numero espresso in \lstinline{secondo.frame} (che ci viene dato direttamente dal programma di editing) in secondi nel mondo reale. \newline
 Innanzitutto vengono specificato gli FPS del rallenty e gli FPS del video.
 \lstset{language=python}
 \begin{lstlisting}
