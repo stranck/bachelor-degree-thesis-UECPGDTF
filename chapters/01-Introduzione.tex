@@ -133,8 +133,12 @@ Il nodo \lstinline{DMXMode} raccoglie tutte le modalità di funzionamento di un 
     \item Infine abbiamo i \lstinline{ChannelSet} che rappresentano delle macro o valori precisi che una ChannelFunction può assumere. Gli attributi di un ChannelSet sono: \begin{itemize}
             \item \lstinline{Name}: Nome/DisplayName del channel set
             \item \lstinline{DMXFrom}: Valore DMX in cui questo ChannelSet inizia nel DMXChannel. Analogamente alle ChannelFunction, non esiste un attributo DMXTo, che verrà calcolato allo stesso modo loro, eccezion fatta che come valore massimo non si userà quello del DMXChannel, bensì quello della ChannelFunction. 
-            \item \lstinline{PhysicalFrom}: Funzionamento analogo alle ChannelFunction. Se non viene specificato, può essere calcolato come proporzione \[CS.PysicalFrom : CF.PhysicalRange = CS.DMXFrom : CS.DMXRange\] dove $PhysicalRange$ e $DMXRange$ si ottengono calcolando il rispettivo valore To meno il rispettivo valore From
-            \item \lstinline{PhysicalTo}: Funzionamento analogo alle ChannelFunction. Se non viene specificato, può essere calcolato come proporzione \[CS.PysicalTo : CF.PhysicalRange = CS.DMXTo : CS.DMXRange\] dove $PhysicalRange$ e $DMXRange$ si ottengono calcolando il rispettivo valore To meno il rispettivo valore From
+            \item \lstinline{PhysicalFrom}: Funzionamento analogo alle ChannelFunction. Se non viene specificato, può essere calcolato come proporzione:
+            \[PysicalFrom_{CS} : PhysicalRange_{CF} = DMXFrom_{CS} : DMXRange_{CS}\]
+            Dove $PhysicalRange$ e $DMXRange$ si ottengono calcolando il rispettivo valore To meno il rispettivo valore From
+            \item \lstinline{PhysicalTo}: Funzionamento analogo alle ChannelFunction. Se non viene specificato, può essere calcolato come proporzione:
+            \[PysicalTo_{CS} : PhysicalRange_{CF} = DMXTo_{CS} : DMXRange_{CS}\]
+            Dove $PhysicalRange$ e $DMXRange$ si ottengono calcolando il rispettivo valore To meno il rispettivo valore From
             \item \lstinline{WheelSlotIndex}: Se la ChannelFunction padre è collegata ad una ruota, è l'identificativo dello slot nella ruota che dovrà essere attivo quando il valore del canale DMX fisico si trova nel range di questo ChannelSet 
         \end{itemize}
 \end{itemize}
