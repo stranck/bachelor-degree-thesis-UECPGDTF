@@ -13,27 +13,27 @@ Lo scopo del progetto CPGDTF-Importer è quello di realizzare un Previsualizer o
 \newline
 CPGDTF-Importer è una fork di DMXEngine ed è, in particolare, un plugin per l'\say{editor} di UE, ovvero quella sezione che permette la creazione di mondi che, nel nostro caso, consisterebbero in palcoscenici virtuali. Il plugin lavorerà principalmente su 3 livelli:
 \begin{itemize}
-    \item Importazione di luci da un formato standard (GDTF \cite{GDTF}, spiegato nella sezione \ref{subsec:1_gdtf}), negli \say{Actor} di UE.
+    \item Importazione di luci da un formato standard (GDTF \cite{GDTF}, esposto nella sezione \ref{subsec:1_gdtf}), negli \say{Actor} di UE.
     \item Importazione di luci sotto forma di Attori all'interno di mondi e gestione delle loro impostazioni.
     \item Simulazione in real-time del comportamento delle fixture, il più possibile vicino alla realtà.
 \end{itemize}
 
 \subsection{Anatomia di una fixture}\label{subsec:1_fixtureAnatomy}
-Le luci (Che chiameremo anche \say{fari} o \say{fixture}) utilizzati nel mondo dell'eventistica sono dei macchinari di vario tipo e dimensioni che hanno il compito di generare luce di forme e colori differenti. Le fixture che ci interessano sono quelle utilizzate sia come illuminazione di oggetti (Ad esempio, le luci frontali che illuminano un attore in teatro) che come effettistica (Ovvero le luci che fanno effetti aerei ai concerti). Storicamente le luci nascono come semplici fari monocolore a cui si potevano applicare a mano dei filtri davanti la sorgente luminosa ed a cui si poteva solamente regolare l'intensità attraverso apparecchiature chiamate \say{dimmer}. Solo a partire dagli anni '90 sono entrate in commercio le prime fixture intelligenti, ovvero con la possibilità di essere controllate da remoto attraverso una console luci sfruttando il protocollo DMX \cite{DMX}. 
+Le luci (che chiameremo anche \say{fari} o \say{fixture}) utilizzati nel mondo dell'eventistica sono dei macchinari di vario tipo e dimensioni che hanno il compito di generare luce di forme e colori differenti. Le fixture che ci interessano sono quelle utilizzate sia come illuminazione di oggetti (ad esempio, le luci frontali che illuminano un attore in teatro) che come effettistica (ovvero le luci che fanno effetti aerei ai concerti). Storicamente le luci nascono come semplici fari monocolore a cui si potevano applicare a mano dei filtri davanti la sorgente luminosa ed a cui si poteva solamente regolare l'intensità attraverso apparecchiature chiamate \say{dimmer}. Solo a partire dagli anni '90 sono entrate in commercio le prime fixture intelligenti, ovvero con la possibilità di essere controllate da remoto attraverso una console luci sfruttando il protocollo DMX \cite{DMX}. 
 
 \subsubsection{Luci statiche e dinamiche}\label{subsec:1_1_fixtureTypes}
-Le fixture possono essere classificabili come statiche o dinamiche. Le fixture dette \say{statiche} sono fixture che sono formate da un unico \say{blocco} (Che GDTF chiama \say{geometrie}, mentre Unreal Engine chiama \say{SceneComponents}) e che, fisicamente, non si muovono. Sono quelle più semplici nonché il primo tipo di faro entrato in commercio.
+Le fixture possono essere classificabili come statiche o dinamiche. Le fixture dette \say{statiche} sono fixture che sono formate da un unico \say{blocco} (che GDTF chiama \say{geometrie}, mentre Unreal Engine chiama \say{SceneComponents}) e che, fisicamente, non si muovono. Sono quelle più semplici nonché il primo tipo di faro entrato in commercio.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.4\linewidth]{img/introduzione/staticFixtureExample.jpg}
-    \caption{Esempio di fixture statica.}
+    \caption{Esempio di fixture statica. Immagine da \cite{fig_1_fixtureStatic}.}
     \label{fig:1_staticFixture}
 \end{figure}
-Le fixture dette invece \say{dinamiche} (chiamate anche \say{Teste mobili}) sono composte da più geometrie collegate tra loro da motori, in modo che quella responsabile di emettere il fascio di luce possa roteare, di solito su due assi. La geometria che viene poggiata per terra o appesa viene chiamata \say{base}, quella che emette luce \say{testa}.
+\noindent Le fixture dette invece \say{dinamiche} (chiamate anche \say{Teste mobili}) sono composte da più geometrie collegate tra loro da motori, in modo che quella responsabile di emettere il fascio di luce possa roteare, di solito su due assi. La geometria che viene poggiata per terra o appesa viene chiamata \say{base}, quella che emette luce \say{testa}.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.75\linewidth]{img/introduzione/dynamicFixtureAnatomy.jpg}
-    \caption{Geometrie di un faro dinamico.}
+    \caption{Geometrie di un faro dinamico. Immagine originale da \cite{fig_1_xtylos}.}
     \label{fig:1_DynamicFixture}
 \end{figure}
 
@@ -56,19 +56,19 @@ I moduli solitamente funzionano sottrattivamente: per ogni modulo a partire dall
 \end{figure}
 
 \subsubsection{Protocollo DMX}\label{subsec:1_1_dmx}
-Oggi giorno, quasi tutte le fixture che vengono usate sono intelligenti e, come citato sopra, vengono controllate via DMX. DMX è un protocollo unidirezionale in cui un master (solitamente una console luci) invia 44 volte al secondo agli slave (le varie fixture) un array di 512 byte chiamato \say{Universo DMX}. Le luci hanno memorizzato un offset all'interno di questo array chiamato \say{Indirizzo DMX} che viene impostato manualmente su ognuna dall'operaio che le monta su un palcoscenico. Ogni volta che arriva un nuovo pacchetto DMX la luce inizierà a leggere la sua sezione di dati a partire dall'indirizzo/offset specificato. Ogni byte che legge è chiamato \say{canale DMX} e, solitamente, corrisponde al valore da assegnare ad una diversa \say{funzionalità} (Chiamata anche \say{feature}, o \say{attributo}) della luce.
+Oggi giorno, quasi tutte le fixture che vengono usate sono intelligenti e, come citato sopra, vengono controllate via DMX. DMX è un protocollo unidirezionale in cui un master (solitamente una console luci) invia 44 volte al secondo agli slave (le varie fixture) un array di 512 byte chiamato \say{Universo DMX}. Le luci hanno memorizzato un offset all'interno di questo array chiamato \say{Indirizzo DMX} che viene impostato manualmente su ognuna dall'operaio che le monta su un palcoscenico. Ogni volta che arriva un nuovo pacchetto DMX la luce inizierà a leggere la sua sezione di dati a partire dall'indirizzo/offset specificato. Ogni byte che legge è chiamato \say{canale DMX} e, solitamente, corrisponde al valore da assegnare ad una diversa \say{funzionalità} (chiamata anche \say{feature}, o \say{attributo}) della luce.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.65\linewidth]{img/introduzione/dmxChannelDescExample.png}
-    \caption{Esempio di canali DMX. Se il canale 1 di questa luce viene portato a FULL (255), la luce si colorerà di azzurro. Se, invece, il canale 6 viene impostato al valore 50, si colorerà di rosa.}
+    \caption{Esempio di canali DMX presi da \cite{fig_1_dmxChart}. Se il canale 1 di questa luce viene portato a FULL (255), la luce si colorerà di azzurro. Se, invece, il canale 6 viene impostato al valore 50, si colorerà di rosa.}
     \label{fig:1_dmxChannelsExample}
 \end{figure}
 
-Alcune fixture possono supportare più modalità di controllo, che possono andare ad attivare o disattivare funzionalità della luce stessa, oppure possono permettere il controllo più preciso di alcuni attributi; introducendo quindi nuovi canali da controllare o riordinando quelli già esistenti. 
+\noindent Alcune fixture possono supportare più modalità di controllo, che possono andare ad attivare o disattivare funzionalità della luce stessa, oppure possono permettere il controllo più preciso di alcuni attributi; introducendo quindi nuovi canali da controllare o riordinando quelli già esistenti. 
 
 
 \subsection{GDTF}\label{subsec:1_gdtf}
-GDTF - \textit{General Device Type Format} - è un formato per descrivere fixture nella maniera più accurata possibile. È stato sviluppato da MAlighting (azienda produttrice del sistema di controllo luci attualmente più usato in show medio-grandi), Robe (Uno dei leader mondiali nello sviluppo e realizzazione di luci per l'eventistica) e Vectorworks (Un software di CAD/Design anch'esso molto usato nella progettazione e previsualizzazione di palcoscenici). 
+GDTF - \textit{General Device Type Format} - è un formato per descrivere fixture nella maniera più accurata possibile. È stato sviluppato da MAlighting (azienda produttrice del sistema di controllo luci attualmente più usato in show medio-grandi), Robe (uno dei leader mondiali nello sviluppo e realizzazione di luci per l'eventistica) e Vectorworks (un software di CAD/Design anch'esso molto usato nella progettazione e previsualizzazione di palcoscenici). 
 \newline
 
 Un file GDTF è essenzialmente un pacchetto contenente all'interno i modelli 3D delle varie geometrie che compongono un faro, le texture delle sue gobo/animazioni/prismi/etc ed un file in formato XML contenente una descrizione esaustiva delle caratteristiche del faro. \newline
@@ -115,7 +115,7 @@ Il nodo \lstinline{DMXMode} raccoglie tutte le modalità di funzionamento di un 
             \item \lstinline{Geometry}: Nome della geometria controllata da questo canale.
             \item \lstinline{InitialFunction}: Nome della \lstinline{ChannelFunction} da eseguire come valore default del canale, espresso nella forma: \lstinline{NomeGeometria_AttributoLogicalChannel.AttributoChannelFunction.NomeChannelFunction}
         \end{itemize}
-    \item I figli di un DMXChannel sono i nodi \lstinline{LogicalChannel}. Su alcune fixture un canale dmx fisico può controllare funzionalità differenti, per questo motivo esiste una distinzione tra DMXChannel (Ovvero il canale fisico) e LogicalChannel. I LogicalChannel all'interno dello stesso DMXChannel sono mutualmente esclusivi. Gli attributi principali di un LogicalChannel sono: \begin{itemize}
+    \item I figli di un DMXChannel sono i nodi \lstinline{LogicalChannel}. Su alcune fixture un canale dmx fisico può controllare funzionalità differenti, per questo motivo esiste una distinzione tra DMXChannel (ovvero il canale fisico) e LogicalChannel. I LogicalChannel all'interno dello stesso DMXChannel sono mutualmente esclusivi. Gli attributi principali di un LogicalChannel sono: \begin{itemize}
             \item \lstinline{Snap}: Se lo snap è abilitato vuol dire che questo attributo non deve essere interpolato quando andiamo a fare la preview del faro, ma deve saltare direttamente a quel valore, poiché, fisicamente su una fixture vera, la feature non è controllata da un motore. Un esempio è il controllo della luminosità di un LED, che è istantaneo.
             \item \lstinline{Attribute}: Feature controllata da questo LogicalChannel.
         \end{itemize}
@@ -149,6 +149,7 @@ Il nodo \lstinline{DMXMode} raccoglie tutte le modalità di funzionamento di un 
     \label{fig:1_gdtfDmxExample}
 \end{figure}
 
+\clearpage
 \subsection{Terminologia di Unreal Engine}\label{subsec:1_dataStructsUE}
 Qui sotto elencate tutti tutti i termini che si riferiscono a concetti e oggetti di Unreal Engine.
 \begin{itemize}
@@ -160,7 +161,7 @@ Qui sotto elencate tutti tutti i termini che si riferiscono a concetti e oggetti
     \item \textbf{MaterialExpression}: Nodi di un grafo di un Material.
     \item \textbf{MaterialExpressionParameter}: Tipo di MaterialExpression che permettono di controllare i parametri del materiale esternamente.
     \item \textbf{MaterialExpressionFunctionCall}: Tipo di MaterialExpression che implementa una chiamata ad una MaterialFunction.
-    \item \textbf{MaterialExpressionCustom} o \say{CustomExpression}: Tipo di MaterialExpression che prende degli input e ritorna degli output. Mentre una MaterialExpressionFunctionCall elabora gli output utilizzando una MaterialFunction (E quindi un grafo), una MaterialExpressionCustom esegue codice vero e proprio scritto in HLSL, un linguaggio C-like utilizzato per la scrittura di Shader.
+    \item \textbf{MaterialExpressionCustom} o \say{CustomExpression}: Tipo di MaterialExpression che prende degli input e ritorna degli output. Mentre una MaterialExpressionFunctionCall elabora gli output utilizzando una MaterialFunction (e quindi un grafo), una MaterialExpressionCustom esegue codice vero e proprio scritto in HLSL, un linguaggio C-like utilizzato per la scrittura di Shader.
 \end{itemize}
 
 
@@ -173,14 +174,14 @@ Dopo aver speso un primo periodo a prendere conoscenza con la codebase mi sono r
 
 Solamente dopo aver risolto questi grossi problemi strutturali nel codice (e dopo aver fatto funzionare correttamente l'interpolazione) ho potuto dedicarmi all'implementazione effettiva di nuove features. 
 
-\clearpage %TODO CHECK IF THIS IS STILL NEEDED
+%\clearpage %TODO CHECK IF THIS IS STILL NEEDED
 \subsection{Struttura della tesi}\label{subsec:1_thesisInfo}
 L'elaborato è articolato come segue. Ogni capitolo rappresenta una milestone del progetto:
 \begin{itemize}
     \item \textbf{Capitolo \ref{sec:Intro}, Introduzione}. %We like recurion
     \item \textbf{Capitolo \ref{sec:RenderingPipeline}, Design di una pipeline di rendering}: In questo capitolo verrà analizzata l'implementazione originale con la quale veniva effettuato il rendering dell'illuminazione di ogni singola fixture. Verranno evidenziati i problemi e mostrate idee per risolverli. Infine verrà anche esposta l'implementazione per la generazione di una pipeline vera e propria per il rendering dei vari moduli di una luce. 
     \item \textbf{Capitolo \ref{sec:FixtureComponentHierachy}, Redesign gerarchia dei FixtureComponent}: Tratta l'analisi della vecchia gerarchia dei FixtureComponent, ovvero quelle classi responsabili di controllare ogni singola feature che compone una fixture. Vengono proposte nuove idee di implementazione e mostrati quali dati e metodi servirebbe mettere a disposizione alle classi che implementano la singola feature.
-    \item \textbf{Capitolo \ref{sec:Interpolation}, Reimplementazione dell'interpolazione}: All'interno di questo capitolo vengono velocemente esposti i problemi dell'attuale classe che controlla l'interpolazione, ovvero il controllo del movimento dei motori virtuali. Successivamente viene mostrata la nuova implementazione della classe, esponendo i vari problemi che si sono verificati durante la scrittura del codice e come sono stati risolti.
+    \item \textbf{Capitolo \ref{sec:Interpolation}, Nuovo approccio all'interpolazione}: All'interno di questo capitolo vengono velocemente esposti i problemi dell'attuale classe che controlla l'interpolazione, ovvero il controllo del movimento dei motori virtuali. Successivamente viene mostrata la nuova implementazione della classe, esponendo i vari problemi che si sono verificati durante la scrittura del codice e come sono stati risolti.
     \item \textbf{Capitolo \ref{sec:NewFeatures}, Implementazione di nuove funzionalità alle fixtures}: Una volta sistemata la struttura del plugin e reso comodo e meno error-prone l'implementazione di nuove feature, viene descritta come sono state pensate e implementate le due funzionalità che sono state aggiunte a CPGDTF-Importer.
     \item \textbf{Capitolo \ref{sec:End}, Conclusioni}: In questo capitolo conclusivo, vengono sintetizzati i problemi generali, emersi durante lo sviluppo con GDTF ed Unreal Engine. Inoltre, vengono valutati futuri sviluppi con Arri (l'azienda che ha acquisito ClayPaky lo scorso Marzo, durante il mio periodo di tirocinio) e con Epic Games stessa.
 \end{itemize}
