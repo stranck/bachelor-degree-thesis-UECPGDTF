@@ -55,7 +55,7 @@ Da qui in poi inizia il loop dell'algoritmo di Beam RayMarching. Il ciclo in se 
 \begin{lstlisting}
 float3 cumul = 0;
 for(uint i=0; i<numSteps; i++){
-    ...
+    //...
 }
 return cumul ;
 \end{lstlisting}
@@ -67,35 +67,36 @@ float3 pos = NSlice + posOffset * i ;
 float depth = NDepth + StepSize * i ;
 \end{lstlisting}
 Successivamente la posizione viene ricalcolata per essere nel range [0, 1], in modo da poter effettuare successivamente le operazioni di sample. A questo punto la nostra posizione è stata convertita in coordinate UV.
+%\begin{lstlisting}
+%///Domain Transform
+%pos.z = -pos.z;
+%pos /= float3(Opp*2,Opp*2,Adj);
+%
+%float div = ConeRadius / Opp;
+%div = (pos.z*(1-div))+div;
+%pos.xy /= div;
+%
+%//Center domain
+%pos.z -= 0.5 ;
+%\end{lstlisting}
+\newline
+
+\noindent Poi viene verificato che non stiamo disegnando texture dalla parte opposta della fixture, e che non abbiamo un qualche altro oggetto a coprire completamente il beam. Se è valida una delle due condizioni, saltiamo questa iterazione del ciclo.
+%\begin{lstlisting}
+%///Clip domain edges.
+%bool maskX = abs(pos.x) > 0.5;
+%bool maskY = abs(pos.y) > 0.5;
+%bool maskZ = abs(pos.z) > 0.5;
+%if (maskX || maskY || maskZ) continue;
+%
+%///Soft clipping with scene depth.
+%float dClip = saturate((ScDepth-depth)/SoftClipSize);
+%if(dClip == 0) continue;
+%\end{lstlisting}
+\newline
+
+\noindent A questo punto avviene l'effettivo sample della ruota gobo e colori. Viene prima calcolato l'offset all'interno nella ruota, per poi essere usato per modificare la coordinata $X$ delle UV ed infine si effettua l'operazione di sampling della texture.
 \begin{lstlisting}
-///Domain Transform
-pos.z = -pos.z;
-pos /= float3(Opp*2,Opp*2,Adj);
-
-float div = ConeRadius / Opp;
-div = (pos.z*(1-div))+div;
-pos.xy /= div;
-
-//Center domain
-pos.z -= 0.5 ;
-\end{lstlisting}
-Poi viene verificato che non stiamo disegnando texture dalla parte opposta della fixture, e che non abbiamo un qualche altro oggetto a coprire completamente il beam. Se è valida una delle due condizioni, saltiamo questa iterazione del ciclo.
-\begin{lstlisting}
-///Clip domain edges.
-bool maskX = abs(pos.x) > 0.5;
-bool maskY = abs(pos.y) > 0.5;
-bool maskZ = abs(pos.z) > 0.5;
-if (maskX || maskY || maskZ) continue;
-
-///Soft clipping with scene depth.
-float dClip = saturate((ScDepth-depth)/SoftClipSize);
-if(dClip == 0) continue;
-\end{lstlisting}
-A questo punto avviene l'effettivo sample della ruota gobo e colori. Viene prima calcolato l'offset all'interno nella ruota, per poi essere usato per modificare la coordinata $X$ delle UV ed infine si effettua l'operazione di sampling della texture.
-\begin{lstlisting}
-// UVs from pos
-pos.xy = saturate(pos.xy+0.5);
-
 //gobo
 float2 texCoor = pos.xy;
 float scale = 1 / NumGobos;
@@ -226,26 +227,11 @@ void CPGDTFRenderPipelineBuilder(
         TArray<UActorComponent*> components,
         FString fixturePathOnContentBrowser) {
 
-    //Salva l'indice della modalita' selezionata
-	this->mSelectedMode = selectedMode;
-	this->mGdtfDescription = gdtfDescription;
+    //Salva informazioni sulla luce quali la modalita' ed il path
+
 	//Ottieni l'array con le ruote presenti in un faro
     this->mWheels = Cast<UDMXImportGDTFWheels>(
         gdtfDescription->Wheels)->Wheels;
-    //Salva il nome (sanitizzato) del tipo di fixture
-	this->mSanitizedName = UPackageTools::SanitizePackageName(
-        Cast<UDMXImportGDTFFixtureType(
-            gdtfDescription->FixtureType)->Name.ToString());
-
-    //Genera il path in cui verranno salvati
-    // i materiali clonati e la pipeline
-	if (fixturePathOnContentBrowser.EndsWith(TEXT("/")))
-        fixturePathOnContentBrowser.RemoveAt(
-            fixturePathOnContentBrowser.Len() - 1);
-	fixturePathOnContentBrowser.Append("/lightRenderingPipeline/");
-	fixturePathOnContentBrowser.Append(FString::FromInt(selectedMode));
-	fixturePathOnContentBrowser.Append(TEXT("/"));
-	this->mBasePackagePath = fixturePathOnContentBrowser;
 
     //Analizza le ruote del faro e conta quante ce ne sono per tipo
 	for (FDMXImportGDTFWheel wheel : this->mWheels) {
@@ -291,7 +277,8 @@ bool cloneMaterialInterface(
 	UMaterialExpression::CopyMaterialExpressions(
         srcExpression, nullptr,
         dstMaterial, nullptr,
-        dstExpression, nullptr);
+        dstExpression, nullptr
+    );
 	//Esegui la lambda per collegare gli output del materiale
 	if(linkOutputFnc)
         linkOutputFnc(dstMaterial, dstMaterialData, dstExpression);
@@ -334,40 +321,40 @@ CheckType* searchMaterialExpressionByDesc(
 Ogni volta che viene creato un nuovo nodo, esso viene inserito a coordinate (0, 0) all'interno del grafo del materiale. Andare ad effettuare del debugging su un materiale in cui sono stati generati tante MaterialExpression può essere pesante per via del disordine che si crea nell'avere tutti i nodi l'uno sull'altro. È nata quindi la necessità di creare una nuova classe di helper specializzata nel posizionare automaticamente i nuovi nodi ad intervalli regolari l'uno dall'altro. \newline
 Questa classe ha bisogno di sapere l'asse sul quale ci stiamo muovendo, le coordinate dell'ultima MaterialExpression spostata, ed lo spiazzamento tra l'una e l'altra. Il costruttore è molto semplice, si prende queste 4 informazioni e se le salva. Il metodo \lstinline{moveMaterialExpression()} (responsabile di muovere i nodi) banalmente imposterà l'x e la y della MaterialExpression in input a quelli correnti, sceglierà una coordinata in base all'asse che stiamo percorrendo e la aggiornerà dell'offset prestabilito (o uno specificato alla funzione).
 \clearpage % TODO check if we really need this
-\begin{lstlisting}
-struct MeBlocksMover {
-    private:
-    bool movingYAxys = false;
-    int32 x, y;
-    int32 defaultOffset;
-
-    public:
-    MeBlocksMover(int32 x, int32 y, int32 offset, bool movingYAxys) :
-        movingYAxys(movingYAxys), x(x), y(y), defaultOffset(offset) {}
-
-    void moveMaterialExpression(UMaterialExpression* me, int offset=0) {
-        //Sposta la MaterialExpression
-        me->MaterialExpressionEditorX = x;
-        me->MaterialExpressionEditorY = y;
-
-        //Aggiorna i valori di X/Y salvati
-        if (offset == 0) offset = defaultOffset;
-        if (movingYAxys) y += offset;
-            else x += offset;
-    }
-    void moveMaterialExpressions(TArray <UMaterialExpression*>& mes) {
-        for (UMaterialExpression* me : mes)
-            moveMaterialExpression(me);
-    }
-
-    inline int32 getCurrentX() {
-        return x;
-    }
-    inline int32 getCurrentY() {
-        return y;
-    }
-};
-\end{lstlisting}
+%\begin{lstlisting}
+%struct MeBlocksMover {
+%    private:
+%    bool movingYAxys = false;
+%    int32 x, y;
+%    int32 defaultOffset;
+%
+%    public:
+%    MeBlocksMover(int32 x, int32 y, int32 offset, bool movingYAxys) :
+%        movingYAxys(movingYAxys), x(x), y(y), defaultOffset(offset) {}
+%
+%    void moveMaterialExpression(UMaterialExpression* me, int offset=0) {
+%        //Sposta la MaterialExpression
+%        me->MaterialExpressionEditorX = x;
+%        me->MaterialExpressionEditorY = y;
+%
+%        //Aggiorna i valori di X/Y salvati
+%        if (offset == 0) offset = defaultOffset;
+%        if (movingYAxys) y += offset;
+%            else x += offset;
+%    }
+%    void moveMaterialExpressions(TArray <UMaterialExpression*>& mes) {
+%        for (UMaterialExpression* me : mes)
+%            moveMaterialExpression(me);
+%    }
+%
+%    inline int32 getCurrentX() {
+%        return x;
+%    }
+%    inline int32 getCurrentY() {
+%        return y;
+%    }
+%};
+%\end{lstlisting}
 
 Infine vengono create una serie di funzioni inline che generano i nomi dei parametri ed il nome delle variabili del codice HLSL in modo da standardizzare la nomenclatura all'interno dell'itero plugin CPGDTF-Importer. Con \lstinline{get*ParamName()} ci riferiamo a funzioni che generano il nome di parametri all'interno di materiali. Invece, con \lstinline{getInput*Name()} ci riferiamo alla generazione dei nomi per le variabili (e, conseguentemente, ai nomi per gli input) della CustomExpression responsabile di implementare la pipeline di rendering per il materiale Beam.
 
@@ -385,42 +372,42 @@ Come accennato sopra, generare un nuovo parametro per la pipeline del beam consi
     \item Aggiungere l'input alla custom expression che contiene il codice HLSL.
     \item Riposizionare l'input usando un oggetto \lstinline{MeBlocksMover}.
 \end{itemize}
-Il codice che si occupa di queste operazioni è il seguente:
-\begin{lstlisting}
-UMaterialExpressionScalarParameter* addScalarInputToBeamPipeline(
-        UMaterial* beamMaterial, //Materiale di destinazione
-        FString paramName, //Nome del parametro
-        FString inputName, //Nome dell'input della CustomExpression
-        UMaterialExpressionCustom* meCustom,
-        MeBlocksMover* mover = nullptr,
-        float defaultValue = 0) {
-    //Genera un nuovo parametro
-    UMaterialExpressionScalarParameter* param =
-        generateMaterialExpression<UMaterialExpressionScalarParameter>(
-        beamMaterial);
-    //Imposta le proprieta' di un parametro
-    param->ParameterName = FName(*paramName);
-    param->Group = FName(TEXT("Runtime Parameters"));
-    param->SortPriority = 5;
-    param->DefaultValue = defaultValue;
-    //Aggiunge il parametro al materiale
-    beamMaterial->GetEditorOnlyData()->
-        ExpressionCollection.AddExpression(param);
-
-    //Crea un input per le CustomExpression
-    FCustomInput input;
-    input.InputName = FName(*inputName);
-    //Connette il parametro all'input
-    input.Input.Connect(0, param);
-    //Aggiunge l'input alla CustomExpression
-    meCustom->Inputs.Add(input);
-
-    //Sposta il parametro appena generato
-    if(mover)
-        mover->moveMaterialExpression(param, SCALAR_PARAM_SIZE_Y);
-    return param;
-}
-\end{lstlisting}
+%Il codice che si occupa di queste operazioni è il seguente:
+%\begin{lstlisting}
+%UMaterialExpressionScalarParameter* addScalarInputToBeamPipeline(
+%        UMaterial* beamMaterial, //Materiale di destinazione
+%        FString paramName, //Nome del parametro
+%        FString inputName, //Nome dell'input della CustomExpression
+%        UMaterialExpressionCustom* meCustom,
+%        MeBlocksMover* mover = nullptr,
+%        float defaultValue = 0) {
+%    //Genera un nuovo parametro
+%    UMaterialExpressionScalarParameter* param =
+%        generateMaterialExpression<UMaterialExpressionScalarParameter>(
+%        beamMaterial);
+%    //Imposta le proprieta' di un parametro
+%    param->ParameterName = FName(*paramName);
+%    param->Group = FName(TEXT("Runtime Parameters"));
+%    param->SortPriority = 5;
+%    param->DefaultValue = defaultValue;
+%    //Aggiunge il parametro al materiale
+%    beamMaterial->GetEditorOnlyData()->
+%        ExpressionCollection.AddExpression(param);
+%
+%    //Crea un input per le CustomExpression
+%    FCustomInput input;
+%    input.InputName = FName(*inputName);
+%    //Connette il parametro all'input
+%    input.Input.Connect(0, param);
+%    //Aggiunge l'input alla CustomExpression
+%    meCustom->Inputs.Add(input);
+%
+%    //Sposta il parametro appena generato
+%    if(mover)
+%        mover->moveMaterialExpression(param, SCALAR_PARAM_SIZE_Y);
+%    return param;
+%}
+%\end{lstlisting}
 
 Per la generazione del codice HLSL è stata salvata in una costante del precompilatore una versione modificata del codice originale. Innanzitutto ad inizio codice è stata creata una struttura \lstinline{FunctionsWrapper} contenente le varie funzioni che abbiamo bisogno di chiamare durante la generazione. La funzione di sampling delle ruote è stata generalizzata e spostata in questa struttura:
 \lstset{language=glsl}
@@ -498,9 +485,6 @@ for (int i = 0; i < FCPGDTFWheelImporter::WheelType::SIZE; i++) {
     //Per ogni ruota colori
     for (int j = 0; j < this->mWheelsNo[i]; j++) {
         //Ottieni i nomi degli input
-        FString txtVarName = getInputTextureName(wheelType, false, j);
-        FString numSlotVarName = getInputNumSlotsName(wheelType, j);
-        FString indexVarName = getInputIndexName(wheelType, j);
 
         //Genera il codice HLSL
         placeholderCode = placeholderCode + FString::Format(*textAdd, {
@@ -514,10 +498,7 @@ for (int i = 0; i < FCPGDTFWheelImporter::WheelType::SIZE; i++) {
     //Per ogni ruota gobo
     for (int j = 0; j < this->mWheelsNo[i]; j++) {
         //Ottieni i nomi degli input
-        FString txtVarName = getInputTextureName(wheelType, true, j);
-        FString numSlotVarName = getInputNumSlotsName(wheelType, j);
-        FString indexVarName = getInputIndexName(wheelType, j);
-
+        
         //Genera il codice HLSL
         placeholderCode = placeholderCode + FString::Format(*textAdd, {
             FString::Printf(
@@ -528,8 +509,7 @@ for (int i = 0; i < FCPGDTFWheelImporter::WheelType::SIZE; i++) {
         foundGobo = true;
     }
     break;
-    default:
-    break;
+    default: break;
     }
 }
 
@@ -562,33 +542,33 @@ if (meEmissiveColor)
 
 Per quanto riguarda invece la seconda lambda, abbiamo un codice un po' più elaborato, poiché si occupa anche di generare gli input per la CustomExpression. \newline
 Inizialmente andiamo a cercare la CustomExpression. Se esiste, generiamo il codice HLSL e glielo impostiamo. Successivamente creiamo l'input per il valore di frost e lo piazziamo dentro il materiale usando un \lstinline{MeBlocksMover}.
-\begin{lstlisting}
-UMaterialExpressionCustom* meCustom =
-    searchMaterialExpressionByDesc<UMaterialExpressionCustom>(
-    dstExpression, FIND_DESCR_CUSTOM);
-if (meCustom) {
-    meCustom->Code = generateHLSLCode();
-    
-    MeBlocksMover* meBlocksMover =
-        new MeBlocksMover(BEAM_STARTING_X, BEAM_STARTING_Y, 0, true);
-    UMaterialExpressionScalarParameter* scalarFrost =
-        addScalarInputToBeamPipeline(
-            dstMaterial,
-            getFrostParamName(),
-            getInputFrostName(),
-            meCustom,
-            meBlocksMover
-        );
-\end{lstlisting}
-Carichiamo poi una texture di default che verrà utilizzata in ogni ruota:
-\begin{lstlisting}
-FString defaultTexturePath = FCPGDTFImporterUtils::BASEPATH;
-defaultTexturePath += "MI/Textures/T_Circle_01.T_Circle_01";
-UTexture2D* defaultTexture = Cast<UTexture2D>(
-    FCPGDTFImporterUtils::LoadObjectByPath(defaultTexturePath)
-);
-\end{lstlisting}
-E infine, per ogni tipo di ruota (saltando quelli non supportati) e per ogni ruota dello stesso tipo, andiamo ad aggiungere alla CustomExpression gli input ed i parametri per la texture, il numero di slot e l'indice:
+%\begin{lstlisting}
+%UMaterialExpressionCustom* meCustom =
+%    searchMaterialExpressionByDesc<UMaterialExpressionCustom>(
+%    dstExpression, FIND_DESCR_CUSTOM);
+%if (meCustom) {
+%    meCustom->Code = generateHLSLCode();
+%    
+%    MeBlocksMover* meBlocksMover =
+%        new MeBlocksMover(BEAM_STARTING_X, BEAM_STARTING_Y, 0, true);
+%    UMaterialExpressionScalarParameter* scalarFrost =
+%        addScalarInputToBeamPipeline(
+%            dstMaterial,
+%            getFrostParamName(),
+%            getInputFrostName(),
+%            meCustom,
+%            meBlocksMover
+%        );
+%\end{lstlisting}
+%Carichiamo poi una texture di default che verrà utilizzata in ogni ruota:
+%\begin{lstlisting}
+%FString defaultTexturePath = FCPGDTFImporterUtils::BASEPATH;
+%defaultTexturePath += "MI/Textures/T_Circle_01.T_Circle_01";
+%UTexture2D* defaultTexture = Cast<UTexture2D>(
+%    FCPGDTFImporterUtils::LoadObjectByPath(defaultTexturePath)
+%);
+%\end{lstlisting}
+Carichiamo poi una texture di default e infine, per ciascun tipo (saltando quelli non supportati) e per ciascuna ruota dello stesso tipo, andiamo ad aggiungere alla CustomExpression gli input ed i parametri per la texture, il numero di slot e l'indice:
 \begin{lstlisting}
 //Per ogni tipo di ruota
 for (int i = 0; i < FCPGDTFWheelImporter::WheelType::SIZE; i++) {
@@ -682,45 +662,47 @@ auto dstMaterialData = dstMaterial->GetEditorOnlyData();
 Andiamo anche a caricarci la MaterialFunction che si occuperà di fare il rendering delle ruote. Nota: Va scinto il concetto di MaterialFunction e MaterialFunctionCall: La prima rappresenta il \say{codice} in se da eseguire, la seconda rappresenta un nodo all'interno del grafo di un materiale che andrà a chiamare la MaterialFunction impostata. In informatica, è come se la prima fosse una funzione e la seconda una chiamata a funzione. Una volta generata una MaterialFunctionCall bisognerà impostargli quale MaterialFunction dovrà richiamare.
 
 Quando verrà aggiunto il supporto a nuove features qui dovrà essere aggiunto il pre-caricamento delle loro MaterialFunctions.
-\begin{lstlisting}
-FString mfDmxWheelPath = FCPGDTFImporterUtils::BASEPATH;
-mfDmxWheelPath +=
-    TEXT("MaterialInstances/MaterialFunctions/MF_DMXWheel.MF_DMXWheel");
-UMaterialFunctionInterface* mfWheel = Cast<UMaterialFunctionInterface>(
-    FCPGDTFImporterUtils::LoadObjectByPath(mfDmxWheelPath)
-);
-\end{lstlisting}
-Da qui in poi andiamo a generare i singoli moduli per la pipeline di rendering, a partire dal parametro del colore di partenza. Come già mostrato, ogni modulo prenderà in input il risultato di quello precedente. Ad ogni generazione quindi colleghiamo la material function precedente salvata per puntatore dentro \lstinline{previousNode} agli input di quella corrente e successivamente aggiorniamo la variabile.
-\begin{lstlisting}
-UMaterialExpressionVectorParameter* input =
-    generateMaterialExpression<UMaterialExpressionVectorParameter>(
-    dstMaterial);
-input->ParameterName = FName(TEXT("DMX Color"));
-input->DefaultValue = { 1, 1, 1, 0 };
-input->Group = FName(TEXT("Runtime Parameters"));
-input->Function = dstMaterial;
+%\begin{lstlisting}
+%FString mfDmxWheelPath = FCPGDTFImporterUtils::BASEPATH;
+%mfDmxWheelPath +=
+%    TEXT("MaterialInstances/MaterialFunctions/MF_DMXWheel.MF_DMXWheel");
+%UMaterialFunctionInterface* mfWheel = Cast<UMaterialFunctionInterface>(
+%    FCPGDTFImporterUtils::LoadObjectByPath(mfDmxWheelPath)
+%);
+%\end{lstlisting}
+\newline
 
-UMaterialExpression* previousNode = input;
-dstMaterialData->ExpressionCollection.AddExpression(previousNode);
-\end{lstlisting}
-Prima di procedere all'aggiunta dei vari moduli, si genera il parametro di frost, lo si sposta e si carica una texture di default.
-\begin{lstlisting}
-UMaterialExpressionScalarParameter* frostParam =
-    addScalarParameterToMiPipeline(dstMaterial, getFrostParamName());
-
-frostParam->MaterialExpressionEditorX =
-    meModulesMover->getCurrentX() - MI_EDITOR_PARAM_BLOCK_DISTANCE_X;
-frostParam->MaterialExpressionEditorY =
-    meModulesMover->getCurrentY() + EDITOR_MINI_BLOCK_SIZE * 2;
-meModulesMover->moveMaterialExpression(previousNode);
-
-FString defaultTexturePath = FCPGDTFImporterUtils::BASEPATH;
-defaultTexturePath +=
-    TEXT("MaterialInstances/Textures/T_Circle_01.T_Circle_01");
-UTexture2D* defaultTexture = Cast<UTexture2D>(
-    FCPGDTFImporterUtils::LoadObjectByPath(defaultTexturePath)
-);
-\end{lstlisting}
+Da qui in poi andiamo a generare i singoli moduli per la pipeline di rendering, a partire dal parametro del colore di partenza. Come già mostrato, ogni modulo prenderà in input il risultato di quello precedente. Ad ogni generazione quindi colleghiamo la material function precedente salvata per puntatore dentro \lstinline{previousNode} agli input di quella corrente e successivamente aggiorniamo la variabile. Infine, prima di procedere all'aggiunta dei vari moduli, si genera il parametro di frost, lo si sposta e si carica una texture di default.
+% \begin{lstlisting}
+% UMaterialExpressionVectorParameter* input =
+%     generateMaterialExpression<UMaterialExpressionVectorParameter>(
+%     dstMaterial);
+% input->ParameterName = FName(TEXT("DMX Color"));
+% input->DefaultValue = { 1, 1, 1, 0 };
+% input->Group = FName(TEXT("Runtime Parameters"));
+% input->Function = dstMaterial;
+% 
+% UMaterialExpression* previousNode = input;
+% dstMaterialData->ExpressionCollection.AddExpression(previousNode);
+% \end{lstlisting}
+%Prima di procedere all'aggiunta dei vari moduli, si genera il parametro di frost, lo si sposta e si carica una texture di default.
+%\begin{lstlisting}
+%UMaterialExpressionScalarParameter* frostParam =
+%    addScalarParameterToMiPipeline(dstMaterial, getFrostParamName());
+%
+%frostParam->MaterialExpressionEditorX =
+%    meModulesMover->getCurrentX() - MI_EDITOR_PARAM_BLOCK_DISTANCE_X;
+%frostParam->MaterialExpressionEditorY =
+%    meModulesMover->getCurrentY() + EDITOR_MINI_BLOCK_SIZE * 2;
+%meModulesMover->moveMaterialExpression(previousNode);
+%
+%FString defaultTexturePath = FCPGDTFImporterUtils::BASEPATH;
+%defaultTexturePath +=
+%    TEXT("MaterialInstances/Textures/T_Circle_01.T_Circle_01");
+%UTexture2D* defaultTexture = Cast<UTexture2D>(
+%    FCPGDTFImporterUtils::LoadObjectByPath(defaultTexturePath)
+%);
+%\end{lstlisting}
 
 Analogamente a come abbiamo fatto nella generazione del materiale Beam, per creare i moduli per renderizzare le ruote, usiamo due cicli for: uno itera sui tipi differenti di ruote, e l'altro scorre sulla quantità di ruote di quel tipo. 
 \begin{lstlisting}
@@ -749,27 +731,27 @@ for (int i = 0; i < FCPGDTFWheelImporter::WheelType::SIZE; i++) {
 }
 \end{lstlisting}
 Per la generazione di un modulo wheel innanzitutto partiamo dal creare la MaterialFunctionCall ed a settargli la MaterialFunction che abbiamo caricato in precedenza.
-\begin{lstlisting}
-UMaterialExpressionMaterialFunctionCall* currentNode =
-    generateMaterialExpression<UMaterialExpressionMaterialFunctionCall>(
-    dstMaterial);
-dstMaterialData->ExpressionCollection.AddExpression(currentNode);
-currentNode->SetMaterialFunction(mfWheel);
-\end{lstlisting}
-Successivamente andiamo a generare i nodi per i vari parametri.
-\begin{lstlisting}
-auto texParam = addTextureParameterToMiPipeline(
-    dstMaterial, getDiskParamName(wheelType, false, j),
-    defaultTexture, meParamsMover);
-auto texFrostedParam = addTextureParameterToMiPipeline(
-    dstMaterial, getDiskParamName(wheelType, true, j),
-    defaultTexture, meParamsMover);
-auto numSlotParam = addScalarParameterToMiPipeline(
-    dstMaterial, getNumSlotsParamName(wheelType, j), meParamsMover, 1);
-auto wheelIndexParam = addScalarParameterToMiPipeline(
-    dstMaterial, getIndexParamName(wheelType, j), meParamsMover);
-\end{lstlisting}
-Ed infine andiamo ad effettuare tutte le varie connessioni agli input della MaterialFunction. Viene anche effettuato lo spostamento e viene salvata come ultimo modulo elaborato. 
+%\begin{lstlisting}
+%UMaterialExpressionMaterialFunctionCall* currentNode =
+%    generateMaterialExpression<UMaterialExpressionMaterialFunctionCall>(
+%    dstMaterial);
+%dstMaterialData->ExpressionCollection.AddExpression(currentNode);
+%currentNode->SetMaterialFunction(mfWheel);
+%\end{lstlisting}
+%Successivamente andiamo a generare i nodi per i vari parametri.
+%\begin{lstlisting}
+%auto texParam = addTextureParameterToMiPipeline(
+%    dstMaterial, getDiskParamName(wheelType, false, j),
+%    defaultTexture, meParamsMover);
+%auto texFrostedParam = addTextureParameterToMiPipeline(
+%    dstMaterial, getDiskParamName(wheelType, true, j),
+%    defaultTexture, meParamsMover);
+%auto numSlotParam = addScalarParameterToMiPipeline(
+%    dstMaterial, getNumSlotsParamName(wheelType, j), meParamsMover, 1);
+%auto wheelIndexParam = addScalarParameterToMiPipeline(
+%    dstMaterial, getIndexParamName(wheelType, j), meParamsMover);
+%\end{lstlisting}
+Vengono poi effettuate tutte le varie connessioni agli input della MaterialFunction, lo spostamento all'interno del grafo del materiale e viene salvata come ultimo modulo elaborato. 
 \begin{lstlisting}
 currentNode->FunctionInputs[1].Input.Connect(0, previousParameter);
 currentNode->FunctionInputs[2].Input.Connect(0, frostParam);
@@ -777,9 +759,6 @@ currentNode->FunctionInputs[3].Input.Connect(0, texParam);
 currentNode->FunctionInputs[4].Input.Connect(0, texFrostedParam);
 currentNode->FunctionInputs[5].Input.Connect(0, numSlotParam);
 currentNode->FunctionInputs[6].Input.Connect(0, wheelIndexParam);
-
-meModulesMover->moveMaterialExpression(currentNode);
-previousParameter = currentNode;
 \end{lstlisting}
 
 \clearpage
@@ -830,8 +809,7 @@ UMaterialExpressionMultiply* meInput =
     searchMaterialExpressionByDesc<UMaterialExpressionMultiply>(
     dstExpression, FIND_DESCR_INPUT);
 if (meInput) {
-    FString name = this->mSanitizedName + TEXT("_RenderPipeline");
-    FString mfName = TEXT("MF_") + name;
+    //Genera il nome della MF da importare
 
     //Carica la pipeline
     auto materialFunction = Cast<UMaterialFunctionInterface>(
