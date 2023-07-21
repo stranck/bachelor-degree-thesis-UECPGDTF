@@ -53,7 +53,7 @@ Se immaginiamo quindi una singola lama come una equazione matematica, possiamo r
 
 Per trovare l'equazione della retta quando facciamo il sample A+B, possiamo ricorrere alla formula per ottenere l'equazione di una retta passante per due punti:
 \[m = \frac{y_2 - y_1}{x_2 - x_1}\]
-Immaginiamo che i valori di $A$ e $B$ corrispondano alle loro y, che $A$ si trovi a coordinate $x = 0$ (completamente a sinistra della texture) e che $B$ si trovi a $x = 1$ (completamente a destra della texture). La formula sarà uguale a:
+Immaginiamo che i valori di $A$ e $B$ corrispondano alle loro y, che $A$ si trovi completamente a sinistra della texture ($x = 0$) e che $B$ si trovi completamente a destra della texture ($x = 1$). La formula sarà uguale a:
 \[m = \frac{y_B - y_A}{x_B - x_A} = \frac{B - A}{1 - 0} = B - A\]
 In questo modo generiamo il coefficiente di una retta che però ha sempre origine in $(0, 0)$. Nella realtà, ciò che abbiamo appena creato è un sagomatore in cui solamente il valore B \say{funziona}. Per far \say{funzionare} anche il valore $A$, basta aggiungerlo come termine noto dell'equazione.
 
@@ -61,7 +61,7 @@ Come scritto sopra, per generare una flag bisogna controllare quando stiamo \say
 \[y > x(B - A) + A\]
 \newline
 
-Per effettuare, invece, il sampling di una flag A+Rot, possiamo utilizzare $A$ come termine noto, e convertire $R$ da gradi alla relativa tangente trigonometrica in modo da avere direttamente il coefficiente della retta. Poiché vogliamo però inclinare questa retta usando come punto di rotazione il suo centro ($x = 0.5$) e non la sua origine ($x = 0$), dobbiamo modificare il termine noto in base al coefficiente: più il coefficiente è elevato (e più la retta sarà quindi inclinata crescendo da sinistra verso destra) e più il termine noto dovrà calare. Considerando la sezione della retta compresa tra $x = [0, 1]$, la tangente di $R$, essendo direttamente uguale al coefficiente della retta, è anche uguale alla differenza tra il valore della $y$ quando la retta avrà $x = 0$ e quando avrà $x = 1$ (visibile nella seconda immagine della figura \ref{fig:5_shaperDifferentModes}). Al centro di questa sezione (quando $x = 0.5$) la differenza con i due estremi sarà quindi uguale a $\frac{tan(R)}{2}$, ovvero esattamente il valore da sottrarre al termine noto per mantenere centrale il punto di rotazione della retta. La formula finale dell'equazione sarà quindi:
+Per effettuare, invece, il sampling di una flag A+Rot, possiamo utilizzare $A$ come termine noto, e convertire $R$ da gradi alla relativa tangente trigonometrica in modo da avere direttamente il coefficiente della retta. Poiché vogliamo però inclinare questa retta usando come punto di rotazione il suo centro ($x = 0.5$) e non la sua origine ($x = 0$), dobbiamo modificare il termine noto in base al coefficiente: più il coefficiente è elevato quindi più la retta sarà quindi inclinata crescendo da sinistra verso destra, e più il termine noto dovrà calare. Considerando la sezione della retta compresa tra $x = [0, 1]$, la tangente di $R$, essendo direttamente uguale al coefficiente della retta, è anche uguale alla differenza tra il valore della $y$ quando la retta avrà $x = 0$ e quando avrà $x = 1$ (visibile nella seconda immagine della figura \ref{fig:5_shaperDifferentModes}). Al centro di questa sezione (quando $x = 0.5$) la differenza con i due estremi sarà quindi uguale a $\frac{tan(R)}{2}$, ovvero esattamente il valore da sottrarre al termine noto per mantenere centrale il punto di rotazione della retta. La formula finale dell'equazione sarà quindi:
 \[y > \tan(R)x + (a - \frac{\tan(R)}{2})\]
 
 Come le ruote, anche il framing system deve implementare il frost. Piuttosto di applicare un filtro di blur al framing system già renderizzato, è preferibile in termini di peso computazionale implementare una sfocatura come formula matematica direttamente nel precedente rendering. L'idea è quella di utilizzare il valore del frost per definire la dimensione di una zona di sfumatura intorno alla retta. La prima operazione che viene effettuata è trovare la distanza della coordinata UV che stiamo renderizzando dalla retta. Questa operazione viene approssimata come la distanza assoluta ($d$) tra la $y$ della coordinata UV e la $y$ della retta per ogni $x$.
@@ -133,7 +133,7 @@ Dove $a$ corrisponde ai gradi di rotazione in input.
 
 \subsubsection{Generazione codice HLSL ed inserimento nel materiale Beam}\label{subsec:5_1_ShaperHlsl}
 \lstset{language=glsl}
-Le funzioni $fade$, $sigmoid$ e $rotateUV$ sono state scritte in maniera generica poiché sono utili anche nel sample di altre features (ad esempio, l'iris \ref{subsec:5_Iris}). Le funzioni di remapping sono state, invece, accorpate tra di loro. Le condizioni sono implementate con la formula \lstinline{float b = /*boolean expression*/; float f = b * x + (1 - b) * y;} per ridurre la branch divergence nell'esecuzione del codice HLSL.
+Le funzioni $fade$, $sigmoid$ e $rotateUV$ sono state scritte in maniera generica poiché sono utili anche nel sample di altre features come ad esempio l'iris \ref{subsec:5_Iris}). Le funzioni di remapping sono state, invece, accorpate tra di loro. Le condizioni sono implementate con la formula \lstinline{float b = /*boolean expression*/; float f = b * x + (1 - b) * y;} per ridurre la branch divergence nell'esecuzione del codice HLSL.
 \begin{lstlisting}
 float sigmoid(float f){
 	const float exp = -4;
@@ -266,7 +266,7 @@ for (UCPGDTFShaperFixtureComponent *shaper : shapers) {
     );
 }
 \end{lstlisting}
-Dove \lstinline{getBladeABRotParamName()} e \lstinline{getInputBladeABRotName()} prendono \lstinline{true} se stiamo generando il parametro A o \lstinline{false} se stiamo generando il parametro B o Rot (i due valori condividono lo stesso parametro). \newline
+Dove \lstinline{getBladeABRotParamName()} e \lstinline{getInputBladeABRotName()} prendono \lstinline{true} se stiamo generando il parametro A o \lstinline{false} se stiamo generando il parametro B o Rot. Questi ultimi due valori sono raggruppati insieme poiché condividono lo stesso parametro. \newline
 
 La lambda citata sopra si occupa come prima cosa di generare la MaterialFunctionParameter.
 %\begin{lstlisting}
@@ -502,7 +502,7 @@ Il componente di gestione dell'iris, per le stesse ragioni di quello che gestisc
     \item \textbf{PulseOpen}: $y = \tan^{-1}(\tan(x))$
     \item \textbf{PulseClose}: $y = -\tan^{-1}(\tan(x))$
 \end{itemize}
-Questi effetti sono generati e gestiti da una classe esterna (\lstinline{FPulseEffectManager}), poiché effetti simili sono di fatto disponibili anche in altre features (come ad esempio, lo shutter). I nostri compiti, da componente che si appoggia a quella classe per la generazione degli effetti pulse, sono:
+Questi effetti sono generati e gestiti da una classe esterna (\lstinline{FPulseEffectManager}), poiché effetti simili sono di fatto disponibili anche in altre features come, ad esempio, lo shutter. I nostri compiti, da componente che si appoggia a quella classe per la generazione degli effetti pulse, sono:
 \begin{itemize}
     \item \textbf{Far partire o impostare la velocità di un effetto}: questa operazione viene fatta all'interno della funzione \lstinline{ApplyEffectToBeam()} ogni qualvolta il valore dmx corrisponde ad una di queste features:
     \begin{lstlisting}

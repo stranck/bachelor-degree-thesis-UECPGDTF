@@ -19,7 +19,7 @@ CPGDTF-Importer è una fork di DMXEngine ed è, in particolare, un plugin per l'
 \end{itemize}
 
 \subsection{Anatomia di una fixture}\label{subsec:1_fixtureAnatomy}
-Le luci (che chiameremo anche \say{fari} o \say{fixture}) utilizzati nel mondo dell'eventistica sono dei macchinari di vario tipo e dimensioni che hanno il compito di generare luce di forme e colori differenti. Le fixture che ci interessano sono quelle utilizzate sia come illuminazione di oggetti (ad esempio, le luci frontali che illuminano un attore in teatro) che come effettistica (ovvero le luci che fanno effetti aerei ai concerti). Storicamente le luci nascono come semplici fari monocolore a cui si potevano applicare a mano dei filtri davanti la sorgente luminosa ed a cui si poteva solamente regolare l'intensità attraverso apparecchiature chiamate \say{dimmer}. Solo a partire dagli anni '90 sono entrate in commercio le prime fixture intelligenti, ovvero con la possibilità di essere controllate da remoto attraverso una console luci sfruttando il protocollo DMX \cite{DMX}. 
+Le luci (che chiameremo anche \say{fari} o \say{fixture}) utilizzati nel mondo dell'eventistica sono dei macchinari di vario tipo e dimensioni che hanno il compito di generare luce di forme e colori differenti. Le fixture che ci interessano sono quelle utilizzate sia come illuminazione di oggetti, come ad esempio quelle frontali che illuminano un attore in teatro, che come effettistica, ovvero le luci che fanno gli effetti aerei ai concerti. Storicamente le luci nascono come semplici fari monocolore a cui si potevano applicare a mano dei filtri davanti la sorgente luminosa ed a cui si poteva solamente regolare l'intensità attraverso apparecchiature chiamate \say{dimmer}. Solo a partire dagli anni '90 sono entrate in commercio le prime fixture intelligenti, ovvero con la possibilità di essere controllate da remoto attraverso una console luci sfruttando il protocollo DMX \cite{DMX}. 
 
 \subsubsection{Luci statiche e dinamiche}\label{subsec:1_1_fixtureTypes}
 Le fixture possono essere classificabili come statiche o dinamiche. Le fixture dette \say{statiche} sono fixture che sono formate da un unico \say{blocco} (che GDTF chiama \say{geometrie}, mentre Unreal Engine chiama \say{SceneComponents}) e che, fisicamente, non si muovono. Sono quelle più semplici nonché il primo tipo di faro entrato in commercio.
@@ -42,7 +42,7 @@ All'interno della testa, così come all'interno delle fixture statiche, è prese
 I moduli che verranno toccati in questo progetto sono i seguenti:
 \begin{itemize}
     \item \textbf{Ruote colori e gobo}: Sono delle ruote in cui sono presenti degli slot contenenti dei filtri colori o delle forme. Hanno sempre uno slot libero in cui la luce può passare senza essere modificata e, girando, possono mettere in mezzo alla luce uno slot alla volta.
-    \item \textbf{Sintesi e correzione dei colori}: Nelle luci a sintesi additiva troviamo LED di colori differenti (RGB + Bianco, Ambra, Lime, UV, etc); nelle luci a sintesi sottrattiva invece abbiamo una luce bianca e delle flag CMY che vengono inserite davanti per regolarne il colore. Esistono anche dei filtri (sempre sottrattivi) per effettuare color correction.
+    \item \textbf{Sintesi e correzione dei colori}: Nelle luci a sintesi additiva troviamo LED di colori differenti (RGB + Bianco, Ambra, Lime, UV, etc); nelle luci a sintesi sottrattiva invece abbiamo una luce bianca e delle flag CMY che vengono inserite davanti per regolarne il colore. Esistono anche dei filtri, sempre sottrattivi, per effettuare color correction.
     \item \textbf{Sagomatore}: È un sistema composto da quattro lame che possono essere inserite nel fascio di luce da direzioni differenti e possono essere inclinate, in modo da ritagliare in maniera precisa triangoli e quadrilateri per fare puntamenti.
     \item \textbf{Iris}: Sono delle lame circolari che entrano nel fascio di luce da tutte le direzioni e si occupano di ridurne la dimensione. Il funzionamento è analogo al diaframma di una fotocamera.
     \item \textbf{Frost}: È un filtro atto a rendere soffusa la luce, smorzando i bordi di eventuali figure che si stanno proiettando.
@@ -56,7 +56,7 @@ I moduli solitamente funzionano sottrattivamente: per ogni modulo a partire dall
 \end{figure}
 
 \subsubsection{Protocollo DMX}\label{subsec:1_1_dmx}
-Oggi giorno, quasi tutte le fixture che vengono usate sono intelligenti e, come citato sopra, vengono controllate via DMX. DMX è un protocollo unidirezionale in cui un master (solitamente una console luci) invia 44 volte al secondo agli slave (le varie fixture) un array di 512 byte chiamato \say{Universo DMX}. Le luci hanno memorizzato un offset all'interno di questo array chiamato \say{Indirizzo DMX} che viene impostato manualmente su ognuna dall'operaio che le monta su un palcoscenico. Ogni volta che arriva un nuovo pacchetto DMX la luce inizierà a leggere la sua sezione di dati a partire dall'indirizzo/offset specificato. Ogni byte che legge è chiamato \say{canale DMX} e, solitamente, corrisponde al valore da assegnare ad una diversa \say{funzionalità} (chiamata anche \say{feature}, o \say{attributo}) della luce.
+Oggi giorno, quasi tutte le fixture che vengono usate sono intelligenti e, come citato sopra, vengono controllate via DMX. DMX è un protocollo unidirezionale in cui un master che solitamente è una console luci invia 44 volte al secondo un array di 512 byte (chiamato \say{Universo DMX}) alle varie fixture che funzionano come slave. Le luci hanno memorizzato un offset all'interno di questo array chiamato \say{Indirizzo DMX} che viene impostato manualmente su ognuna dall'operaio che le monta su un palcoscenico. Ogni volta che arriva un nuovo pacchetto DMX la luce inizierà a leggere la sua sezione di dati a partire dall'indirizzo/offset specificato. Ogni byte che legge è chiamato \say{canale DMX} e, solitamente, corrisponde al valore da assegnare ad una diversa \say{funzionalità} (chiamata anche \say{feature}, o \say{attributo}) della luce.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.65\linewidth]{img/introduzione/dmxChannelDescExample.png}
@@ -81,7 +81,7 @@ Dei vari dati contenuti in questo XML a noi ci interessano principalmente:
 \end{itemize}
 
 \subsubsection{Ruote}\label{subsec:1_2_wheels}
-Nel nodo \lstinline{Wheels} all'interno del file XML viene definita una lista di ruote presenti all'interno del faro. Ogni ruota (rappresentata da un nodo \lstinline{Wheel}) può avere un nome e dentro ciascuna troviamo una lista di \lstinline{Slot} che rappresentano ognuno un elemento della ruota. Ogni slot ha anch'esso un nome e può avere degli attributi opzionali quali:
+Nel nodo \lstinline{Wheels} all'interno del file XML viene definita una lista di ruote presenti all'interno del faro. Ogni ruota, rappresentata da un nodo \lstinline{Wheel}, può avere un nome e dentro ciascuna troviamo una lista di \lstinline{Slot} che rappresentano ognuno un elemento della ruota. Ogni slot ha anch'esso un nome e può avere degli attributi opzionali quali:
 \begin{itemize}
     \item \lstinline{Color}: Il colore di uno slot presente su una color wheel.
     \item \lstinline{MediaFileName}: Nome del file PNG contenente la texture di questo slot, utilizzato per le ruote gobo ed animazione.
@@ -115,11 +115,11 @@ Il nodo \lstinline{DMXMode} raccoglie tutte le modalità di funzionamento di un 
             \item \lstinline{Geometry}: Nome della geometria controllata da questo canale.
             \item \lstinline{InitialFunction}: Nome della \lstinline{ChannelFunction} da eseguire come valore default del canale, espresso nella forma: \lstinline{NomeGeometria_AttributoLogicalChannel.AttributoChannelFunction.NomeChannelFunction}
         \end{itemize}
-    \item I figli di un DMXChannel sono i nodi \lstinline{LogicalChannel}. Su alcune fixture un canale dmx fisico può controllare funzionalità differenti, per questo motivo esiste una distinzione tra DMXChannel (ovvero il canale fisico) e LogicalChannel. I LogicalChannel all'interno dello stesso DMXChannel sono mutualmente esclusivi. Gli attributi principali di un LogicalChannel sono: \begin{itemize}
+    \item I figli di un DMXChannel sono i nodi \lstinline{LogicalChannel}. Su alcune fixture un canale dmx fisico può controllare funzionalità differenti, per questo motivo esiste una distinzione tra LogicalChannel e DMXChannel rappresentante il canale fisico. I LogicalChannel all'interno dello stesso DMXChannel sono mutualmente esclusivi. Gli attributi principali di un LogicalChannel sono: \begin{itemize}
             \item \lstinline{Snap}: Se lo snap è abilitato vuol dire che questo attributo non deve essere interpolato quando andiamo a fare la preview del faro, ma deve saltare direttamente a quel valore, poiché, fisicamente su una fixture vera, la feature non è controllata da un motore. Un esempio è il controllo della luminosità di un LED, che è istantaneo.
             \item \lstinline{Attribute}: Feature controllata da questo LogicalChannel.
         \end{itemize}
-    \item Sotto i LogicalChannel abbiamo i \lstinline{ChannelFunction}, che rappresentano una funzionalità specifica dell'attributo indicato nel LogicalChannel padre. Ad esempio, l'attributo del padre potrebbe essere \lstinline{Shutter} e come figli potrebbe avere due ChannelFunction di tipo \lstinline{StrobeRandom} e \lstinline{LinearStrobe}: Entrambi i ChannelFunction fanno uso dello stesso attributo fisico (lo shutter), ma di fatto sono due funzionalità differenti. Gli attributi principali di una ChannelFunction sono: \begin{itemize}
+    \item Sotto i LogicalChannel abbiamo i \lstinline{ChannelFunction}, che rappresentano una funzionalità specifica dell'attributo indicato nel LogicalChannel padre. Ad esempio, l'attributo del padre potrebbe essere \lstinline{Shutter} e come figli potrebbe avere due ChannelFunction di tipo \lstinline{StrobeRandom} e \lstinline{LinearStrobe}: Entrambi i ChannelFunction fanno uso dello stesso attributo fisico, lo shutter, ma di fatto sono due funzionalità differenti. Gli attributi principali di una ChannelFunction sono: \begin{itemize}
             \item \lstinline{Name}: Nome della ChannelFunction.
             \item \lstinline{Attribute}: Feature specifica di questo ChannelFunction, che riguarda comunque la feature generale specificata nel nodo LogicalChannel padre.
             \item \lstinline{DMXFrom}: Valore DMX in cui questa ChannelFunction inizia nel DMXChannel. Non esiste un attributo DMXTo indicato esplicitamente in GDTF; viene calcolato utilizzando il valore DMXFrom della ChannelFunction successiva, oppure, se è l'ultima ChannelFunction nella lista, il valore massimo che può assumere il DMXChannel.
@@ -161,7 +161,7 @@ Qui sotto elencate tutti tutti i termini che si riferiscono a concetti e oggetti
     \item \textbf{MaterialExpression}: Nodi di un grafo di un Material.
     \item \textbf{MaterialExpressionParameter}: Tipo di MaterialExpression che permettono di controllare i parametri del materiale esternamente.
     \item \textbf{MaterialExpressionFunctionCall}: Tipo di MaterialExpression che implementa una chiamata ad una MaterialFunction.
-    \item \textbf{MaterialExpressionCustom} o \say{CustomExpression}: Tipo di MaterialExpression che prende degli input e ritorna degli output. Mentre una MaterialExpressionFunctionCall elabora gli output utilizzando una MaterialFunction (e quindi un grafo), una MaterialExpressionCustom esegue codice vero e proprio scritto in HLSL, un linguaggio C-like utilizzato per la scrittura di Shader.
+    \item \textbf{MaterialExpressionCustom} o \say{CustomExpression}: Tipo di MaterialExpression che prende degli input e ritorna degli output. Mentre una MaterialExpressionFunctionCall elabora gli output utilizzando il grafo di una MaterialFunction, una MaterialExpressionCustom esegue codice vero e proprio scritto in HLSL, un linguaggio C-like utilizzato per la scrittura di Shader.
 \end{itemize}
 
 
@@ -172,7 +172,7 @@ Al mio arrivo in ClayPaky mi è stato affidato il progetto con l'obiettivo di im
 
 Dopo aver speso un primo periodo a prendere conoscenza con la codebase mi sono reso conto di quanto buona parte del codice necessitasse di un refactoring. In particolare ho riscontrato difficoltà nell'implementare nuove features, sia perché il codice che si occupava del rendering dell'illuminazione non fosse in alcun modo modulare e sia perché la gerarchia di classi che le gestisce fosse mal disegnata e con tanto codice duplicato. 
 
-Solamente dopo aver risolto questi grossi problemi strutturali nel codice (e dopo aver fatto funzionare correttamente l'interpolazione) ho potuto dedicarmi all'implementazione effettiva di nuove features. 
+Solamente dopo aver risolto questi grossi problemi strutturali nel codice e dopo aver fatto funzionare correttamente l'interpolazione ho potuto dedicarmi all'implementazione effettiva di nuove features. 
 
 %\clearpage %TODO CHECK IF THIS IS STILL NEEDED
 \subsection{Struttura della tesi}\label{subsec:1_thesisInfo}
@@ -183,7 +183,7 @@ L'elaborato è articolato come segue. Ogni capitolo rappresenta una milestone de
     \item \textbf{Capitolo \ref{sec:FixtureComponentHierachy}, Redesign gerarchia dei FixtureComponent}: Tratta l'analisi della vecchia gerarchia dei FixtureComponent, ovvero quelle classi responsabili di controllare ogni singola feature che compone una fixture. Vengono proposte nuove idee di implementazione e mostrati quali dati e metodi servirebbe mettere a disposizione alle classi che implementano la singola feature.
     \item \textbf{Capitolo \ref{sec:Interpolation}, Nuovo approccio all'interpolazione}: All'interno di questo capitolo vengono velocemente esposti i problemi dell'attuale classe che controlla l'interpolazione, ovvero il controllo del movimento dei motori virtuali. Successivamente viene mostrata la nuova implementazione della classe, esponendo i vari problemi che si sono verificati durante la scrittura del codice e come sono stati risolti.
     \item \textbf{Capitolo \ref{sec:NewFeatures}, Implementazione di nuove funzionalità alle fixtures}: Una volta sistemata la struttura del plugin e reso comodo e meno error-prone l'implementazione di nuove feature, viene descritta come sono state pensate e implementate le due funzionalità che sono state aggiunte a CPGDTF-Importer.
-    \item \textbf{Capitolo \ref{sec:End}, Conclusioni}: In questo capitolo conclusivo, vengono sintetizzati i problemi generali, emersi durante lo sviluppo con GDTF ed Unreal Engine. Inoltre, vengono valutati futuri sviluppi con Arri (l'azienda che ha acquisito ClayPaky lo scorso Marzo, durante il mio periodo di tirocinio) e con Epic Games stessa.
+    \item \textbf{Capitolo \ref{sec:End}, Conclusioni}: In questo capitolo conclusivo, vengono sintetizzati i problemi generali, emersi durante lo sviluppo con GDTF ed Unreal Engine. Inoltre, vengono valutati futuri sviluppi con l'azienda che ha acquisito ClayPaky lo scorso Marzo (Arri), durante il mio periodo di tirocinio, e con Epic Games stessa.
 \end{itemize}
 
 
