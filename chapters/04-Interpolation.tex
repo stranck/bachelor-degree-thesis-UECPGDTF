@@ -42,7 +42,7 @@ Prima di iniziare, enuncio dei concetti ricorrenti all'interno di questo capitol
         \caption{Grafico che mostra visivamente il calcolo di \textit{TimeToAccelerate}.}
         \label{fig:4_timeToFullyAccelerate}
     \end{figure}
-    \item Convertire la velocità interna a velocità reale (ovvero la distanza fisica percorsa al secondo): Per le stesse motivazioni di sopra, basta moltiplicare la velocità interna con \lstinline{maxPhysicalSpeed}. Questo ragionamento si applica per tutto, anche per le distanze.
+    \item Convertire la velocità interna a velocità reale, ovvero la distanza fisica percorsa al secondo: Per le stesse motivazioni di sopra, basta moltiplicare la velocità interna con \lstinline{maxPhysicalSpeed}. Questo ragionamento si applica per tutto, anche per le distanze.
 \end{itemize}
 
 Analizziamo la funzione di Update originale (visibile nella figura \ref{fig:4_Update}). Gli step saranno numerati per indicare nei capitoli successivi dove verranno aggiunte le modifiche al codice per compensare il fatto che \lstinline{Update()} venga chiamata ad intervalli irregolari e risolvere altre imprecisioni.
@@ -54,7 +54,7 @@ Analizziamo la funzione di Update originale (visibile nella figura \ref{fig:4_Up
     \item Controlliamo se siamo fermi o meno.
     \item Se siamo fermi, controlliamo se abbiamo raggiunto TargetValue. Se si, \itemEnu terminiamo l'interpolazione. Altrimenti, \itemEnu calcoliamo la nuova direzione (\lstinline{FORWARD} o \lstinline{BACKWARD}) e \itemEnu forziamo l'inizio dell'interpolazione.\newline
     Se non siamo fermi, \itemEnu controlliamo se la distanza calcolata precedentemente è più grande della differenza tra CurrentValue e TargetValue. Se si, \itemEnu vuol dire che dobbiamo iniziare a decelerare, altrimenti sorpasseremo TargetValue.
-    \item Controlliamo il nostro status, ovvero se stiamo accelerando (\lstinline{status == true}) o decelerando (\lstinline{status == false}). Se lo stato è cambiato rispetto allo scorso tick (oppure se stiamo forzando l'inizio dell'interpolazione), \itemEnu iniziamo ad accelerare o decelerare impostando, nel primo caso, \lstinline{currentAcceleration = acceleration}, altrimenti, nel secondo caso, \lstinline{currentAcceleration = -acceleration}.
+    \item Controlliamo il nostro status, ovvero se stiamo accelerando (\lstinline{status == true}) o decelerando (\lstinline{status == false}). Se lo stato è cambiato rispetto allo scorso tick oppure se stiamo forzando l'inizio dell'interpolazione, \itemEnu iniziamo ad accelerare o decelerare impostando, nel primo caso, \lstinline{currentAcceleration = acceleration}, altrimenti, nel secondo caso, \lstinline{currentAcceleration = -acceleration}.
     \item Controlliamo se l'interpolazione è finita testando se stiamo fermi e abbiamo raggiunto TargetValue. Se si, ritorniamo, altrimenti \itemEnu aggiungiamo a CurrentValue la distanza percorsa nel tick corrente.
 \end{enumerate}
 
@@ -92,7 +92,7 @@ Nella funzione \lstinline{Update()} sono state chiamate altre funzioni:
 \end{itemize}
 
 \subsection{Modifiche all'implementazione}\label{subsec:4_edits}
-Come detto in precedenza, il codice scritto fin'ora (proveniente da un altro progetto) funziona a patto che i DeltaSeconds tra un tick e l'altro siano costanti e ravvicinati. Questo non è il caso di UnrealEngine, e, di conseguenza, bisogna aggiungere delle modifiche all'algoritmo originale per ottenere una interpolazione corretta.
+Come detto in precedenza, il codice scritto fin'ora, proveniente da un altro progetto, funziona a patto che i DeltaSeconds tra un tick e l'altro siano costanti e ravvicinati. Questo non è il caso di UnrealEngine, e, di conseguenza, bisogna aggiungere delle modifiche all'algoritmo originale per ottenere una interpolazione corretta.
 
 \subsubsection{Compensate Late Call}\label{subsubsec:4_2_CompensateLateCall}
 Quasi sempre accade che il momento esatto in cui dovremmo iniziare a decelerare si trovi tra il tick precedente e quello corrente. Iniziando a decelerare in questo tick ci ritroveremo alla fine con più distanza percorsa del dovuto, sorpassando TargetValue.
@@ -114,7 +114,7 @@ Quasi sempre accade che il momento esatto in cui dovremmo iniziare a decelerare 
 Per calcolare il momento esatto in cui avremmo dovuto iniziare a decelerare avremo due casi possibili: 
 %TODO manage to align the following minipages to the right
 \begin{itemize}
-    \item \textbf{Siamo a velocità costante}: La differenza di spazio percorso è un parallelogramma (vedi la seconda immagine di \ref{fig:4_compensateLateCall3Case}) di cui sappiamo l'area (distanceDifference) e l'altezza (1, ovvero maxSpeed). Possiamo calcolarci la base (ovvero la differenza tra DeltaSeconds ed il momento in cui avremmo dovuto iniziare a decelerare) con una semplice formula inversa:
+    \item \textbf{Siamo a velocità costante}: La differenza di spazio percorso è un parallelogramma (vedi la seconda immagine di \ref{fig:4_compensateLateCall3Case}) di cui sappiamo l'area (distanceDifference) e l'altezza (1, ovvero maxSpeed). Possiamo calcolarci la base corrispondente alla differenza tra DeltaSeconds ed il momento in cui avremmo dovuto iniziare a decelerare, con una semplice formula inversa:
     \[timeDifference = \frac{distanceDifference}{speed}\]
     
     \begin{minipage}{.45\textwidth}
@@ -149,7 +149,7 @@ Per calcolare il momento esatto in cui avremmo dovuto iniziare a decelerare avre
     Dove $a$ è uguale all'accelerazione; $B$ alla base; $H$, $H_t$ e $H_r$ all'altezza totale, del triangolo e del rettangolo; $A$, $A_t$ e $A_r$ all'area totale, del triangolo e del rettangolo.
     
     Riusciamo a calcolare l'altezza del triangolo a partire dall'accelerazione grazie al fatto che l'accelerazione rappresenta il rapporto tra la crescita della velocità rispetto al tempo impiegato.\newline
-    Le formule per calcolarci l'area totale (corrispondente alla distanceDifference) e l'altezza totale (corrispondente alla velocità al tick corrente) sono:
+    Le formule per calcolarci l'area totale, corrispondente alla distanceDifference, e l'altezza totale, corrispondente alla velocità al tick corrente, sono:
     \hspace{2cm}
     
     \begin{minipage}{.45\textwidth}\[A = A_t + A_r = \frac{a}{4}x^2 + xy\]\end{minipage}
@@ -165,7 +165,7 @@ Se invece il valore risulta negativo, vuol dire che TargetValue è cambiato tra 
 
 
 \subsubsection{Override Deceleration}\label{subsubsec:4_2_OverrideDeceleration}
-TargetValue potrebbe cambiare (avvicinandosi a CurrentValue) sia tra un frame e l'altro che mentre stiamo già decelerando. In entrambi i casi è preferibile decelerare più in fretta piuttosto di fermarsi oltre TargetValue e poi tornare indietro (vedi figura \ref{fig:4_OverrideDecelIntro}).
+TargetValue potrebbe cambiare avvicinandosi a CurrentValue sia tra un frame e l'altro che mentre stiamo già decelerando. In entrambi i casi è preferibile decelerare più in fretta piuttosto di fermarsi oltre TargetValue e poi tornare indietro (vedi figura \ref{fig:4_OverrideDecelIntro}).
 \begin{figure}[H]
     \centering
     \includegraphics[width=.95\linewidth]{img/interpolazione/OverrideDecelIntro.png}
@@ -230,7 +230,7 @@ Successivamente avviene il controllo per scoprire se durante l'interpolazione ra
 \end{figure}
 
 
-\textbf{Se l'area di $T_1 + T_2$ è minore di distanceDifference} allora vuol dire che serve arrivare a velocità costante per compiere l'intero movimento. In tal caso abbiamo già la base di $T_1$ e di $T_2$ (corrispondenti al tempo di accelerazione e decelerazione); ci manca calcolare la base di $R$: Prima ci calcoliamo l'area di $R$ come $distanceDifference - (T_1 + T_2)$ e successivamente la dividiamo per l'altezza. Poiché stiamo a velocità massima, l'altezza sarà sempre uguale ad 1. La formula finale quindi per calcolare il tempo richiesto da una interpolazione per completare il suo ciclo raggiungendo la velocità massima è quindi:
+\textbf{Se l'area di $T_1 + T_2$ è minore di distanceDifference} allora vuol dire che serve arrivare a velocità costante per compiere l'intero movimento. In tal caso abbiamo già la base di $T_1$ e di $T_2$ corrispondenti al tempo di accelerazione e decelerazione; ci manca calcolare la base di $R$: Prima ci calcoliamo l'area di $R$ come $distanceDifference - (T_1 + T_2)$ e successivamente la dividiamo per l'altezza. Poiché stiamo a velocità massima, l'altezza sarà sempre uguale ad 1. La formula finale quindi per calcolare il tempo richiesto da una interpolazione per completare il suo ciclo raggiungendo la velocità massima è quindi:
 \[time = (TTFA * 2 - TTRCS) + (distanceDifference - A_t)\]
 \begin{figure}[H]
     \centering
@@ -294,7 +294,7 @@ Le equazioni finali per ottenere lo speedCap a partire dalla nostra velocità, l
 \[tx^2 + (ts + T)x + (\frac{ts^2}{2} + A) = 0 \quad\text{quando}\qquad x \geq p\]
 \[(-ts + T)x + (\frac{ts^2}{2} - A) = 0 \quad\text{quando}\qquad x \leq p\]
 
-Il codice inizialmente risolverà prima il secondo caso (poiché più rapido, visto che non implica risolvere un'equazione di secondo grado) e controllerà la validità del risultato. Se il risultato non rispetta la condizione, allora procederà con la risoluzione del primo caso. \newline
+Il codice inizialmente risolverà prima il secondo caso poiché più rapido, visto che non implica risolvere un'equazione di secondo grado, e controllerà la validità del risultato. Se il risultato non rispetta la condizione specificata, allora procederà con la risoluzione del primo caso. \newline
 
 Una volta mostrato come lo speedCap viene calcolato ed impostato, la funzione \lstinline{Update()} si dovrà occupare di mantenerlo ed interverrà solamente se non stiamo già decelerando per raggiungere TargetValue. Lo speedCap è implementato impostando l'override dell'accelerazione (lo stesso usato da OverrideDeceleration \ref{subsubsec:4_2_OverrideDeceleration}) a 0. Il codice si occuperà di rimuovere l'override quando lo speedCap viene disattivato dentro \lstinline{TargetValue} e si occuperà di impostarlo o forzare la decelerazione quando viene invece attivato.
 
@@ -308,7 +308,7 @@ Una volta mostrato come lo speedCap viene calcolato ed impostato, la funzione \l
 Ci sono due casi che sono trattati implicitamente dal resto della funzione \lstinline{Update()} e quindi non serve prendere particolari misure:
 \begin{itemize}
     \item Il caso in cui la nostra velocità è inferiore ad uno speedCap e non ne abbiamo ancora mai raggiunto uno, non è coperto perché stiamo normalmente già accelerando. Eventualmente ricadremo nel caso \textbf{1}.
-    \item Il caso in cui dobbiamo iniziare a decelerare perché stiamo raggiungendo TargetValue non è coperto perché impostando una nuova accelerazione (operazione che viene fatta per iniziare a decelerare) l'override della stessa viene automaticamente disattivato.
+    \item Il caso in cui dobbiamo iniziare a decelerare perché stiamo raggiungendo TargetValue non è coperto perché iniziando a decelerare viene impostata una nuova accelerazione, operazione che disattiva automaticamente l'override della stessa.
 \end{itemize}
 
 \begin{figure}[H]
@@ -335,7 +335,7 @@ Il parametro \lstinline{RealAcceleration} rappresenta il tempo in secondi utiliz
 
 Il parametro \lstinline{RealFade} considera anche i tempi di accelerazione e decelerazione di un movimento, per cui non possiamo usarlo direttamente come valore di \lstinline{maxPhysicalSpeed} che, ricordiamo, rappresenta quanto movimento facciamo ogni secondo quando siamo a maxSpeed. Per ottenere questo valore dobbiamo quindi fare una proporzione (RealAcceleration è abbreviato in $a$ e RealFade è abbreviato in $f$):
 \begin{itemize}
-    \item L'area dei triangoli dell'accelerazione/decelerazione è uguale a $\frac{a * maxSpeed}{2}$. Poiché maxSpeed è uguale ad 1 e ci serve calcolare l'area di entrambi (poiché entrambi presenti dentro RealFade), la formula finale sarà:
+    \item L'area dei triangoli dell'accelerazione/decelerazione è uguale a $\frac{a * maxSpeed}{2}$. Poiché maxSpeed è uguale ad 1 e ci serve calcolare l'area di entrambi poiché entrambi presenti dentro RealFade, la formula finale sarà:
     \[A_1 + A_2 = 2\frac{a * 1}{2} = a\]
     \item La base di $R$ è uguale a RealFade meno la base di $T_1$ e $T_2$, ergo $f - 2a$. L'area di $R$ invece corrisponde alla base per maxSpeed, che essendo uguale ad 1 ritorniamo con la stessa formula di prima:
     \[B_r = f - B_1 - B_2 = f - 2a\]
@@ -343,7 +343,7 @@ Il parametro \lstinline{RealFade} considera anche i tempi di accelerazione e dec
     \item L'area totale è uguale a:
     \[A = A_1 + A_2 + A_r = a + f - 2a = f - a\]
 \end{itemize}
-A questo punto mettiamo in proporzione l'area \say{virtuale} appena calcolata con la sua velocità massima (ovvero 1), e il range reale dell'interpolazione con \lstinline{maxPhysicalSpeed} (che vogliamo calcolare):
+A questo punto mettiamo in proporzione l'area \say{virtuale} appena calcolata con la sua velocità massima (ovvero 1), e il range reale dell'interpolazione con \lstinline{maxPhysicalSpeed}, che vogliamo calcolare:
 \[A : maxSpeed = range : maxPhysicalSpeed\]
 E risolviamo la proporzione attraverso la formula:
 \[maxPhysicalSpeed = \frac{range * maxSpeed}{A} = \frac{range * 1}{A} = \frac{range}{f - a}\]
