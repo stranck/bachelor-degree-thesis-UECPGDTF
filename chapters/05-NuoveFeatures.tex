@@ -197,18 +197,6 @@ Il codice per la generazione del codice HLSL in se è molto semplice. Si prende 
 //Per ogni shaper presente nella fixture
 for (int i = 0; i < mShapers.Num(); i++) {
     //Ottieni il nome delle variabili nel codice HLSL
-    FString orientationVarName =
-        CPGDTFRenderPipelineBuilder::getInputBladeOrientationName(
-            mShapers[i]->getOrientation()
-        );
-    FString bRotVarName =
-        CPGDTFRenderPipelineBuilder::getInputBladeABRotName(
-            false, mShapers[i]->getOrientation()
-        );
-    FString aVarName =
-        CPGDTFRenderPipelineBuilder::getInputBladeABRotName(
-            true, mShapers[i]->getOrientation()
-        );
 
     //Controlla la modalita'
     if (mShapers[i]->isInAbMode()) {
@@ -229,22 +217,22 @@ for (int i = 0; i < mShapers.Num(); i++) {
 }
 \end{lstlisting}
 
-La funzione $remapABposition$ è stata implementata come MaterialFunction invece che come codice HLSL, in modo che possa venire ottimizzata automaticamente da UnrealEngine \cite{hlslNoOptimize}. Inoltre è stata creata un'altra MaterialFunction (ConvertRot) che si occupa di convertire i gradi in radianti e di ottenerne il valore della tangente. L'inserimento degli input e dei parametri nel materiale Beam inizia caricandosi queste due MaterialFunction.
-\begin{lstlisting}
-UMaterialFunctionInterface* mfShaperConvertBladePosition =
-    Cast<UMaterialFunctionInterface>(
-        FCPGDTFImporterUtils::LoadObjectByPath(
-            mfShaperConvertBladePositionPath
-        )
-    );
-UMaterialFunctionInterface* mfShaperConvertRot =
-    Cast<UMaterialFunctionInterface>(
-        FCPGDTFImporterUtils::LoadObjectByPath(
-            mfShaperConvertRotPath
-        )
-    );
-\end{lstlisting}
-Successivamente viene creata una lambda che si occuperà di aggiungere effettivamente un parametro al materiale.
+La funzione $remapABposition$ è stata implementata come MaterialFunction invece che come codice HLSL, in modo che possa venire ottimizzata automaticamente da UnrealEngine \cite{hlslNoOptimize}. Inoltre è stata creata un'altra MaterialFunction (ConvertRot) che si occupa di convertire i gradi in radianti e di ottenerne il valore della tangente. L'inserimento degli input e dei parametri nel materiale Beam inizia caricandosi le MaterialFunction \lstinline{mfShaperConvertBladePosition} e \lstinline{mfShaperConvertRot}, per poi generare una lambda che si occuperà di aggiungere un singolo parametro al materiale.
+%\begin{lstlisting}
+%UMaterialFunctionInterface* mfShaperConvertBladePosition =
+%    Cast<UMaterialFunctionInterface>(
+%        FCPGDTFImporterUtils::LoadObjectByPath(
+%            mfShaperConvertBladePositionPath
+%        )
+%    );
+%UMaterialFunctionInterface* mfShaperConvertRot =
+%    Cast<UMaterialFunctionInterface>(
+%        FCPGDTFImporterUtils::LoadObjectByPath(
+%            mfShaperConvertRotPath
+%        )
+%    );
+%\end{lstlisting}
+%Successivamente viene creata una lambda che si occuperà di aggiungere effettivamente un parametro al materiale.
 \begin{lstlisting}
 const std::function<void(FString, FString, bool)>
     addABRotParameterToBeamPipeline = [&](
@@ -280,32 +268,27 @@ for (UCPGDTFShaperFixtureComponent *shaper : shapers) {
 \end{lstlisting}
 Dove \lstinline{getBladeABRotParamName()} e \lstinline{getInputBladeABRotName()} prendono \lstinline{true} se stiamo generando il parametro A o \lstinline{false} se stiamo generando il parametro B o Rot (i due valori condividono lo stesso parametro). \newline
 
-La lambda citata sopra si occupa come prima cosa di generare il parametro effettivo.
-\begin{lstlisting}
-//Generazione del parametro
-UMaterialExpressionScalarParameter* param =
-    generateMaterialExpression<UMaterialExpressionScalarParameter>(
-        dstMaterial
-    );
-//Impostazione dei valori del parametro
-param->ParameterName = FName(*paramName);
-param->Group = FName(TEXT("Runtime Parameters"));
-param->SortPriority = 5;
-param->DefaultValue = 0;
-//Aggiunta del parametro al materiale
-dstMaterial->GetEditorOnlyData()->ExpressionCollection.
-    AddExpression(param);
-\end{lstlisting}
+La lambda citata sopra si occupa come prima cosa di generare la MaterialFunctionParameter.
+%\begin{lstlisting}
+%//Generazione del parametro
+%UMaterialExpressionScalarParameter* param =
+%    generateMaterialExpression<UMaterialExpressionScalarParameter>(
+%        dstMaterial
+%    );
+%//Impostazione dei valori del parametro
+%param->ParameterName = FName(*paramName);
+%param->Group = FName(TEXT("Runtime Parameters"));
+%param->SortPriority = 5;
+%param->DefaultValue = 0;
+%//Aggiunta del parametro al materiale
+%dstMaterial->GetEditorOnlyData()->ExpressionCollection.
+%    AddExpression(param);
+%\end{lstlisting}
 Successivamente crea, imposta, collega e sposta la MaterialFunctionCall in base alla modalità selezionata.
 \begin{lstlisting}
-//Creazione della MaterialExpressionFunctionCall
-UMaterialExpressionMaterialFunctionCall* mfCall = 
-    generateMaterialExpression<UMaterialExpressionMaterialFunctionCall>(
-        dstMaterial
-    );
-//Aggiunta della MaterialExpression al materiale
-dstMaterial->GetEditorOnlyData()->ExpressionCollection.
-    AddExpression(mfCall);
+//Generiamo ed aggiungiamo della MaterialExpressionFunctionCall
+// al materiale
+
 //Impostiamo la funzione corretta controllando se stiamo generando 
 // il parametro di rotazione o meno
 if (isRot) {
@@ -317,13 +300,7 @@ if (isRot) {
 }
 mfCall->FunctionInputs[0].Input.Connect(0, param); //Value
 
-//Spostiamo la MaterialExpressionFunctionCall
-mfCall->MaterialExpressionEditorX =
-    meBlocksMover->getCurrentX()+ BEAM_EDITOR_BLOCK_DISTANCE_X;
-mfCall->MaterialExpressionEditorY =
-    meBlocksMover->getCurrentY() + EDITOR_MINI_BLOCK_SIZE;
-//Spostiamo il parametro
-meBlocksMover->moveMaterialExpression(param, EDITOR_SCALAR_PARAM_SIZE);
+//Spostiamo la MaterialExpressionFunctionCall ed il parametro
 \end{lstlisting}
 Infine, genera un input sulla CustomExpression e lo collega alla precedente MaterialFunctionCall.
 \begin{lstlisting}
@@ -339,44 +316,25 @@ Come per la generazione del materiale Beam anche qui le varie funzioni descritte
 Si effettua un ciclo su tutti gli ShaperFixtureComponent che dobbiamo aggiungere alla pipeline. Per ciascuno, iniziamo con lo generare una MaterialFunctionCall ed impostarne la MaterialFunction in base alla modalità della flag.
 \begin{lstlisting}
 int orientation = shaper->getOrientation();
-//Creiamo la MaterialFunctionCall
-UMaterialExpressionMaterialFunctionCall* currentNode =
-    generateMaterialExpression<UMaterialExpressionMaterialFunctionCall>(
-        dstMaterial
-    );
-//Aggiungiamo la MaterialFunctionCall al materiale
+//Creiamo ed aggiungiamo la MaterialFunctionCall al materiale
 dstMaterialData->ExpressionCollection.AddExpression(currentNode);
 
 //Impostiamo la funzione in base alla modalita' dello shaper
 if (shaper->isInAbMode()) currentNode->SetMaterialFunction(mfShaperAB);
     else currentNode->SetMaterialFunction(mfShaperARot);
 \end{lstlisting}
-Successivamente vengono generati e connessi i vari parametri della precedente MaterialFunctionCall.
+Successivamente vengono generati e connessi i vari parametri della precedente MaterialFunctionCall, per poi venire spostata ed impostata come ultimo nodo generato
 \begin{lstlisting}
-auto aParam = addScalarParameterToMiPipeline(
-    dstMaterial,
-    getBladeABRotParamName(true, orientation),
-    meParamsMover
-);
-auto bRotParam = addScalarParameterToMiPipeline(
-    dstMaterial,
-    getBladeABRotParamName(false, orientation),
-    meParamsMover
-);
-auto orientationParam = addScalarParameterToMiPipeline
-    dstMaterial,
-    getBladeOrientationParamName(orientation),
-    meParamsMover
-);
+//Generiamo i parametri
 
+//Colleghiamo i parametri
 currentNode->FunctionInputs[1].Input.Connect(0, previousParameter);
 currentNode->FunctionInputs[2].Input.Connect(0, frostParam);
 currentNode->FunctionInputs[3].Input.Connect(0, aParam);
 currentNode->FunctionInputs[4].Input.Connect(0, bRotParam);
 currentNode->FunctionInputs[5].Input.Connect(0, orientationParam);
-\end{lstlisting}
-Ed infine viene spostata ed impostata come ultimo nodo generato.
-\begin{lstlisting}
+
+//Spostiamo la MaterialFunctionCall
 meModulesMover->moveMaterialExpression(currentNode);
 previousParameter = currentNode;
 delete meParamsMover;
@@ -386,25 +344,25 @@ delete meParamsMover;
 L'implementazione del componente è molto semplice, vista la gerarchia dei componenti che abbiamo creato in precedenza. L'unico codice elaborato presente nel componente si trova nella funzione \lstinline{Setup()}, e si occupa solamente di capire in che modalità il componente viene usato. 
 
 Questa operazione viene effettuata scorrendo tutta la lista di ChannelFunction assegnate al componente, e viene impostata la modalità \say{A+B} ogni qualvolta si incontra un componente B, oppure la modalità \say{A+Rot} ogni qualvolta si incontra un componente Rot.
-\begin{lstlisting}
-for (/*Per ogni ChannelFunction cf*/) {
-    auto attrType =
-        CPGDTFDescription::GetGDTFAttributeTypeValueFromString(
-            cf.Attribute.Name.ToString()
-        );
-
-    if (attrType == ECPGDTFAttributeType::Blade_n_Rot) {
-        //Abbiamo trovato un attributo Rot
-        abMode = false;
-    } else if (
-               attrType == ECPGDTFAttributeType::Blade_n_B
-            || attrType == ECPGDTFAttributeType::BladeSoft_n_B
-            ) {
-        //Abbiamo trovato un attributo B
-        abMode = true;
-    }
-}
-\end{lstlisting}
+%\begin{lstlisting}
+%for (/*Per ogni ChannelFunction cf*/) {
+%    auto attrType =
+%        CPGDTFDescription::GetGDTFAttributeTypeValueFromString(
+%            cf.Attribute.Name.ToString()
+%        );
+%
+%    if (attrType == ECPGDTFAttributeType::Blade_n_Rot) {
+%        //Abbiamo trovato un attributo Rot
+%        abMode = false;
+%    } else if (
+%               attrType == ECPGDTFAttributeType::Blade_n_B
+%            || attrType == ECPGDTFAttributeType::BladeSoft_n_B
+%            ) {
+%        //Abbiamo trovato un attributo B
+%        abMode = true;
+%    }
+%}
+%\end{lstlisting}
 
 \clearpage %TODO CHECK IF STILL NEEDED
 Di seguito, degli screenshot della classe per mostrare quanto sia semplice implementare nuovi componenti ora che la gerarchia di FixtureComponent è stata rivoluzionata.
@@ -514,18 +472,12 @@ if (this->hasIris) {
 }
 \end{lstlisting}
 
-Viene poi generata ed impostata la MaterialFunctionCall:
+Viene poi generata ed impostata la MaterialFunctionCall ed il suo parametro, per poi essere collegati e spostati. Infine la MaterialFunction viene salvata come ultimo nodo generato:
 \begin{lstlisting}
-MI_INIT_BLOCKS_MOVER
-UMaterialExpressionMaterialFunctionCall* currentNode =
-    generateMaterialExpression<UMaterialExpressionMaterialFunctionCall>(
-        dstMaterial
-    );
-dstMaterialData->ExpressionCollection.AddExpression(currentNode);
+// Generazione ed aggiunta della MaterialFunctionCall al materiale
 currentNode->SetMaterialFunction(mfIris);
-\end{lstlisting}
-Successivamente si genera il parametro e vengono connessi gli input alla MaterialFunction.
-\begin{lstlisting}
+
+//Generazione del parametro
 UMaterialExpressionScalarParameter* irisVal =
     addScalarParameterToMiPipeline(
         dstMaterial,
@@ -533,15 +485,14 @@ UMaterialExpressionScalarParameter* irisVal =
         meParamsMover
     );
 
+//Collegamento dei parametri alla MaterialFunction
 currentNode->FunctionInputs[1].Input.Connect(0, previousParameter);
 currentNode->FunctionInputs[2].Input.Connect(0, frostParam);
 currentNode->FunctionInputs[3].Input.Connect(0, irisVal);
-\end{lstlisting}
-Infine viene spostata la MaterialFunction ed impostata come ultimo nodo generato:
-\begin{lstlisting}
+
+//Spostamento della MaterialFunction
 meModulesMover->moveMaterialExpression(currentNode);
 previousParameter = currentNode;
-delete meParamsMover;
 \end{lstlisting}
 
 \subsubsection{IrisFixtureComponent}\label{subsec:5_1_IrisFixtureComponent}
@@ -556,7 +507,6 @@ Questi effetti sono generati e gestiti da una classe esterna (\lstinline{FPulseE
     \item \textbf{Far partire o impostare la velocità di un effetto}: questa operazione viene fatta all'interno della funzione \lstinline{ApplyEffectToBeam()} ogni qualvolta il valore dmx corrisponde ad una di queste features:
     \begin{lstlisting}
 switch (AttributeType) {
-
     //Imposta il valore diretto dell'iris
 	case ECPGDTFAttributeType::Iris:
 		this->SetTargetValue(physicalValue, 0);
@@ -568,13 +518,14 @@ switch (AttributeType) {
 	case ECPGDTFAttributeType::IrisPulseOpen:
 	case ECPGDTFAttributeType::IrisPulseClose:
 		if (channel.RunningEffectTypeChannel != AttributeType) 
+            //Partenza di un nuovo effetto
             this->PulseManager.StartPulseEffect(
                 AttributeType, 1 / physicalValue, DMXBehaviour.Key
             );
 		else
+            //Cambiamento della velocita'
             this->PulseManager.ChangePeriod(1 / physicalValue);
 		break;
-    default: break; // Not supported behaviour
 }
 \end{lstlisting}
     Dove \lstinline{StartPulseEffect()} è una funzione che si prende in input il tipo di effetto (Pulse, PulseOpen, PulseClose) selezionato.
