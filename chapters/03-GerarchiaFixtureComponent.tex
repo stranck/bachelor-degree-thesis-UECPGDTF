@@ -92,55 +92,55 @@ Nella nuova implementazione ogni FixtureComponent ha a disposizione 3 strutture 
 %\subsubsection{Strutture dati}\label{subsec:3_2_structs}
 
 \subsection{Implementazione}\label{subsec:3_implementation}
-Iniziamo con l'analizzare l'implementazione della struttura dati \lstinline{FAttributesData}. Tale struttura ha internamente memorizzata una lista di tutti i ChannelData presenti nel componente ed una mappa da attributo a ChannelData. Attributi che fanno parte dello stesso AttributeGroup verranno quindi risolti attraverso questa mappa, al medesimo ChannelData in memoria.
+Iniziamo con l'analizzare l'implementazione della struttura dati \lstinline{FAttributesData}. Tale struttura ha internamente memorizzata una lista di tutti i ChannelData presenti nel componente ed una mappa da attributo a ChannelData. Attributi che fanno parte dello stesso AttributeGroup verranno quindi risolti attraverso questa mappa, al medesimo ChannelData in memoria. \newline
 \lstset{language=UEcpp}
-\begin{lstlisting}
-//Struttura dati che incapsula FCPDMXChannelData assieme
-//  all'attributeGroup di cui fa parte
-struct F__SingleAttributeData {
-    GENERATED_BODY()
-    UPROPERTY(VisibleDefaultsOnly, Category = "Internal")
-    TSet<ECPGDTFAttributeType> attributeGroup;
-    UPROPERTY(VisibleDefaultsOnly, Category = "Internal")
-    FCPDMXChannelData data;
-};
-
-UPROPERTY(VisibleDefaultsOnly, Category = "Internal")
-//Utilizziamo gli indici nella lista al posto di puntatori perche',
-//  altrimenti, UE non ne supporterebbe la serializzazione
-TMap<ECPGDTFAttributeType, int32> attributeData;
-UPROPERTY(VisibleDefaultsOnly, Category = "Internal")
-TArray<F__SingleAttributeData> attributeList;
-\end{lstlisting}
+%\begin{lstlisting}
+%//Struttura dati che incapsula FCPDMXChannelData assieme
+%//  all'attributeGroup di cui fa parte
+%struct F__SingleAttributeData {
+%    GENERATED_BODY()
+%    UPROPERTY(VisibleDefaultsOnly, Category = "Internal")
+%    TSet<ECPGDTFAttributeType> attributeGroup;
+%    UPROPERTY(VisibleDefaultsOnly, Category = "Internal")
+%    FCPDMXChannelData data;
+%};
+%
+%UPROPERTY(VisibleDefaultsOnly, Category = "Internal")
+%//Utilizziamo gli indici nella lista al posto di puntatori perche',
+%//  altrimenti, UE non ne supporterebbe la serializzazione
+%TMap<ECPGDTFAttributeType, int32> attributeData;
+%UPROPERTY(VisibleDefaultsOnly, Category = "Internal")
+%TArray<F__SingleAttributeData> attributeList;
+%\end{lstlisting}
 L'inserimento di un nuovo attributeGroup viene fatto aggiungendo prima uno \lstinline{F__SingleAttributeData} dentro la rispettiva lista e successivamente aggiungendo nella mappa ogni elemento del gruppo associato all'indice del precedente inserimento nella lista.\newline
-La funzione \lstinline{FixtureComponentBase::Setup()} chiamerà due metodi: \lstinline{initAttributeGroups()} e \lstinline{analizeDMXChannels()}. Il primo dei due metodi si occupa di preallocare tutti gli attributeGroups con dei dati vuoti:
-\begin{lstlisting}
-void initAttributeGroups(
-        TArray<TSet<ECPGDTFAttributeType>> attributeGroups
-    ) {
-
-    attributeData.Empty();
-    attributeList.Empty();
-    for (int i = 0; i < attributeGroups.Num(); i++)
-        addAttributeData(attributeGroups[i]);
-}
-\end{lstlisting}
-Il secondo invece si scorre ogni singola ChannelFunction presente dei DMXChannel in input e, per ciascuna, chiede alla \lstinline{FCPDMXChannelData} di aggiornare i propri valori:
-\begin{lstlisting}
-void analizeDMXChannels(TArray<FDMXImportGDTFDMXChannel> DMXChannels) {
-    for (/*itera per ogni channelFunction cf dentro DMXChannels*/) {
-        ECPGDTFAttributeType attrType =
-            CPGDTFDescription::GetGDTFAttributeTypeValueFromString(
-                cf.Attribute.Name.ToString()
-            );
-        FCPDMXChannelData* channelData = getChannelData(attrType);
-        channelData->updateMinMaxFadeAccelCalc(cf);
-    }
-
-    for (int i = 0; i < attributeList.Num(); i++)
-        attributeList[i].data.finalizeMinMaxFadeAccelCalc();
-}
-\end{lstlisting}
+La funzione \lstinline{FixtureComponentBase::Setup()} chiamerà due metodi: \lstinline{initAttributeGroups()} e \lstinline{analizeDMXChannels()}. Il primo dei due metodi si occupa di preallocare tutti gli attributeGroups con dei dati vuoti.
+%\begin{lstlisting}
+%void initAttributeGroups(
+%        TArray<TSet<ECPGDTFAttributeType>> attributeGroups
+%    ) {
+%
+%    attributeData.Empty();
+%    attributeList.Empty();
+%    for (int i = 0; i < attributeGroups.Num(); i++)
+%        addAttributeData(attributeGroups[i]);
+%}
+%\end{lstlisting}
+Il secondo invece si scorre ogni singola ChannelFunction presente dei DMXChannel in input e, per ciascuna, chiede alla \lstinline{FCPDMXChannelData} di aggiornare i propri valori. \newline
+%\begin{lstlisting}
+%void analizeDMXChannels(TArray<FDMXImportGDTFDMXChannel> DMXChannels) {
+%    for (/*itera per ogni channelFunction cf dentro DMXChannels*/) {
+%        ECPGDTFAttributeType attrType =
+%            CPGDTFDescription::GetGDTFAttributeTypeValueFromString(
+%                cf.Attribute.Name.ToString()
+%            );
+%        FCPDMXChannelData* channelData = getChannelData(attrType);
+%        channelData->updateMinMaxFadeAccelCalc(cf);
+%    }
+%
+%    for (int i = 0; i < attributeList.Num(); i++)
+%        attributeList[i].data.finalizeMinMaxFadeAccelCalc();
+%}
+%\end{lstlisting}
 Andiamo quindi a vedere come vengono calcolati i valori nella struttura dati \lstinline{FCPDMXChannelData}. Il problema principale da gestire è che spesso i valori di minimo e massimo di diversi attributi non sono indicati in ordine e per giunta, il valore minimo può non corrispondere al valore matematicamente più piccolo: Alcune funzionalità potrebbero essere invertite, quindi partire da un valore grande e finire ad uno piccolo. Tale caratteristica deve essere preservata ed automaticamente riconosciuta nel momento in cui si calcola un valore minimo e massimo globale per un attributeGroup. Inoltre, può capitare che attributi differenti dello stesso attributeGroup presentino valori differenti di fade e accelerazione (anche se, da standard, dovrebbero essere uguali. Qui stiamo gestendo la casistica in cui in input abbiamo file GDTF mal scritti), quindi facciamo la media tra di essi. Per effettuare queste operazioni ci appoggiamo ad una struttura dati temporanea, che viene allocata automaticamente la prima volta che sopra viene chiamato \lstinline{updateMinMaxFadeAccelCalc()} e viene distrutta quando invece finalizziamo il calcolo:
 \begin{lstlisting}
 struct MinMaxHelper {
