@@ -24,7 +24,7 @@ In questo capitolo non tratteremo mai il secondo punto poiché consiste nella re
     \caption{Sagomatore in azione.}
     \label{fig:5_shaper}
 \end{figure}
-Il sistema dei sagomatori (detto anche \say{framing system} oppure \say{shaper}) consiste in un modulo composto da 4 lame (dette anche \say{bandiere}) che possono immettersi ed inclinasi singolarmente all'interno del fascio di luce. Inoltre, l'intero modulo può roteare, muovendo contemporaneamente la direzione in cui si immettono tutte le lame si immettono. \newline
+Il sistema dei sagomatori (detto anche \say{framing system} oppure \say{shaper}) consiste in un modulo composto da 4 lame (dette anche \say{bandiere}) che possono immettersi ed inclinasi singolarmente all'interno del fascio di luce. Inoltre, l'intero modulo può roteare muovendo contemporaneamente la direzione in cui si immettono tutte le lame. \newline
 \clearpage %TODO CHECK IF THIS IS STILL NEEDED
 Il controllo della lama può avvenire in due modi:
 \begin{itemize}
@@ -61,7 +61,7 @@ Come scritto sopra, per generare una flag bisogna controllare quando stiamo \say
 \[y > x(B - A) + A\]
 \newline
 
-Per effettuare, invece, il sampling di una flag A+Rot, possiamo utilizzare $A$ come termine noto, e convertire $R$ da gradi alla relativa tangente trigonometrica in modo da avere direttamente il coefficiente della retta. Poiché vogliamo però inclinare questa retta usando come punto di rotazione il suo centro ($x = 0.5$) e non la sua origine ($x = 0$), dobbiamo modificare il termine noto in base al coefficiente: più il coefficiente è elevato quindi più la retta sarà quindi inclinata crescendo da sinistra verso destra, e più il termine noto dovrà calare. Considerando la sezione della retta compresa tra $x = [0, 1]$, la tangente di $R$, essendo direttamente uguale al coefficiente della retta, è anche uguale alla differenza tra il valore della $y$ quando la retta avrà $x = 0$ e quando avrà $x = 1$ (visibile nella seconda immagine della figura \ref{fig:5_shaperDifferentModes}). Al centro di questa sezione (quando $x = 0.5$) la differenza con i due estremi sarà quindi uguale a $\frac{tan(R)}{2}$, ovvero esattamente il valore da sottrarre al termine noto per mantenere centrale il punto di rotazione della retta. La formula finale dell'equazione sarà quindi:
+Per effettuare, invece, il sampling di una flag A+Rot, possiamo utilizzare $A$ come termine noto, e convertire $R$ da gradi alla relativa tangente trigonometrica in modo da avere direttamente il coefficiente della retta. Poiché vogliamo però inclinare questa retta usando come punto di rotazione il suo centro ($x = 0.5$) e non la sua origine ($x = 0$), dobbiamo modificare il termine noto in base al coefficiente: più il coefficiente è elevato quindi più la retta sarà inclinata crescendo da sinistra verso destra, e più il termine noto dovrà calare. Considerando la sezione della retta compresa tra $x = [0, 1]$, la tangente di $R$, essendo direttamente uguale al coefficiente della retta, è anche uguale alla differenza tra il valore della $y$ quando la retta avrà $x = 0$ e quando avrà $x = 1$ (visibile nella seconda immagine della figura \ref{fig:5_shaperDifferentModes}). Al centro di questa sezione (quando $x = 0.5$) la differenza con i due estremi sarà quindi uguale a $\frac{tan(R)}{2}$, ovvero esattamente il valore da sottrarre al termine noto per mantenere centrale il punto di rotazione della retta. La formula finale dell'equazione sarà quindi:
 \[y > \tan(R)x + (a - \frac{\tan(R)}{2})\]
 
 Come le ruote, anche il framing system deve implementare il frost. Piuttosto di applicare un filtro di blur al framing system già renderizzato, è preferibile in termini di peso computazionale implementare una sfocatura come formula matematica direttamente nel precedente rendering. L'idea è quella di utilizzare il valore del frost per definire la dimensione di una zona di sfumatura intorno alla retta. La prima operazione che viene effettuata è trovare la distanza della coordinata UV che stiamo renderizzando dalla retta. Questa operazione viene approssimata come la distanza assoluta ($d$) tra la $y$ della coordinata UV e la $y$ della retta per ogni $x$.
@@ -80,7 +80,7 @@ Successivamente viene applicata un'altra funzione di remapping sulla distanza, i
 	\end{dcases}
 \]
 
-Poiché $d$ all'inizio viene calcolata come distanza assoluta dalla retta, con quanto definito fin'ora avremo una figura nera che si dissolve andando verso il bianco quando siamo abbastanza vicini alla retta stessa. Dobbiamo invece fare in modo che la dissolvenza parta da bianco, diventi grigia in corrispondenza della retta, e nera dopo la stessa:
+Poiché $d$ all'inizio viene calcolata come distanza assoluta dalla retta, con quanto definito fin'ora avremo una figura nera che si dissolve andando verso il bianco quando siamo abbastanza vicini alla retta, per poi sfumare di nuovo verso il nero quando ci riallontaniamo. Dobbiamo invece fare in modo che la dissolvenza parta da bianco, diventi grigia in corrispondenza della retta, e nera dopo la stessa:
 \[fade(d, f) \coloneqq 
 	\begin{dcases}
 		\hfil	 \frac{remapDist(d, f)}{2} & \text{se } y > g(x)\\
@@ -96,7 +96,7 @@ Poiché $d$ all'inizio viene calcolata come distanza assoluta dalla retta, con q
     \caption{Funzione $sigmoid(v)$.}
     \label{fig:5_sCurve}
 \end{wrapfigure}
-Per un effetto ottico in cui è molto più semplice distinguere gradazioni differenti di colori scuri rispetto a gradazioni differenti di colori chiari, applicando il frost sembrerà che il valore del sagomatore si sposti verso il basso, come in figura \ref{fig:5_shaperFixes}. Per compensare ciò, il risultato finale calcolato in precedenza, viene passato all'interno di un'ultima funzione di remapping: quello che vogliamo è creare una sigmoide (figura \ref{fig:5_sCurve}), in modo che la dissolvenza avvenga repentinamente al centro dei nostri valori piuttosto che linearmente da 0 ad 1.
+Per un effetto ottico in cui è molto più semplice distinguere gradazioni differenti di colori scuri rispetto a gradazioni differenti di colori chiari, applicando il frost sembrerà che il valore del sagomatore si sposti verso il basso, come in figura \ref{fig:5_shaperFixes}. Per compensare ciò, il risultato finale calcolato in precedenza viene passato all'interno di un'ultima funzione di remapping: quello che vogliamo è creare una sigmoide (figura \ref{fig:5_sCurve}), in modo che la dissolvenza avvenga repentinamente al centro dei nostri valori piuttosto che linearmente da 0 ad 1.
 \[sigmoid(v) \coloneqq \frac{1}{1 + (\frac{v}{1.125 - v})^{-4}}\]
 Dove i valori all'interno della frazione e l'esponenziale sono ottenuti via try ed error. Il valore $1.125$ serve per sbilanciare verso destra la sigmoide, l'esponenziale per regolarne l'ampiezza.
 \begin{figure}[H]
@@ -286,7 +286,7 @@ La lambda citata sopra si occupa come prima cosa di generare la MaterialFunction
 %\end{lstlisting}
 Successivamente crea, imposta, collega e sposta la MaterialFunctionCall in base alla modalità selezionata.
 \begin{lstlisting}
-//Generiamo ed aggiungiamo della MaterialExpressionFunctionCall
+//Generiamo ed aggiungiamo la MaterialExpressionFunctionCall
 // al materiale
 
 //Impostiamo la funzione corretta controllando se stiamo generando 

@@ -7,7 +7,7 @@
 \vspace{1.0cm}
 
 \section{Design di una pipeline di rendering}\label{sec:RenderingPipeline}
-Come mostrato nel capitolo \ref{subsec:1_tirocinio} dopo un primo periodo per familiarizzare con la codebase, è stato semplice intuire come, in quello stato, fosse impossibile la facile aggiunta di nuove features. Inoltre tra le TODO trovate all'interno del progetto lasciate dal tirocinante precedente, ne troviamo una che indica come vada ancora aggiunto il supporto a più ruote dello stesso tipo, particolarità presente in molte fixture. In questo capitolo mostriamo la vecchia implementazione, gettiamo delle idee su come ricrearla in maniera più modulare e mostriamo alla fine il codice finale.
+Come mostrato nel capitolo \ref{subsec:1_tirocinio} dopo un primo periodo per familiarizzare con la codebase, è stato semplice intuire come, in quello stato, fosse impossibile la facile aggiunta di nuove features. Inoltre tra le TODO trovate all'interno del progetto lasciate dal tirocinante precedente, ne troviamo una che indica come vada ancora aggiunto il supporto a più ruote dello stesso tipo, particolarità presente in molte fixture. In questo capitolo mostriamo la vecchia implementazione dei materiali usati nel rendering della luce in real time, gettiamo delle idee su come ricrearla in maniera più modulare e mostriamo il codice finale.
 
 \subsection{Analisi dello stato preliminare}\label{subsec:2_oldImplementation}
 All'interno del plugin troviamo 3 materiali che si occupano del rendering della luce emessa da una fixture.
@@ -34,7 +34,7 @@ Il RayMarching viene spesso usato per generare geometrie che si ripetono, ed è 
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/renderingPipeline/renderingQuality.jpg}
-    \caption{Diminuendo o aumentando il numero di sample si vede chiaramente come l'effetto beam sia ottenuto ripetendo un numero elevato di volte la texture che vogliamo proiettare, in questo caso corrispondente a 4 punti in fila orizzontale.}
+    \caption{Diminuendo o aumentando il numero di sample si vede chiaramente come l'effetto beam sia ottenuto ripetendo un numero elevato di volte la texture che vogliamo proiettare, in questo caso corrispondente a 5 punti in fila orizzontale.}
     \label{fig:2_raymarchQualities}
 \end{figure}
 
@@ -106,7 +106,7 @@ float GoboSample = TXTpGobo.SampleLevel(TXTpGoboSampler, texCoor, 0);
 
 //color
 ColorUV.x = ColorUV.x / NumColors;
-ColorUV.x = ColorUV.x  + (ColorIndex/NumColors) ;
+ColorUV.x = ColorUV.x  + (ColorIndex/NumColors);
 float3 ColorSample =
     TXTpColor.SampleLevel(TXTpColorSampler, ColorUV.xy,0);
 // Add DMXColor in
@@ -149,7 +149,7 @@ Questo materiale si occupa della proiezione della luce su altri materiali.
 \end{figure}
 \noindent A sinistra riceviamo in input le coordinate UV che la camera sta renderizzando in quel momento. Successivamente passiamo in due blocchi, che svolgono l'operazione:
 \[x_{UV} * \frac{1}{GoboNumMask} + \frac{GoboIndex}{GoboNumMask}\]
-Notiamo come questo calcolo sia lo stesso utilizzato per fare il sample delle gobo dentro il materiale Beam (\ref{subsec:2_1_beam}). Infatti il risultato viene poi utilizzato come input per due nodi Texture \say{DMX Gobo Disk} e \say{DMX Gobo Disk Frosted}, uno contiene la texture originale, l'altro una versione sfocata della stessa texture, per effettuare il sample della ruota gobo. Successivamente i due sample vengono interpolati in base al valore del frost (sfocatura) ed infine viene restituito in output.
+Notiamo come questo calcolo sia lo stesso utilizzato per fare il sample delle gobo dentro il materiale Beam (\ref{subsec:2_1_beam}). Infatti il risultato viene poi utilizzato come input per due nodi Texture \say{DMX Gobo Disk} e \say{DMX Gobo Disk Frosted}, uno contiene la texture originale, l'altro una versione sfocata della stessa, per effettuare il sample della ruota gobo. Successivamente i due sample vengono interpolati in base al valore del frost (sfocatura) ed infine viene restituito in output.
 
 Da notare come il nome dei parametri all'interno di questa MaterialFunction facciano riferimento solo alle ruote gobo, e come all'interno del Materiale originale sia presente solamente una MaterialFunctionCall a DMXGobo. Questo implica l'impossibilità di renderizzare sia ruote differenti da quelle gobo e l'impossibilità di avere più ruote gobo nella stessa fixture.
 
@@ -171,16 +171,16 @@ Questo materiale si occupa di applicare l'effetto che stiamo renderizzando sulle
 \noindent Il grafo è in realtà molto simile a quello visto precedentemente per il materiale Light (\ref{subsec:2_1_light}). Si aggiungono solamente dei blocchi di nodi in più (\say{Lens}, \say{Lamp}) che servono a rendere più fotorealistica la resa delle lenti. Anche in questo materiale è presente una MaterialFunctionCall a DMXGobo, ma notiamo come ce n'è un'altra a DMXColorWheel la quale implementazione è identica alla prima, creando così \say{codice} duplicato.
 
 \subsection{Idea della pipeline}\label{subsec:2_pipelineIdea}
-Nelle precedenti sezioni abbiamo potuto vedere come allo stato attuale sia davvero difficile aggiungere nuove features e sia impossibile la presenza di più attributi contemporaneamente. Una buona idea per risolvere questi problemi è quella di astrarre il rendering delle varie features in moduli generici e realizzare una pipeline il più simile possibile ad una vera fixture. Come mostrato nell'introduzione (\ref{subsec:1_1_modules}), in una vera luce è presente un emettitore che genera un fascio di luce che attraverserà ogni singolo modulo montato. Ogni modulo prende quindi il \say{risultato} del modulo precedente, ci applica un filtro sottrattivo e lo da in output al modulo successivo.
+Nelle precedenti sezioni abbiamo potuto vedere come allo stato attuale sia davvero difficile aggiungere nuove features e sia impossibile la presenza di più attributi uguali contemporaneamente. Una buona idea per risolvere questi problemi è quella di astrarre il rendering delle varie features in moduli generici e realizzare una pipeline il più simile possibile ad una vera fixture. Come mostrato nell'introduzione (\ref{subsec:1_1_modules}), in una vera luce è presente un emettitore che genera un fascio di luce che attraverserà ogni singolo modulo montato. Ogni modulo prende quindi il \say{risultato} del modulo precedente, ci applica un filtro sottrattivo e lo da in output al modulo successivo.
 \begin{figure}[H]
     \centering
     \includegraphics[width=.8\linewidth]{img/renderingPipeline/modules.jpg}
-    \caption{Moduli di una fixture visti frontalmente; in foto mostrati una ruota colori ed una ruota gobo. Possiamo notare come c'è un unico passaggio, centrale, da cui passa la luce ed in cui i vari moduli possono inserirsi per modellarne la forma ed il colore.}
+    \caption{Moduli di una fixture visti frontalmente; in foto mostrati una ruota colori ed una ruota gobo. Possiamo notare come c'è un unico passaggio, centrale, attraversato dalla luce, ed in cui i vari moduli possono inserirsi per modellarne la forma ed il colore.}
     \label{fig:2_modules}
 \end{figure}
 
 \noindent La stessa identica cosa è stata quindi implementata su Unreal Engine creando una nuova MaterialFunction contenente l'intera pipeline. Tutte le feature di una luce vengono trasformate in MaterialFunction che prenderanno in input, oltre ai loro parametri, il valore elaborato dalla precedente MF e che daranno in output il valore modificato dalla feature. Tutte le feature che riguardano i colori, eccezion fatta della color wheel, verranno renderizzate al di fuori di questa catena di moduli e l'output di questo processo verrà utilizzato come primo nodo della pipeline. L'output dell'ultimo nodo verrà collegato all'output della MaterialFunction. Ogni modulo della pipeline si occuperà, internamente, di fare il rendering della feature, invertirlo matematicamente, e poi sottrarlo al valore del nodo precedente. \newline
-Questa MaterialFunction contenente la nuova pipeline verrà quindi piazzata al posto di quella che calcola le ruote gobo dentro il rendering Light e Lens, in modo da toccare il meno possibile i materiali originali. Dentro Lens viene inoltre rimossa la MaterialFunction che renderizzerà le ruote colori, poiché vengono già elaborate nella prima. Nel contesto del materiale originale, è come se stessimo renderizzando una gobo molto elaborata e già colorata. \newline
+Questa MaterialFunction contenente la nuova pipeline verrà quindi piazzata al posto di quella che calcola le ruote gobo dentro il rendering Light e Lens, in modo da toccare il meno possibile i materiali originali. Dentro Lens viene inoltre rimossa la MaterialFunction che renderizzerà le ruote colori, poiché vengono già elaborate nella pipeline. Nel contesto del materiale originale, è come se stessimo renderizzando una gobo molto elaborata e già colorata. \newline
 E per il rendering del Beam?
 
 \subsubsection{Problemi con le MaterialExpressionCustom e le MaterialFunction}\label{subsec:2_2_CM-MFproblems}
@@ -298,7 +298,7 @@ bool cloneMaterialInterface(
     \caption{Esempio di descrizione dentro il nodo che si collega all'out.}
     \label{fig:2_searchDesc}
 \end{wrapfigure}
-Unreal Engine permette di impostare una descrizione o commento per ogni nodo. Questa descrizione verrà usata per trovare i nodi da collegare agli output dei materiali o da collegare alla pipeline di rendering, poiché ci serve un modo deterministico per ottenere sempre i nodi corretti. Viene quindi inserito un identificativo nella descrizione di ogni nodo che deve essere collegato in output o alla pipeline e verrà creata una funzione templatizzata per ricercare un nodo di un determinato tipo con un determinato identificativo all'interno di un materiale:
+Unreal Engine permette di impostare una descrizione o commento per ogni nodo. Questa descrizione verrà usata per trovare i nodi da collegare agli output dei materiali o da collegare in input alla pipeline di rendering, poiché ci serve un modo deterministico per ottenere sempre i nodi corretti. Viene quindi inserito un identificativo nella descrizione di ogni nodo che deve essere collegato in output o alla pipeline e verrà creata una funzione templatizzata per ricercare un nodo di un determinato tipo con un determinato identificativo all'interno di un materiale:
 \begin{lstlisting}
 template <typename CheckType>
 CheckType* searchMaterialExpressionByDesc(
@@ -440,7 +440,8 @@ Infine è stata modificata la funzione per il calcolo del risultato, in modo da 
 cumul += (1.f / numSteps) * outputSample * dClip * invsqr * falloff;
 \end{lstlisting}
 
-La generazione del codice in se viene fatta attraverso l'uso di varie printf e StringFormat innestate. Vengono utilizzati entrambi i metodi poiché UnrealEngine presenta una discreta incompatibilità tra tipi di stringhe, ad esempio una printf non può prendersi come stringa di formattazione il risultato di un'altra printf. Per evitare di convergere a nero troppo velocemente quando si hanno troppi moduli, il risultato di ciascuno viene prima elevato alla $1/3$.
+La generazione del codice in se viene fatta attraverso l'uso di varie printf e StringFormat innestate. Vengono utilizzati entrambi i metodi poiché UnrealEngine presenta una discreta incompatibilità tra tipi di stringhe, ad esempio una printf non può prendersi come stringa di formattazione il risultato di un'altra printf. \newline 
+Per evitare di convergere a nero troppo velocemente quando si hanno troppi moduli, il risultato di ciascuno viene prima elevato alla $1/3$.
 %\clearpage % TODO check if we really need this
 \lstset{language=UEcpp}
 \begin{lstlisting}
@@ -541,6 +542,7 @@ if (meEmissiveColor)
 \end{lstlisting}
 
 Per quanto riguarda invece la seconda lambda, abbiamo un codice un po' più elaborato, poiché si occupa anche di generare gli input per la CustomExpression. \newline
+    
 Inizialmente andiamo a cercare la CustomExpression. Se esiste, generiamo il codice HLSL e glielo impostiamo. Successivamente creiamo l'input per il valore di frost e lo piazziamo dentro il materiale usando un \lstinline{MeBlocksMover}.
 %\begin{lstlisting}
 %UMaterialExpressionCustom* meCustom =
@@ -659,7 +661,7 @@ UMaterialFunction* dstMaterial = materialFactory->FactoryCreateNew(
 );
 auto dstMaterialData = dstMaterial->GetEditorOnlyData();
 \end{lstlisting}
-Andiamo anche a caricarci la MaterialFunction che si occuperà di fare il rendering delle ruote. Nota: Va scinto il concetto di MaterialFunction e MaterialFunctionCall: La prima rappresenta il \say{codice} in se da eseguire, la seconda rappresenta un nodo all'interno del grafo di un materiale che andrà a chiamare la MaterialFunction impostata. In informatica, è come se la prima fosse una funzione e la seconda una chiamata a funzione. Una volta generata una MaterialFunctionCall bisognerà impostargli quale MaterialFunction dovrà richiamare.
+Andiamo anche a caricarci la MaterialFunction che si occuperà di fare il rendering delle ruote. Nota: Va scinto il concetto di MaterialFunction e MaterialFunctionCall. La prima rappresenta il \say{codice} in se da eseguire, la seconda rappresenta un nodo all'interno del grafo di un materiale che andrà a chiamare la MaterialFunction impostata. In informatica, è come se la prima fosse una funzione e la seconda una chiamata a funzione. Una volta generata una MaterialFunctionCall bisognerà impostargli quale MaterialFunction dovrà richiamare.
 
 Quando verrà aggiunto il supporto a nuove features qui dovrà essere aggiunto il pre-caricamento delle loro MaterialFunctions.
 %\begin{lstlisting}
@@ -672,7 +674,7 @@ Quando verrà aggiunto il supporto a nuove features qui dovrà essere aggiunto i
 %\end{lstlisting}
 \newline
 
-Da qui in poi andiamo a generare i singoli moduli per la pipeline di rendering, a partire dal parametro del colore di partenza. Come già mostrato, ogni modulo prenderà in input il risultato di quello precedente. Ad ogni generazione quindi colleghiamo la material function precedente salvata per puntatore dentro \lstinline{previousNode} agli input di quella corrente e successivamente aggiorniamo la variabile. Infine, prima di procedere all'aggiunta dei vari moduli, si genera il parametro di frost, lo si sposta e si carica una texture di default.
+A questo punto andiamo a generare i singoli moduli per la pipeline di rendering, a partire dal parametro del colore di partenza. Come già mostrato, ogni modulo prenderà in input il risultato di quello precedente. Ad ogni generazione quindi colleghiamo la material function precedente salvata per puntatore dentro \lstinline{previousNode} agli input di quella corrente e successivamente aggiorniamo la variabile. Infine, prima di procedere all'aggiunta dei vari moduli, si genera il parametro di frost, lo si sposta e si carica una texture di default. \newline
 % \begin{lstlisting}
 % UMaterialExpressionVectorParameter* input =
 %     generateMaterialExpression<UMaterialExpressionVectorParameter>(
