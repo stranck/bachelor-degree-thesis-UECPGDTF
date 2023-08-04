@@ -25,14 +25,14 @@ Le luci (che chiameremo anche \say{fari} o \say{fixture}) utilizzati nel mondo d
 Le fixture possono essere classificabili come statiche o dinamiche. Le fixture dette \say{statiche} sono fixture che sono formate da un unico \say{blocco} (che GDTF chiama \say{geometrie}, mentre Unreal Engine chiama \say{SceneComponents}) e che, fisicamente, non si muovono. Sono quelle più semplici nonché il primo tipo di faro entrato in commercio.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.4\linewidth]{img/introduzione/staticFixtureExample.jpg}
+    \includegraphics[width=0.36\linewidth]{img/introduzione/staticFixtureExample.jpg}
     \caption{Esempio di fixture statica. Immagine da \cite{fig_1_fixtureStatic}.}
     \label{fig:1_staticFixture}
 \end{figure}
 \noindent Le fixture dette invece \say{dinamiche} (chiamate anche \say{Teste mobili}) sono composte da più geometrie collegate tra loro da motori, in modo che quella responsabile di emettere il fascio di luce possa roteare, di solito su due assi. La geometria che viene poggiata per terra o appesa viene chiamata \say{base}, quella che emette luce \say{testa}.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\linewidth]{img/introduzione/dynamicFixtureAnatomy.jpg}
+    \includegraphics[width=0.65\linewidth]{img/introduzione/dynamicFixtureAnatomy.jpg}
     \caption{Geometrie di un faro dinamico. Immagine originale da \cite{fig_1_xtylos}.}
     \label{fig:1_DynamicFixture}
 \end{figure}
@@ -55,6 +55,7 @@ I moduli solitamente funzionano sottrattivamente: per ogni modulo a partire dall
     \label{fig:1_FixtureModules}
 \end{figure}
 
+%\clearpage
 \subsubsection{Protocollo DMX}\label{subsec:1_1_dmx}
 Oggi giorno, quasi tutte le fixture che vengono usate sono intelligenti e, come citato sopra, vengono controllate via DMX. DMX è un protocollo unidirezionale in cui un master, che solitamente è una console luci, invia 44 volte al secondo un array di 512 byte (chiamato \say{Universo DMX}) alle varie fixture che funzionano come slave. Le luci hanno memorizzato un offset all'interno di questo array chiamato \say{Indirizzo DMX} che viene impostato manualmente su ognuna dall'operaio che le monta su un palcoscenico. Ogni volta che arriva un nuovo pacchetto DMX la luce inizierà a leggere la sua sezione di dati a partire dall'indirizzo/offset specificato. Ogni byte che legge è chiamato \say{canale DMX} e, solitamente, corrisponde al valore da assegnare ad una diversa \say{funzionalità} (chiamata anche \say{feature}, o \say{attributo}) della luce.
 \begin{figure}[H]
@@ -71,7 +72,7 @@ Oggi giorno, quasi tutte le fixture che vengono usate sono intelligenti e, come 
 GDTF - \textit{General Device Type Format} - è un formato per descrivere fixture nella maniera più accurata possibile. È stato sviluppato da MAlighting (azienda produttrice del sistema di controllo luci attualmente più usato in show medio-grandi), Robe (uno dei leader mondiali nello sviluppo e realizzazione di luci per l'eventistica) e Vectorworks (un software di CAD/Design anch'esso molto usato nella progettazione e previsualizzazione di palcoscenici). 
 \newline
 
-Un file GDTF è essenzialmente un pacchetto contenente all'interno i modelli 3D delle varie geometrie che compongono un faro, le texture delle sue gobo/animazioni/prismi/etc ed un file in formato XML contenente una descrizione esaustiva delle caratteristiche del faro. \newline
+\noindent Un file GDTF è essenzialmente un pacchetto contenente all'interno i modelli 3D delle varie geometrie che compongono un faro, le texture delle sue gobo/animazioni/prismi/etc ed un file in formato XML contenente una descrizione esaustiva delle caratteristiche del faro. \newline
 Dei vari dati contenuti in questo XML a noi ci interessano principalmente:
 \begin{itemize}
     \item Informazioni e texture delle ruote colori e gobo.
@@ -149,7 +150,7 @@ Il nodo \lstinline{DMXMode} raccoglie tutte le modalità di funzionamento di un 
     \label{fig:1_gdtfDmxExample}
 \end{figure}
 
-\clearpage
+%\clearpage
 \subsection{Terminologia di Unreal Engine}\label{subsec:1_dataStructsUE}
 Qui sotto elencate tutti tutti i termini che si riferiscono a concetti e oggetti di Unreal Engine.
 \begin{itemize}
