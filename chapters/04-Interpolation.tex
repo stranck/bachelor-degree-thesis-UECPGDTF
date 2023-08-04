@@ -244,6 +244,7 @@ Successivamente avviene il controllo per scoprire se durante l'interpolazione ra
 \[A = \frac{2BH}{2}\]
 Risolvendo per $B$ arriviamo quindi a:
 \[B = \sqrt{\frac{A}{a}}\]
+\clearpage
 Come detto sopra, $B$ fa riferimento solamente alla base di uno dei due triangoli. Per ottenere quindi il tempo totale bisogna moltiplicare $B$ per 2. Inoltre, se $currentSpeed > 0$ allora bisogna aggiungere il \say{pezzo} di $T_1$ che viene tagliato fuori all'area totale, e togliere da $2B$ il TTRCS. La formula finale è quindi la seguente:
 \[B = 2\sqrt{\frac{A + prevArea}{a}} - TTRCS\]
 \begin{figure}[H]
@@ -274,15 +275,15 @@ Possiamo avere 3 possibili casi:\newline
     \item $s > x$: Partendo dalla currentSpeed dobbiamo decelerare fino ad arrivare allo speedCap. Dobbiamo sostituire il modulo nella precedente equazione con $tx - ts$.
     \begin{figure}[H]
         \centering
-        \includegraphics[width=.9\linewidth]{img/interpolazione/speedCapCalcGE.png}
+        \includegraphics[width=.8\linewidth]{img/interpolazione/speedCapCalcGE.png}
         \caption{In rosso l'andamento velocità senza imporre uno speedCap, che ci fa raggiungere TargetValue troppo velocemente. In verde la velocità con uno speedCap  minore alla velocità corrente che ci farà raggiungere TargetValue nel tempo corretto. Le due aree si equivalgono.}
         \label{fig:4_speedCapCalcGE}
     \end{figure}
-\clearpage %TODO CHECK IF THIS IS REALLY NEEDED
+%\clearpage %TODO CHECK IF THIS IS REALLY NEEDED
     \item $s < x$: Partendo dalla currentSpeed dobbiamo accelerare fino ad arrivare allo speedCap. Dobbiamo sostituire il modulo nella precedente equazione con $ts - tx$.
     \begin{figure}[H]
         \centering
-        \includegraphics[width=.9\linewidth]{img/interpolazione/speedCapCalcBE.png}
+        \includegraphics[width=.8\linewidth]{img/interpolazione/speedCapCalcBE.png}
         \caption{Stessa illustrazione della figura \ref{fig:4_speedCapCalcGE}. L'unica differenza è che lo speedCap è maggiore della velocità corrente e di conseguenza lo raggiungeremo accelerando al posto di decelerare.}
         \label{fig:4_speedCapCalcBE}
     \end{figure}
@@ -318,7 +319,7 @@ Ci sono due casi che sono trattati implicitamente dal resto della funzione \lsti
     \label{fig:4_speedCapThreeCases}
 \end{figure}
 
-\clearpage %TODO CHECK IF STILL NEEDED
+%\clearpage %TODO CHECK IF STILL NEEDED
 \subsubsection{Conversioni da RealFade e RealAcceleration}\label{subsubsec:4_2_Conversions}
 Questa funzione si occupa di convertire i parametri GDTF \lstinline{RealFade} e \lstinline{RealAcceleration} verso i valori \lstinline{maxSpeed} e \lstinline{acceleration} utilizzati all'interno dell'oggetto interpolazione. Per calcolare \lstinline{maxPhysicalSpeed} c'è bisogno della dimensione del range in cui opererà l'interpolazione, definito come $MaxValue - MinValue$.\newline
 

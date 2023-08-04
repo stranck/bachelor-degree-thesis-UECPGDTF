@@ -186,10 +186,7 @@ Nel costruttore della \lstinline{CPGDTFRenderPipelineBuilder}, all'interno del f
 \lstset{language=UEcpp}
 \begin{lstlisting}
 auto shaper = Cast<UCPGDTFShaperFixtureComponent>(components[i]);
-if (shaper != nullptr) {
-    shapers.Add(shaper);
-    continue;
-}
+if (shaper != nullptr) { shapers.Add(shaper); continue; }
 \end{lstlisting}
 
 Il codice per la generazione del codice HLSL in se è molto semplice. Si prende in input un array di ShaperFixtureComponent già istanziati e per ciascuno controlla se sono in modalità A+B oppure A+Rot, e seleziona la relativa chiamata a funzione corretta.
@@ -314,6 +311,7 @@ meCustom->Inputs.Add(input);
 Come per la generazione del materiale Beam anche qui le varie funzioni descritte nel capitolo \ref{subsec:5_1_ShaperMath} sono state trasformate in MaterialFunctions. Come esposto nella sezione \ref{sec:RenderingPipeline} tali MaterialFunctions prenderanno in input l'output della precedente, per formare la pipeline di rendering. L'implementazione in se delle MaterialFunctions non viene vista poiché è identica al codice HLSL mostrato nel capitolo precedente, bensì vedremo comunque la parte di generazione della pipeline. \newline
 
 Si effettua un ciclo su tutti gli ShaperFixtureComponent che dobbiamo aggiungere alla pipeline. Per ciascuno, iniziamo con lo generare una MaterialFunctionCall ed impostarne la MaterialFunction in base alla modalità della flag.
+\clearpage
 \begin{lstlisting}
 int orientation = shaper->getOrientation();
 //Creiamo ed aggiungiamo la MaterialFunctionCall al materiale
@@ -364,7 +362,7 @@ Questa operazione viene effettuata scorrendo tutta la lista di ChannelFunction a
 %}
 %\end{lstlisting}
 
-\clearpage %TODO CHECK IF STILL NEEDED
+%\clearpage %TODO CHECK IF STILL NEEDED
 Di seguito, degli screenshot della classe per mostrare quanto sia semplice implementare nuovi componenti ora che la gerarchia di FixtureComponent è stata rivoluzionata.
 \begin{figure}[H]
     \centering
@@ -379,7 +377,7 @@ Di seguito, degli screenshot della classe per mostrare quanto sia semplice imple
     \label{fig:5_ShaperComponentCode2}
 \end{figure}
 
-
+\clearpage
 \subsection{Iris}\label{subsec:5_Iris}
 L'iris è una feature atta a restringere un fascio di luce. Differisce dallo zoom, poiché quest'ultimo definisce di quanto si allarga una immagine che vogliamo proiettare rispetto alla distanza, mentre l'iris definisce la dimensione in se dell'immagine. In generale, è come se fosse un sagomatore di forma circolare che entra nel fascio di luce da tutte le direzioni contemporaneamente. Così come per i sagomatori, renderizziamo questa feature attraverso formule matematiche.
 \begin{figure}[H]
@@ -505,6 +503,7 @@ Il componente di gestione dell'iris, per le stesse ragioni di quello che gestisc
 Questi effetti sono generati e gestiti da una classe esterna (\lstinline{FPulseEffectManager}), poiché effetti simili sono di fatto disponibili anche in altre features come, ad esempio, lo shutter. I nostri compiti, da componente che si appoggia a quella classe per la generazione degli effetti pulse, sono:
 \begin{itemize}
     \item \textbf{Far partire o impostare la velocità di un effetto}: questa operazione viene fatta all'interno della funzione \lstinline{ApplyEffectToBeam()} ogni qualvolta il valore dmx corrisponde ad una di queste features:
+\clearpage
     \begin{lstlisting}
 switch (AttributeType) {
     //Imposta il valore diretto dell'iris
@@ -543,7 +542,7 @@ switch (channel.RunningEffectTypeChannel) {
 }
 \end{lstlisting}
 \end{itemize}
-
+\clearpage
 \subsection{RenderingPipeline finale}\label{subsec:5_final}
 Abbiamo mostrato nei precedenti due capitoli come l'implementazione di nuove funzionalità sia, finalmente, una operazione molto semplice e chiara, in cui definire solamente i comportamenti specifici del singolo componente.
 

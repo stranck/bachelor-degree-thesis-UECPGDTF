@@ -96,6 +96,7 @@ Successivamente la posizione viene ricalcolata per essere nel range [0, 1], in m
 \newline
 
 \noindent A questo punto avviene l'effettivo sample della ruota gobo e colori. Viene prima calcolato l'offset all'interno nella ruota, per poi essere usato per modificare la coordinata $X$ delle UV ed infine si effettua l'operazione di sampling della texture.
+\clearpage
 \begin{lstlisting}
 //gobo
 float2 texCoor = pos.xy;
@@ -132,6 +133,7 @@ cumul +=
 
 Nell'implementazione attuale non esiste la possibilità di avere più ruote dello stesso tipo: lo evinciamo semplicemente dal fatto che gli input della CustomExpression sono solo uno per tipo di ruota. Inoltre notiamo come nel codice il sampling della ruota colore e di quella gobo viene essenzialmente fatto allo stesso modo, eppure non è stata creata una funzione generalizzata per farlo, bensì due codici specifici per ciascuna. 
 
+\clearpage
 \subsubsection{Light}\label{subsec:2_1_light}
 Questo materiale si occupa della proiezione della luce su altri materiali.
 \begin{figure}[H]
@@ -153,7 +155,7 @@ Notiamo come questo calcolo sia lo stesso utilizzato per fare il sample delle go
 
 Da notare come il nome dei parametri all'interno di questa MaterialFunction facciano riferimento solo alle ruote gobo, e come all'interno del Materiale originale sia presente solamente una MaterialFunctionCall a DMXGobo. Questo implica l'impossibilità di renderizzare sia ruote differenti da quelle gobo e l'impossibilità di avere più ruote gobo nella stessa fixture.
 
-\clearpage %TODO CHECK IF STILL NEEDED
+%\clearpage %TODO CHECK IF STILL NEEDED
 \subsubsection{Lens}\label{subsec:2_1_lens}
 \begin{figure}[H]
     \centering
@@ -168,6 +170,7 @@ Questo materiale si occupa di applicare l'effetto che stiamo renderizzando sulle
     \caption{Grafo del materiale Lens.}
     \label{fig:2_lensGraphFull}
 \end{figure}
+\clearpage %TODO CHECK IF THIS IS STILL NEEDED
 \noindent Il grafo è in realtà molto simile a quello visto precedentemente per il materiale Light (\ref{subsec:2_1_light}). Si aggiungono solamente dei blocchi di nodi in più (\say{Lens}, \say{Lamp}) che servono a rendere più fotorealistica la resa delle lenti. Anche in questo materiale è presente una MaterialFunctionCall a DMXGobo, ma notiamo come ce n'è un'altra a DMXColorWheel la quale implementazione è identica alla prima, creando così \say{codice} duplicato.
 
 \subsection{Idea della pipeline}\label{subsec:2_pipelineIdea}
@@ -214,6 +217,7 @@ Come ci aspettavamo, questo metodo compila con successo. Possiamo quindi impleme
 
 Si sta preferendo mantenere una doppia implementazione fatta sia come materiali che come codice HLSL dei vari moduli perché, nel momento in cui Unreal Engine va a compilare i materiali in codice HLSL, effettua una prima, grossa, ottimizzazione in cui eventuali valori e calcoli che non cambiano durante il rendering di un materiale vengono automaticamente messi in una cache. La stessa cosa non accade al codice HLSL dentro le MaterialExpressionCustom che viene invece incapsulato senza essere toccato all'interno di una funzione nel sorgente HLSL del materiale di cui fa parte. \cite{hlslNoOptimize}
 
+\clearpage %TODO CHECK IF THIS IS STILL NEEDED
 \lstset{language=UEcpp}
 \subsection{Generazione dinamica del codice e delle MaterialExpression}\label{subsec:2_codeGeneration}
 Non tutte fixture hanno gli stessi moduli. Alcune, ad esempio, potrebbero avere il sagomatore, mentre altre no. Inoltre alcune luci possono avere un numero variabile di una stessa feature. Per far fronte a queste differenze, al posto di usare un unico materiale in ogni tipo di fixture, si è scelto di generare programmaticamente una pipeline di rendering per ogni tipo di faro importato. Purtroppo, per poter usare una MaterialFunction (e quindi una pipeline) specifica per ogni attore (rappresentante un tipo di fixture) che viene creato, bisogna che ciascuno abbia anche i propri materiali univoci. Ad ogni import viene quindi prima generata la pipeline, successivamente vengono clonati i materiali Light, Beam e Lens, poi viene inserita una MaterialFunctionCall alla pipeline (o inserito il codice HLSL) nei materiali, ed infine vengono assegnati questi nuovi materiali all'attore. \newline
@@ -254,13 +258,11 @@ Successivamente viene creato un metodo \lstinline{cloneMaterialInterface()} per 
 bool cloneMaterialInterface(
     FString materialType, //Nome del tipo di materiale
     const std::function<bool(
-        UMaterial*,
-        UMaterialEditorOnlyData*,
+        UMaterial*, UMaterialEditorOnlyData*,
         TArray<TObjectPtr<UMaterialExpression>>
     )>& linkOutputFnc, //Lambda per collegare i nodi all'output
     const std::function<bool(
-        UMaterial*,
-        UMaterialEditorOnlyData*,
+        UMaterial*, UMaterialEditorOnlyData*,
         TArray<TObjectPtr<UMaterialExpression>>
     )>& middleCode) { //Lambda per la generazione/link della pipeline
 
@@ -290,7 +292,9 @@ bool cloneMaterialInterface(
         middleCode(dstMaterial, dstMaterialData, dstExpression);
 }
 \end{lstlisting}
-\clearpage % TODO check if we really need this
+\par
+%\bigbreak
+%\clearpage % TODO check if we really need this
 \begin{wrapfigure}{r}{0.4\textwidth}
     \centering
     \captionsetup{justification=centering}
@@ -299,6 +303,7 @@ bool cloneMaterialInterface(
     \label{fig:2_searchDesc}
 \end{wrapfigure}
 Unreal Engine permette di impostare una descrizione o commento per ogni nodo. Questa descrizione verrà usata per trovare i nodi da collegare agli output dei materiali o da collegare in input alla pipeline di rendering, poiché ci serve un modo deterministico per ottenere sempre i nodi corretti. Viene quindi inserito un identificativo nella descrizione di ogni nodo che deve essere collegato in output o alla pipeline e verrà creata una funzione templatizzata per ricercare un nodo di un determinato tipo con un determinato identificativo all'interno di un materiale:
+\newline
 \begin{lstlisting}
 template <typename CheckType>
 CheckType* searchMaterialExpressionByDesc(
@@ -542,7 +547,8 @@ if (meEmissiveColor)
 \end{lstlisting}
 
 Per quanto riguarda invece la seconda lambda, abbiamo un codice un po' più elaborato, poiché si occupa anche di generare gli input per la CustomExpression. \newline
-    
+
+\clearpage
 Inizialmente andiamo a cercare la CustomExpression. Se esiste, generiamo il codice HLSL e glielo impostiamo. Successivamente creiamo l'input per il valore di frost e lo piazziamo dentro il materiale usando un \lstinline{MeBlocksMover}.
 %\begin{lstlisting}
 %UMaterialExpressionCustom* meCustom =
@@ -673,8 +679,7 @@ Quando verrà aggiunto il supporto a nuove features qui dovrà essere aggiunto i
 %);
 %\end{lstlisting}
 \newline
-
-A questo punto andiamo a generare i singoli moduli per la pipeline di rendering, a partire dal parametro del colore di partenza. Come già mostrato, ogni modulo prenderà in input il risultato di quello precedente. Ad ogni generazione quindi colleghiamo la material function precedente salvata per puntatore dentro \lstinline{previousNode} agli input di quella corrente e successivamente aggiorniamo la variabile. Infine, prima di procedere all'aggiunta dei vari moduli, si genera il parametro di frost, lo si sposta e si carica una texture di default. \newline
+\indent A questo punto andiamo a generare i singoli moduli per la pipeline di rendering, a partire dal parametro del colore di partenza. Come già mostrato, ogni modulo prenderà in input il risultato di quello precedente. Ad ogni generazione quindi colleghiamo la material function precedente salvata per puntatore dentro \lstinline{previousNode} agli input di quella corrente e successivamente aggiorniamo la variabile. Infine, prima di procedere all'aggiunta dei vari moduli, si genera il parametro di frost, lo si sposta e si carica una texture di default. \newline
 % \begin{lstlisting}
 % UMaterialExpressionVectorParameter* input =
 %     generateMaterialExpression<UMaterialExpressionVectorParameter>(
