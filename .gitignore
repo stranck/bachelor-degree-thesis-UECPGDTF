@@ -7,3 +7,6 @@ overleafLogin.*
 ~*.docx
 ~*.doc
 ~*.tmp
+
+*.bkp
+*.dtmp
