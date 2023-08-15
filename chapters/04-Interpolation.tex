@@ -9,7 +9,7 @@
 \lstset{language=UEcpp}
 L'oggetto interpolazione si occupa di emulare lo spostamento di un vero motore nella realtà. Ad una interpolazione è possibile impostare un target, ed il valore fornito in output da questo oggetto verrà modificato ad ogni tick seguendo una velocità che accelera, rimane costante e decelera, fino a raggiungere il suddetto target.
 
-L'oggetto interpolazione originale era implementato attraverso varie formule matematiche di derivate e integrali, che però erano difficile da modificare se necessario, non erano documentate, ma soprattutto non funzionavano: Come già mostrato nell'introduzione, molte volte il valore dell'interpolazione non convergeva verso il target continuando ad alternarsi intorno ad esso, oppure lo spostamento era molto lento. Inoltre non era possibile specificare davvero la velocità in secondi con il quale doveva accelerare o arrivare a destinazione, cosa invece richiesta da GDTF.\newline
+L'oggetto interpolazione originale era implementato attraverso varie formule matematiche di derivate e integrali, che però erano difficile da modificare se necessario, non erano documentate, ma soprattutto non funzionavano: come già mostrato nell'introduzione, molte volte il valore dell'interpolazione non convergeva verso il target continuando ad alternarsi intorno ad esso, oppure lo spostamento era molto lento. Inoltre non era possibile specificare davvero la velocità in secondi con il quale doveva accelerare o arrivare a destinazione, cosa invece richiesta da GDTF.\newline
 
 In questo capitolo viene trattato come è stato completamente re-implementato l'algoritmo di interpolazione in una maniera più standard. Dopo essermi confrontato con le persone che lavorano al firmware dei fari nel reparto R\&D di ClayPaky, ho anche avuto conferma che la mia implementazione è molto vicina a quella presente nei fari veri.
 
@@ -42,20 +42,20 @@ Prima di iniziare, enuncio dei concetti ricorrenti all'interno di questo capitol
         \caption{Grafico che mostra visivamente il calcolo di \textit{TimeToAccelerate}.}
         \label{fig:4_timeToFullyAccelerate}
     \end{figure}
-    \item Convertire la velocità interna a velocità reale, ovvero la distanza fisica percorsa al secondo: Per le stesse motivazioni di sopra, basta moltiplicare la velocità interna con \lstinline{maxPhysicalSpeed}. Questo ragionamento si applica per tutto, anche per le distanze.
+    \item Convertire la velocità interna a velocità reale, ovvero la distanza fisica percorsa al secondo: per le stesse motivazioni di sopra, basta moltiplicare la velocità interna con \lstinline{maxPhysicalSpeed}. Questo ragionamento si applica per tutto, anche per le distanze.
 \end{itemize}
 
 Analizziamo la funzione di Update originale (visibile nella figura \ref{fig:4_Update}). Gli step saranno numerati per indicare nei capitoli successivi dove verranno aggiunte le modifiche al codice per compensare il fatto che \lstinline{Update()} venga chiamata ad intervalli irregolari e risolvere altre imprecisioni.
 \newcommand{\itemEnu}{\stepcounter{enumi}\textbf{(\number\numexpr\value{enumi}\relax) }}
 \begin{enumerate}
-    \item Controlliamo se \lstinline{CurrentValue} ha raggiunto \lstinline{TargetValue}. Se si, ritorniamo, altrimenti \itemEnu controlliamo se l'interpolazione è abilitata. Se no, impostiamo \lstinline{TargetValue = CurrentValue} e ritorniamo.
+    \item Controlliamo se \lstinline{CurrentValue} ha raggiunto \lstinline{TargetValue}. Se sì, ritorniamo, altrimenti \itemEnu controlliamo se l'interpolazione è abilitata. Se no, impostiamo \lstinline{TargetValue = CurrentValue} e ritorniamo.
     \item Calcoliamo quanta distanza abbiamo percorso dall'ultimo tick usando \lstinline{calcNextMovement()}.
     \item Calcoliamo quanta distanza percorreremmo se iniziassimo a decelerare in questo tick, usando \lstinline{getStopDistance()}.
     \item Controlliamo se siamo fermi o meno.
-    \item Se siamo fermi, controlliamo se abbiamo raggiunto TargetValue. Se si, \itemEnu terminiamo l'interpolazione. Altrimenti, \itemEnu calcoliamo la nuova direzione (\lstinline{FORWARD} o \lstinline{BACKWARD}) e \itemEnu forziamo l'inizio dell'interpolazione.
-    \item Se non siamo fermi, controlliamo se la distanza calcolata precedentemente è più grande della differenza tra CurrentValue e TargetValue. Se si, \itemEnu vuol dire che dobbiamo iniziare a decelerare, altrimenti sorpasseremo TargetValue.
+    \item Se siamo fermi, controlliamo se abbiamo raggiunto TargetValue. Se sì, \itemEnu terminiamo l'interpolazione. Altrimenti, \itemEnu calcoliamo la nuova direzione (\lstinline{FORWARD} o \lstinline{BACKWARD}) e \itemEnu forziamo l'inizio dell'interpolazione.
+    \item Se non siamo fermi, controlliamo se la distanza calcolata precedentemente è più grande della differenza tra CurrentValue e TargetValue. Se sì, \itemEnu vuol dire che dobbiamo iniziare a decelerare, altrimenti sorpasseremo TargetValue.
     \item Controlliamo il nostro status, ovvero se stiamo accelerando (\lstinline{status == true}) o decelerando (\lstinline{status == false}). Se lo stato è cambiato rispetto allo scorso tick oppure se stiamo forzando l'inizio dell'interpolazione, \itemEnu iniziamo ad accelerare o decelerare impostando, nel primo caso, \lstinline{currentAcceleration = acceleration}, altrimenti, nel secondo caso, \lstinline{currentAcceleration = -acceleration}.
-    \item Controlliamo se l'interpolazione è finita testando se stiamo fermi e abbiamo raggiunto TargetValue. Se si, ritorniamo, altrimenti \itemEnu aggiungiamo a CurrentValue la distanza percorsa nel tick corrente.
+    \item Controlliamo se l'interpolazione è finita testando se stiamo fermi e abbiamo raggiunto TargetValue. Se sì, ritorniamo, altrimenti \itemEnu aggiungiamo a CurrentValue la distanza percorsa nel tick corrente.
 \end{enumerate}
 
 Nella funzione \lstinline{Update()} sono state chiamate altre funzioni:
@@ -73,7 +73,7 @@ Nella funzione \lstinline{Update()} sono state chiamate altre funzioni:
         \caption{I due quadrilateri in cui la velocità viene divisa per calcolarne l'area.}
         \label{fig:4_calcNextMovementLateCall}
     \end{figure}
-    \item \lstinline{__calcNextMovement_internal()}: Questa funzione si occupa di calcolare lo spazio percorso in DeltaSeconds a partire dalla velocità precedente fino ad arrivare alla velocità corrente. Il calcolo viene effettuato scomponendo il quadrilatero in un rettangolo con un altezza pari a \lstinline{previousSpeed} a cui va sommata l'area di un triangolo che come altezza ha la differenza tra \lstinline{currentSpeed} e \lstinline{prevSpeed}. Questo calcolo funziona sia quando si accelera, che quando si è a velocità costante (il triangolo avrà area 0, poiché la differenza e quindi l'altezza sarà uguale a 0), che quando si decelera (il triangolo avrà area negativa).
+    \item \lstinline{__calcNextMovement_internal()}: Questa funzione si occupa di calcolare lo spazio percorso in DeltaSeconds a partire dalla velocità precedente fino ad arrivare alla velocità corrente. Il calcolo viene effettuato scomponendo il quadrilatero in un rettangolo con un altezza pari a \lstinline{previousSpeed} a cui va sommata l'area di un triangolo che come altezza ha la differenza tra \lstinline{currentSpeed} e \lstinline{prevSpeed}. Questo calcolo funziona sia quando si accelera, che quando si è a velocità costante (il triangolo avrà area 0, poiché la differenza e quindi l'altezza sarà uguale a 0), che quando si decelera (il calcolo dell'area del triangolo ci darà un valore negativo).
     \[movement = prevSpeed * deltaSeconds + \frac{(currentSpeed - prevSpeed) * deltaSeconds}{2}\]
     \begin{figure}[H]
         \centering
@@ -92,7 +92,7 @@ Nella funzione \lstinline{Update()} sono state chiamate altre funzioni:
 \end{itemize}
 
 \subsection{Modifiche all'implementazione}\label{subsec:4_edits}
-Come detto in precedenza, il codice scritto fin'ora proviene da un altro progetto e funziona a patto che i DeltaSeconds tra un tick e l'altro siano costanti e ravvicinati. Questo non è il caso di UnrealEngine e, di conseguenza, bisogna aggiungere delle modifiche all'algoritmo originale per ottenere una interpolazione corretta.
+Come detto in precedenza, il codice scritto finora proviene da un altro progetto e funziona a patto che i DeltaSeconds tra un tick e l'altro siano costanti e ravvicinati. Questo non è il caso di UnrealEngine e, di conseguenza, bisogna aggiungere delle modifiche all'algoritmo originale per ottenere una interpolazione corretta.
 
 \subsubsection{Compensate Late Call}\label{subsubsec:4_2_CompensateLateCall}
 Quasi sempre accade che il momento esatto in cui dovremmo iniziare a decelerare si trovi tra il tick precedente e quello corrente. Iniziando a decelerare in questo tick ci ritroveremo alla fine con più distanza percorsa del dovuto, sorpassando TargetValue.
@@ -103,7 +103,7 @@ Quasi sempre accade che il momento esatto in cui dovremmo iniziare a decelerare 
     \label{fig:4_compensateLateCall}
 \end{figure}
 
-\noindent Questa correzione viene effettuata quando iniziamo a decelerare e se la stopDistance supera TargetValue (chiameremo la differenza tra i due valori \say{distanceDifference}), ma non abbiamo ancora superato TargetValue. Viene effettuata tra le operazioni in cui viene deciso che dobbiamo iniziare a decelerare e immediatamente prima di cambiare il valore di accelerazione (tra i punti \textbf{12} e \textbf{13} della funzione di \lstinline{Update()}). La prima cosa che fa è effettuare un rollback di qualsiasi movimento svolto durante questo frame e successivamente viene controllato se nel tick precedente stavamo accelerando e se nel tick corrente stiamo a velocità costante. Se si vuol dire che tra i due frame abbiamo raggiunto la velocità massima e dobbiamo scoprire se avremmo dovuto iniziare a decelerare prima o dopo averla raggiunta. Per eseguire questo controllo usiamo \lstinline{__calcNextMovement_internal()} per calcolarci lo spazio percorso fino a raggiungere maxSpeed e sommiamo questo valore a quello ottenuto da una chiamata a \lstinline{getStopDistance()} con velocità pari ad 1. Se questa distanza appena calcolata sommata a CurrentValue è più grande di TargetValue vuol dire che avremmo dovuto iniziare a decelerare prima di raggiungere la velocità massima, e viceversa. Nel primo caso ricalcoliamo la distanceDifference come la differenza tra la precedente somma e TargetValue, nel secondo caso faremo semplicemente finta di essere a velocità costante già dal frame precedente.
+\noindent Questa correzione viene effettuata quando iniziamo a decelerare e se la stopDistance supera TargetValue (chiameremo la differenza tra i due valori \say{distanceDifference}), ma non abbiamo ancora superato TargetValue. Viene effettuata tra le operazioni in cui viene deciso che dobbiamo iniziare a decelerare e immediatamente prima di cambiare il valore di accelerazione (tra i punti \textbf{12} e \textbf{13} della funzione di \lstinline{Update()}). La prima cosa che fa è effettuare un rollback di qualsiasi movimento svolto durante questo frame e successivamente viene controllato se nel tick precedente stavamo accelerando e se nel tick corrente stiamo a velocità costante. Se sì, vuol dire che tra i due frame abbiamo raggiunto la velocità massima e dobbiamo scoprire se avremmo dovuto iniziare a decelerare prima o dopo averla raggiunta. Per eseguire questo controllo usiamo \lstinline{__calcNextMovement_internal()} per calcolarci lo spazio percorso fino a raggiungere maxSpeed e sommiamo questo valore a quello ottenuto da una chiamata a \lstinline{getStopDistance()} con velocità pari ad 1. Se questa distanza appena calcolata sommata a CurrentValue è più grande di TargetValue vuol dire che avremmo dovuto iniziare a decelerare prima di raggiungere la velocità massima, e viceversa. Nel primo caso ricalcoliamo la distanceDifference come la differenza tra la precedente somma e TargetValue, nel secondo caso faremo semplicemente finta di essere a velocità costante già dal frame precedente.
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/interpolazione/compensateLateCall3Case.png}
@@ -160,7 +160,7 @@ Per calcolare il momento esatto in cui avremmo dovuto iniziare a decelerare avre
     Dove $A$, $H$ ed $a$ sono valori noti. Risolvendo l'equazione per x otteniamo quindi la base del nostro poligono, che corrisponde al doppio della differenza in secondi tra il tick corrente e quando avremmo dovuto iniziare a decelerare.
 \end{itemize}
 
-\noindent Una volta calcolato quanto tempo prima avremmo dovuto iniziare a decelerare, controlliamo se è un valore positivo. Se si, ricalcoliamo il movimento fino a quel momento e successivamente iniziamo a decelerare aggiornando il DeltaSeconds della funzione \lstinline{Update()} in modo che calcoli automaticamente il resto dello spostamento. \newline
+\noindent Una volta calcolato quanto tempo prima avremmo dovuto iniziare a decelerare, controlliamo se è un valore positivo. Se sì, ricalcoliamo il movimento fino a quel momento e successivamente iniziamo a decelerare aggiornando il DeltaSeconds della funzione \lstinline{Update()} in modo che calcoli automaticamente il resto dello spostamento. \newline
 Se invece il valore risulta negativo, vuol dire che TargetValue è cambiato tra questo ed il frame precedente. Questa casistica viene approfondita e gestita nel capitolo \say{Override Deceleration} \ref{subsubsec:4_2_OverrideDeceleration}.
 
 
@@ -196,7 +196,7 @@ Una volta trovato questo valore, il codice farà un rollback al tick precedente 
 %\clearpage %TODO CONTROLLARE SE SERVE ANCORA
 
 \subsubsection{SpeedCap per i piccoli movimenti}\label{subsubsec:4_2_Speedcap}
-In una fixture vera, se TargetValue viene spostato di poco, il movimento, al posto di essere a piena velocità, sarà più lento. Questa particolarità è molto utile quando viene effettuato un fade molto lungo che viene gestito da una consolle luci: In questo caso viene inviato costantemente un nuovo valore di TargetValue che si scosta di poco da quello precedente. Con l'attuale implementazione le nostre fixture virtuali si muoverebbero a scatti perché proveranno costantemente a raggiungere TargetValue al meglio della loro velocità, mentre sarebbe più realistico avere un movimento più lento e fluido. 
+In una fixture vera, se TargetValue viene spostato di poco, il movimento, al posto di essere a piena velocità, sarà più lento. Questa particolarità è molto utile quando viene effettuato un fade molto lungo che viene gestito da una consolle luci: in questo caso viene inviato costantemente un nuovo valore di TargetValue che si scosta di poco da quello precedente. Con l'attuale implementazione le nostre fixture virtuali si muoverebbero a scatti perché proveranno costantemente a raggiungere TargetValue al meglio della loro velocità, mentre sarebbe più realistico avere un movimento più lento e fluido. 
 
 Per realizzare questa funzionalità si è quindi deciso di imporre uno \say{SpeedCap}, ovvero un limite alla velocità massima di un'interpolazione. Questo limite viene impostato quando il tempo impiegato per raggiungere TargetValue scende sotto una determinata soglia ed è proporzionale alla differenza tra CurrentValue e TargetValue, in modo che il movimento duri almeno quanto tale soglia (vedi figura \ref{fig:4_speedCapIntro}). Il calcolo del valore dello SpeedCap viene effettuato alla fine della funzione \lstinline{SetTargetValue()}, mentre l'attivazione viene svolta nella funzione \lstinline{Update()} dopo aver deciso se dobbiamo iniziare ad accelerare o decelerare, ma prima di effettivamente applicare questa decisione (tra i punti \textbf{11} e \textbf{12}). \newline
 \begin{figure}[H]
@@ -215,7 +215,7 @@ Per realizzare questa funzionalità si è quindi deciso di imporre uno \say{Spee
 \end{wrapfigure}
 \noindent L'ottenimento del tempo impiegato da un intero ciclo di interpolazione viene effettuato attraverso una previsione che prende in considerazione l'accelerazione, la velocità corrente e la differenza tra CurrentValue e TargetValue. Immaginiamo di dividere il ciclo di interpolazione in tre poligoni, come in figura \ref{fig:4_movementThreeParts}. Il raggiungere maxSpeed durante il movimento ci farà calcolare la predizione in maniera differente. \newline
 
-La prima operazione che viene fatta è una compensazione per gestire i casi in cui $currentSpeed > 0$. Calcoliamo quindi due valori: Immaginando di partire con velocità pari a 0, otteniamo il tempo per raggiungere currentSpeed (\say{TimeToReachCurrentSpeed}) come:
+La prima operazione che viene fatta è una compensazione per gestire i casi in cui $currentSpeed > 0$. Calcoliamo quindi due valori: immaginando di partire con velocità pari a 0, otteniamo il tempo per raggiungere currentSpeed (\say{TimeToReachCurrentSpeed}) come:
 \[TTRCS = TTFA * currentSpeed\]
 E lo spazio percorso fino a raggiungere currentSpeed come l'area di un triangolo che ha TTRCS come base e currentSpeed come altezza:
 \[prevArea = \frac{TTRCS * currentSpeed}{2} = \frac{TTFA * currentSpeed^2}{2}\]
@@ -314,7 +314,7 @@ Ci sono due casi che sono trattati implicitamente dal resto della funzione \lsti
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\linewidth]{img/interpolazione/speedCapThreeCases.png}
+    \includegraphics[width=1\linewidth]{img/interpolazione/speedCapThreeCases-split.png}
     \caption{I tre casi descritti sopra, da sinistra verso destra.}
     \label{fig:4_speedCapThreeCases}
 \end{figure}

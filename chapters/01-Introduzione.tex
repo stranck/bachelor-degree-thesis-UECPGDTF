@@ -73,7 +73,7 @@ GDTF - \textit{General Device Type Format} - è un formato per descrivere fixtur
 \newline
 
 \noindent Un file GDTF è essenzialmente un pacchetto contenente all'interno i modelli 3D delle varie geometrie che compongono un faro, le texture delle sue gobo/animazioni/prismi/etc ed un file in formato XML contenente una descrizione esaustiva delle caratteristiche del faro. \newline
-Dei vari dati contenuti in questo XML a noi ci interessano principalmente:
+Dei vari dati contenuti in questo XML a noi interessano principalmente:
 \begin{itemize}
     \item Informazioni e texture delle ruote colori e gobo.
     \item Informazioni sui valori di fade e accelerazione per l'interpolazione delle varie componenti fisiche.
@@ -88,12 +88,12 @@ Nel nodo \lstinline{Wheels} all'interno del file XML viene definita una lista di
     \item \lstinline{MediaFileName}: Nome del file PNG contenente la texture di questo slot, utilizzato per le ruote gobo ed animazione.
 \end{itemize}
 I prismi vengono comunque classificati come ruote, dove ogni slot rappresenta un tipo diverso di prisma. In questi casi avranno come figli dei nodi \lstinline{Facet} rappresentanti le facce di un prisma, in cui ne viene definito il colore, la rotazione, la traslazione e la grandezza della faccia.
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1\linewidth]{img/introduzione/GDTFwheelExample.jpg}
-    \caption{Nodo \lstinline{Wheels} in un file GDTF.}
-    \label{fig:1_gdtfWheelExample}
-\end{figure}
+%\begin{figure}[H]
+%    \centering
+%    \includegraphics[width=1\linewidth]{img/introduzione/GDTFwheelExample.jpg}
+%    \caption{Nodo \lstinline{Wheels} in un file GDTF.}
+%    \label{fig:1_gdtfWheelExample}
+%\end{figure}
 
 \subsubsection{Geometrie}\label{subsec:1_2_geometries}
 Il nodo \lstinline{Models} viene utilizzato per definire una lista di modelli 3D da importare. Per ciascuno può essere assegnato un nome e delle dimensioni per effettuare dello scaling al modello stesso. 
@@ -143,12 +143,12 @@ Il nodo \lstinline{DMXMode} raccoglie tutte le modalità di funzionamento di un 
             \item \lstinline{WheelSlotIndex}: Se la ChannelFunction padre è collegata ad una ruota, è l'identificativo dello slot nella ruota che dovrà essere attivo quando il valore del canale DMX fisico si trova nel range di questo ChannelSet.
         \end{itemize}
 \end{itemize}
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1\linewidth]{img/introduzione/GDTFdmxExample.jpg}
-    \caption{Esempio di nodi rappresentanti la descrizione di un canale DMX in un file GDTF.}
-    \label{fig:1_gdtfDmxExample}
-\end{figure}
+%\begin{figure}[H]
+%    \centering
+%    \includegraphics[width=1\linewidth]{img/introduzione/GDTFdmxExample.jpg}
+%    \caption{Esempio di nodi rappresentanti la descrizione di un canale DMX in un file GDTF.}
+%    \label{fig:1_gdtfDmxExample}
+%\end{figure}
 
 %\clearpage
 \subsection{Terminologia di Unreal Engine}\label{subsec:1_dataStructsUE}
@@ -162,7 +162,7 @@ Qui sotto elencate tutti tutti i termini che si riferiscono a concetti e oggetti
     \item \textbf{MaterialExpression}: Nodi di un grafo di un Material.
     \item \textbf{MaterialExpressionParameter}: Tipo di MaterialExpression che permettono di controllare i parametri del materiale esternamente.
     \item \textbf{MaterialExpressionFunctionCall}: Tipo di MaterialExpression che implementa una chiamata ad una MaterialFunction.
-    \item \textbf{MaterialExpressionCustom} o \say{CustomExpression}: Tipo di MaterialExpression che prende degli input e ritorna degli output. Mentre una MaterialExpressionFunctionCall elabora gli output utilizzando il grafo di una MaterialFunction, una MaterialExpressionCustom esegue codice vero e proprio scritto in HLSL, un linguaggio C-like utilizzato per la scrittura di Shader.
+    \item \textbf{MaterialExpressionCustom} o \say{CustomExpression}: Tipo di MaterialExpression che prende degli input e restituisce degli output. Mentre una MaterialExpressionFunctionCall elabora gli output utilizzando il grafo di una MaterialFunction, una MaterialExpressionCustom esegue codice vero e proprio scritto in HLSL, un linguaggio C-like utilizzato per la scrittura di Shader.
 \end{itemize}
 
 
@@ -171,9 +171,9 @@ CPGDTF-Importer è un progetto sviluppato dalla \say{Clay Paky}, azienda italian
 
 Al mio arrivo in ClayPaky mi è stato affidato il progetto con l'obiettivo di implementare nuove funzionalità delle fixtures in modo da poter arrivare a simulare completamente tutti i fari dell'azienda.
 
-Dopo aver speso un primo periodo a prendere conoscenza con la codebase mi sono reso conto di quanto buona parte del codice necessitasse di un refactoring. In particolare ho riscontrato difficoltà nell'implementare nuove features, sia perché il codice che si occupava del rendering dell'illuminazione non fosse in alcun modo modulare e sia perché la gerarchia di classi che le gestisce fosse mal disegnata e con tanto codice duplicato. 
+Dopo aver speso un primo periodo a prendere conoscenza con la codebase mi sono reso conto di quanto buona parte del codice necessitasse di un refactoring. In particolare ho riscontrato difficoltà nell'implementare nuove features, sia perché il codice che si occupava del rendering dell'illuminazione non fosse in alcun modo modulare e sia perché la gerarchia di classi che le gestisce fosse mal progettata e con tanto codice duplicato. 
 
-Solamente dopo aver risolto questi grossi problemi strutturali nel codice e dopo aver fatto funzionare correttamente l'interpolazione ho potuto dedicarmi all'implementazione effettiva di nuove features. 
+Solamente dopo aver risolto queste criticità nel codice e dopo aver fatto funzionare correttamente l'interpolazione ho potuto dedicarmi all'implementazione effettiva di nuove features. 
 
 %\clearpage %TODO CHECK IF THIS IS STILL NEEDED
 \subsection{Struttura della tesi}\label{subsec:1_thesisInfo}

@@ -70,7 +70,7 @@ Dove $g(x)$ è la funzione matematica scelta per effettuare il sample della flag
 
 Lo step seguente è trasformare il valore di frost ($f$) dentro una semplice funzione di remapping:
 \[remapFrost(f) \coloneqq f * 0.05 + 0.002\]
-Dove $0.05$ e $0.002$ sono valori magici trovati dopo discreti tentativi di try and error.
+Dove $0.05$ e $0.002$ sono magic numbers trovati dopo discreti tentativi di try and error.
 
 Successivamente viene applicata un'altra funzione di remapping sulla distanza, in modo che sia scalata all'interno del valore frost:
 \[remapDist(d, f) \coloneqq 
@@ -80,7 +80,7 @@ Successivamente viene applicata un'altra funzione di remapping sulla distanza, i
 	\end{dcases}
 \]
 
-Poiché $d$ all'inizio viene calcolata come distanza assoluta dalla retta, con quanto definito fin'ora avremo una figura nera che si dissolve andando verso il bianco quando siamo abbastanza vicini alla retta, per poi sfumare di nuovo verso il nero quando ci riallontaniamo. Dobbiamo invece fare in modo che la dissolvenza parta da bianco, diventi grigia in corrispondenza della retta, e nera dopo la stessa:
+Poiché $d$ all'inizio viene calcolata come distanza assoluta dalla retta, con quanto definito finora avremo una figura nera che si dissolve andando verso il bianco quando siamo abbastanza vicini alla retta, per poi sfumare di nuovo verso il nero quando ci riallontaniamo. Dobbiamo invece fare in modo che la dissolvenza parta da bianco, diventi grigia in corrispondenza della retta, e nera dopo la stessa:
 \[fade(d, f) \coloneqq 
 	\begin{dcases}
 		\hfil	 \frac{remapDist(d, f)}{2} & \text{se } y > g(x)\\
@@ -107,7 +107,7 @@ Dove i valori all'interno della frazione e l'esponenziale sono ottenuti via try 
 \end{figure}
 
 
-Con il frost abilitato si verifica anche un altro problema: Quando una flag è completamente aperta oppure è completamente chiusa, vedremo comunque renderizzata la sfumatura del frost, piuttosto che avere una figura completamente bianca o nera. Le fixture reali risolvono questo problema facendo muovere le bandiere oltre i limiti di apertura e chiusura. Creiamo quindi due funzioni da anteporre a tutti i calcoli per questa feature, che modifichino il valore di $A$ e di $B$. 
+Con il frost abilitato si verifica anche un altro problema: quando una flag è completamente aperta oppure è completamente chiusa, vedremo comunque renderizzata la sfumatura del frost, piuttosto che avere una figura completamente bianca o nera. Le fixture reali risolvono questo problema facendo muovere le bandiere oltre i limiti di apertura e chiusura. Creiamo quindi due funzioni da anteporre a tutti i calcoli per questa feature, che modifichino il valore di $A$ e di $B$. 
 \[frostLimit(f) \coloneqq 
 	\begin{dcases}
 		\hfil f & \text{se } f < 0.2\\
@@ -189,7 +189,7 @@ auto shaper = Cast<UCPGDTFShaperFixtureComponent>(components[i]);
 if (shaper != nullptr) { shapers.Add(shaper); continue; }
 \end{lstlisting}
 
-Il codice per la generazione del codice HLSL in se è molto semplice. Si prende in input un array di ShaperFixtureComponent già istanziati e per ciascuno controlla se sono in modalità A+B oppure A+Rot, e seleziona la relativa chiamata a funzione corretta.
+Il codice per la generazione del codice HLSL in sé è molto semplice. Si prende in input un array di ShaperFixtureComponent già istanziati e per ciascuno controlla se sono in modalità A+B oppure A+Rot, e seleziona la relativa chiamata a funzione corretta.
 \begin{lstlisting}
 //Per ogni shaper presente nella fixture
 for (int i = 0; i < mShapers.Num(); i++) {
@@ -240,7 +240,7 @@ const std::function<void(FString, FString, bool)>
     //...
 }
 \end{lstlisting}
-Infine si scorre la lista degli shaper e per ciascuno aggiunge tre parametri, A, B/Rot e rotazione. Quando viene generato il parametro B/Rot si controlla la modalità dello shaper attraverso la funzione \lstinline{isInAbMode()}.
+Infine itera sulla lista degli shaper e per ciascuno aggiunge tre parametri, A, B/Rot e rotazione. Quando viene generato il parametro B/Rot si controlla la modalità dello shaper attraverso la funzione \lstinline{isInAbMode()}.
 \begin{lstlisting}
 for (UCPGDTFShaperFixtureComponent *shaper : shapers) {
     int orientation = shaper->getOrientation(); //ID della flag
@@ -308,7 +308,7 @@ meCustom->Inputs.Add(input);
 \end{lstlisting}
 
 \subsubsection{Generazione nella RenderingPipeline per Light e Lens}\label{subsec:5_1_ShaperRenderingPipeline}
-Come per la generazione del materiale Beam anche qui le varie funzioni descritte nel capitolo \ref{subsec:5_1_ShaperMath} sono state trasformate in MaterialFunctions. Come esposto nella sezione \ref{sec:RenderingPipeline} tali MaterialFunctions prenderanno in input l'output della precedente, per formare la pipeline di rendering. L'implementazione in se delle MaterialFunctions non viene vista poiché è identica al codice HLSL mostrato nel capitolo precedente, bensì vedremo comunque la parte di generazione della pipeline. \newline
+Come per la generazione del materiale Beam anche qui le varie funzioni descritte nel capitolo \ref{subsec:5_1_ShaperMath} sono state trasformate in MaterialFunctions. Come esposto nella sezione \ref{sec:RenderingPipeline} tali MaterialFunctions prenderanno in input l'output della precedente, per formare la pipeline di rendering. L'implementazione in sé delle MaterialFunctions non viene vista poiché è identica al codice HLSL mostrato nel capitolo precedente, bensì vedremo comunque la parte di generazione della pipeline. \newline
 
 Si effettua un ciclo su tutti gli ShaperFixtureComponent che dobbiamo aggiungere alla pipeline. Per ciascuno, iniziamo con lo generare una MaterialFunctionCall ed impostarne la MaterialFunction in base alla modalità della flag.
 \clearpage
@@ -379,7 +379,7 @@ Di seguito, degli screenshot della classe per mostrare quanto sia semplice imple
 
 \clearpage
 \subsection{Iris}\label{subsec:5_Iris}
-L'iris è una feature atta a restringere un fascio di luce. Differisce dallo zoom, poiché quest'ultimo definisce di quanto si allarga una immagine che vogliamo proiettare rispetto alla distanza, mentre l'iris definisce la dimensione in se dell'immagine. In generale, è come se fosse un sagomatore di forma circolare che entra nel fascio di luce da tutte le direzioni contemporaneamente. Così come per i sagomatori, renderizziamo questa feature attraverso formule matematiche.
+L'iris è una feature atta a restringere un fascio di luce. Differisce dallo zoom, poiché quest'ultimo definisce di quanto si allarga una immagine che vogliamo proiettare rispetto alla distanza, mentre l'iris definisce la dimensione in sé dell'immagine. In generale, è come se fosse un sagomatore di forma circolare che entra nel fascio di luce da tutte le direzioni contemporaneamente. Così come per i sagomatori, renderizziamo questa feature attraverso formule matematiche.
 \begin{figure}[H]
     \centering
     \includegraphics[width=.75\linewidth]{img/newFeatures/Iris.jpg}
@@ -400,7 +400,7 @@ L'equazione finale sarà quindi:
 
 Per quanto riguarda il frost, si procede nella stessa maniera dei sagomatori. Si utilizza di nuovo la funzione $fade$ per ottenere l'effetto della sfocatura. La distanza ($d$) questa volta è calcolata come la differenza assoluta tra il valore dell'iris e la distanza della coordinata UV dal centro.
 \[d = \abs{(2x - 1)^2 + (2y - 1)^2 - i}\]
-Insorge lo stesso problema riscontrato con i sagomatori: Quando l'iris è chiuso del tutto, avere il frost attivo fa comunque apparire della sfumatura al centro del rendering. Questo problema viene risolto aggiungendo un parametro ($m$) alla $remapFrost$, che moltiplica l'intero valore della funzione:
+Insorge lo stesso problema riscontrato con i sagomatori: quando l'iris è chiuso del tutto, avere il frost attivo fa comunque apparire della sfumatura al centro del rendering. Questo problema viene risolto aggiungendo un parametro ($m$) alla $remapFrost$, che moltiplica l'intero valore della funzione:
 \[remapFrost(f, m) \coloneqq m(f * 0.05 + 0.002)\]
 Questo parametro per il sample dei sagomatori viene impostato ad 1, mentre per il sample dell'iris lo definiamo come uguale ad 1 se il valore dell'iris è sopra una certa soglia prefissata, altrimenti cala proporzionalmente allo stesso.
 \[m = 
@@ -451,7 +451,7 @@ if (mIrisEnabled) {
 }
 \end{lstlisting}
 
-Anche l'aggiunta alla CustomExpression del materiale Beam è molto semplice: Basta semplicemente aggiungere il parametro relativo al valore dell'iris se questo è presente.
+Anche l'aggiunta alla CustomExpression del materiale Beam è molto semplice: basta semplicemente aggiungere il parametro relativo al valore dell'iris se questo è presente.
 \begin{lstlisting}
 if (this->hasIris)
     addScalarInputToBeamPipeline(
