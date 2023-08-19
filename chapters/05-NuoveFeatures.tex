@@ -64,7 +64,7 @@ Come scritto sopra, per generare una flag bisogna controllare quando stiamo \say
 Per effettuare, invece, il sampling di una flag A+Rot, possiamo utilizzare $A$ come termine noto, e convertire $R$ da gradi alla relativa tangente trigonometrica in modo da avere direttamente il coefficiente della retta. Poiché vogliamo però inclinare questa retta usando come punto di rotazione il suo centro ($x = 0.5$) e non la sua origine ($x = 0$), dobbiamo modificare il termine noto in base al coefficiente: più il coefficiente è elevato quindi più la retta sarà inclinata crescendo da sinistra verso destra, e più il termine noto dovrà calare. Considerando la sezione della retta compresa tra $x = [0, 1]$, la tangente di $R$, essendo direttamente uguale al coefficiente della retta, è anche uguale alla differenza tra il valore della $y$ quando la retta avrà $x = 0$ e quando avrà $x = 1$ (visibile nella seconda immagine della figura \ref{fig:5_shaperDifferentModes}). Al centro di questa sezione (quando $x = 0.5$) la differenza con i due estremi sarà quindi uguale a $\frac{tan(R)}{2}$, ovvero esattamente il valore da sottrarre al termine noto per mantenere centrale il punto di rotazione della retta. La formula finale dell'equazione sarà quindi:
 \[y > \tan(R)x + (a - \frac{\tan(R)}{2})\]
 
-Come le ruote, anche il framing system deve implementare il frost. Piuttosto di applicare un filtro di blur al framing system già renderizzato, è preferibile in termini di peso computazionale implementare una sfocatura come formula matematica direttamente nel precedente rendering. L'idea è quella di utilizzare il valore del frost per definire la dimensione di una zona di sfumatura intorno alla retta. La prima operazione che viene effettuata è trovare la distanza della coordinata UV che stiamo renderizzando dalla retta. Questa operazione viene approssimata come la distanza assoluta ($d$) tra la $y$ della coordinata UV e la $y$ della retta per ogni $x$.
+Come le ruote, anche il framing system deve implementare il frost. Piuttosto di applicare un filtro di blur al framing system già renderizzato, è preferibile in termini di peso computazionale implementare la sfocatura come formula matematica direttamente nel precedente rendering. L'idea è quella di utilizzare il valore del frost per definire la dimensione di una zona di sfumatura intorno alla retta. La prima operazione che viene effettuata è trovare la distanza della coordinata UV che stiamo renderizzando dalla retta. Questa operazione viene approssimata come la distanza assoluta ($d$) tra la $y$ della coordinata UV e la $y$ della retta per ogni $x$.
 \[d = \abs{y - g(x)}\]
 Dove $g(x)$ è la funzione matematica scelta per effettuare il sample della flag.
 
@@ -133,7 +133,7 @@ Dove $a$ corrisponde ai gradi di rotazione in input.
 
 \subsubsection{Generazione codice HLSL ed inserimento nel materiale Beam}\label{subsec:5_1_ShaperHlsl}
 \lstset{language=glsl}
-Le funzioni $fade$, $sigmoid$ e $rotateUV$ sono state scritte in maniera generica poiché sono utili anche nel sample di altre features come ad esempio l'iris \ref{subsec:5_Iris}). Le funzioni di remapping sono state, invece, accorpate tra di loro. Le condizioni sono implementate con la formula \lstinline{float b = /*boolean expression*/; float f = b * x + (1 - b) * y;} per ridurre la branch divergence nell'esecuzione del codice HLSL.
+Le funzioni $fade$, $sigmoid$ e $rotateUV$ sono state scritte in maniera generica poiché sono utili anche nel sample di altre features come ad esempio l'iris (\ref{subsec:5_Iris}). Le funzioni di remapping sono state, invece, accorpate tra di loro. Le condizioni sono implementate con la formula \lstinline{float b = /*boolean expression*/; float f = b * x + (1 - b) * y;} per ridurre la branch divergence nell'esecuzione del codice HLSL.
 \begin{lstlisting}
 float sigmoid(float f){
 	const float exp = -4;
@@ -189,7 +189,7 @@ auto shaper = Cast<UCPGDTFShaperFixtureComponent>(components[i]);
 if (shaper != nullptr) { shapers.Add(shaper); continue; }
 \end{lstlisting}
 
-Il codice per la generazione del codice HLSL in sé è molto semplice. Si prende in input un array di ShaperFixtureComponent già istanziati e per ciascuno controlla se sono in modalità A+B oppure A+Rot, e seleziona la relativa chiamata a funzione corretta.
+La funzione responsabile della generazione del codice HLSL in sé è molto semplice. Si prende in input un array di ShaperFixtureComponent già istanziati e per ciascuno controlla se sono in modalità A+B oppure A+Rot, e seleziona la relativa chiamata a funzione corretta.
 \begin{lstlisting}
 //Per ogni shaper presente nella fixture
 for (int i = 0; i < mShapers.Num(); i++) {
@@ -339,7 +339,7 @@ delete meParamsMover;
 \end{lstlisting}
 
 \subsubsection{ShaperFixtureComponent}\label{subsec:5_1_ShaperFixtureComponent}
-L'implementazione del componente è molto semplice, vista la gerarchia dei componenti che abbiamo creato in precedenza. L'unico codice elaborato presente nel componente si trova nella funzione \lstinline{Setup()}, e si occupa solamente di capire in che modalità il componente viene usato. 
+L'implementazione del componente è molto semplice, vista la gerarchia dei componenti che abbiamo creato in precedenza. L'unico codice \say{elaborato} presente nel componente si trova nella funzione \lstinline{Setup()}, e si occupa solamente di capire in che modalità il componente viene usato. 
 
 Questa operazione viene effettuata scorrendo tutta la lista di ChannelFunction assegnate al componente, e viene impostata la modalità \say{A+B} ogni qualvolta si incontra un componente B, oppure la modalità \say{A+Rot} ogni qualvolta si incontra un componente Rot.
 %\begin{lstlisting}
@@ -550,7 +550,7 @@ Le seguenti immagini mostrano il risultato della generazione \say{finale} della 
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/newFeatures/renderPipeline.jpg}
-    \caption{Rendering pipeline finale generata per i materiali Light e Lens.}
+    \caption{Rendering pipeline finale generata per i materiali Light e Lens. Sono chiaramente visibili i vari moduli connessi tra di loro formando una catena.}
     \label{fig:5_finalRenderingPipeline}
 \end{figure}
 %\clearpage %TODO CHECK IF IT'S STILL NEEDED
@@ -586,7 +586,7 @@ outputSample = outputSample - 1 + pow(_fncs.sampleBladeARot(
 \begin{figure}[H]
     \centering
     \includegraphics[width=.445\linewidth]{img/newFeatures/BeamGeneratedFull.jpg}
-    \caption{Parametri per la CustomExpression per il rendering del materiale Beam.}
+    \caption{Parametri generati per la CustomExpression per il rendering del materiale Beam.}
     \label{fig:5_finalBeamCEparams}
 \end{figure}
 

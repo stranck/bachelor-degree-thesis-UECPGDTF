@@ -42,7 +42,7 @@ All'interno della testa, così come all'interno delle fixture statiche, è prese
 I moduli che verranno toccati in questo progetto sono i seguenti:
 \begin{itemize}
     \item \textbf{Ruote colori e gobo}: Sono delle ruote in cui sono presenti degli slot contenenti dei filtri colori o delle forme. Hanno sempre uno slot libero in cui la luce può passare senza essere modificata e, girando, possono mettere \say{in mezzo} alla luce uno slot alla volta.
-    \item \textbf{Sintesi e correzione dei colori}: Nelle luci a sintesi additiva troviamo LED di colori differenti (RGB + Bianco, Ambra, Lime, UV, etc); nelle luci a sintesi sottrattiva invece abbiamo una luce bianca e delle flag CMY che vengono inserite davanti per regolarne il colore. Esistono anche dei filtri, sempre sottrattivi, per effettuare color correction.
+    \item \textbf{Sintesi e correzione dei colori}: Nelle luci a sintesi additiva troviamo LED di colori differenti (RGB + Bianco, Ambra, Lime, UV, etc); nelle luci a sintesi sottrattiva invece abbiamo una luce bianca e delle flag CMY che vengono inserite davanti per regolarne il colore. Esistono anche dei filtri, che possono essere sia sottrattivi che implementati virtualmente nei fari a sintesi additiva, per effettuare color correction (CTO, CTB, CTC, Tint).
     \item \textbf{Sagomatore}: È un sistema composto da quattro lame che possono essere inserite nel fascio di luce da direzioni differenti e possono essere inclinate, in modo da ritagliare in maniera precisa triangoli e quadrilateri per fare puntamenti.
     \item \textbf{Iris}: Sono delle lame circolari che entrano nel fascio di luce da tutte le direzioni e si occupano di ridurne la dimensione. Il funzionamento è analogo al diaframma di una fotocamera.
     \item \textbf{Frost}: È un filtro atto a rendere soffusa la luce, smorzando i bordi di eventuali figure che si stanno proiettando.
@@ -82,7 +82,7 @@ Dei vari dati contenuti in questo XML a noi interessano principalmente:
 \end{itemize}
 
 \subsubsection{Ruote}\label{subsec:1_2_wheels}
-Nel nodo \lstinline{Wheels} all'interno del file XML viene definita una lista di ruote presenti all'interno del faro. Ogni ruota, rappresentata da un nodo \lstinline{Wheel}, può avere un nome e dentro ciascuna troviamo una lista di \lstinline{Slot} che rappresentano ognuno un elemento della ruota. Ogni slot ha anch'esso un nome e può avere degli attributi opzionali quali:
+Nel nodo \lstinline{Wheels} all'interno del file XML viene definita una lista di ruote presenti all'interno del faro. Ogni ruota, rappresentata da un nodo \lstinline{Wheel}, può avere un nome e dentro ciascuna troviamo una lista di \lstinline{Slot} che rappresentano ognuno un elemento della stessa. Ogni slot ha anch'esso un nome e può avere degli attributi opzionali quali:
 \begin{itemize}
     \item \lstinline{Color}: Il colore di uno slot presente su una color wheel.
     \item \lstinline{MediaFileName}: Nome del file PNG contenente la texture di questo slot, utilizzato per le ruote gobo ed animazione.
@@ -152,13 +152,13 @@ Il nodo \lstinline{DMXMode} raccoglie tutte le modalità di funzionamento di un 
 
 %\clearpage
 \subsection{Terminologia di Unreal Engine}\label{subsec:1_dataStructsUE}
-Qui sotto elencate tutti tutti i termini che si riferiscono a concetti e oggetti di Unreal Engine.
+Qui sotto elencati tutti i termini che si riferiscono a concetti e oggetti di Unreal Engine.
 \begin{itemize}
-    \item \textbf{Actor}: Un attore è un qualsiasi oggetto su Unreal Engine che può essere piazzato in un mondo. Può contenere una gerarchia di Componenti che lo caratterizzano.
+    \item \textbf{Actor}: Un attore è un qualsiasi oggetto su Unreal Engine che può essere collocato in un mondo. Può contenere una gerarchia di Componenti che lo caratterizzano.
     \item \textbf{Component}: I componenti sono un tipo di oggetto che un attore può possedere.
     \item \textbf{Material}: Un materiale è un asset che può essere applicato ad un componente e ne va a definire il suo comportamento. Un materiale viene programmato tramite un grafo che ha, come output, una texture.
     \item \textbf{MaterialInstance}: Istanza di un materiale con un valore impostato staticamente per ogni suo parametro. Utilizzato per avere più oggetti simili, ma con qualche differenza tra loro che non richiede la creazione completa di un nuovo materiale.
-    \item \textbf{MaterialFunction}: Materiali che si comportano come una funzione in un normale linguaggio di programmazione: prendono degli input, hanno degli output e possono essere richiamate più volte in grafi differenti.
+    \item \textbf{MaterialFunction}: Materiali che si comportano come una funzione in un normale linguaggio di programmazione: prendono degli input, hanno degli output e possono essere richiamati più volte in grafi differenti.
     \item \textbf{MaterialExpression}: Nodi di un grafo di un Material.
     \item \textbf{MaterialExpressionParameter}: Tipo di MaterialExpression che permettono di controllare i parametri del materiale esternamente.
     \item \textbf{MaterialExpressionFunctionCall}: Tipo di MaterialExpression che implementa una chiamata ad una MaterialFunction.
@@ -167,7 +167,7 @@ Qui sotto elencate tutti tutti i termini che si riferiscono a concetti e oggetti
 
 
 \subsection{Informazioni sul tirocinio}\label{subsec:1_tirocinio}
-CPGDTF-Importer è un progetto sviluppato dalla \say{Clay Paky}, azienda italiana leader mondiale nella progettazione e realizzazione di luci per concerti, architettura e teatri, per cui ho svolto il tirocinio curricolare. Lo sviluppo ha avuto inizio nel Maggio 2022 da un altro tirocinante che ha fatto un fork del plugin originale sviluppato dalla Epic Games ed ha iniziato ad aggiungere funzioni che, nonostante fossero basilari, mancavano totalmente. Il plugin originale leggeva solamente quali fossero i componenti di una fixture, i suoi canali e poche altre informazioni. Utilizzava sempre modelli 3D e ruote gobo predefinite, non importava i valori di fade e accelerazione per l'interpolazione, mancavano moltissime features delle fixture, quelle esistenti funzionavano male, e molto altro ancora. Il tirocinante precedente, dopo aver speso quasi tutto il periodo del suo tirocinio a fare ricerca su come funzionasse il plugin originale, ha gettato delle basi per iniziare ad estenderlo e per completare l'importazione di tutti i dati e file da un GDTF. Ha infine scritto delle documentazioni abbastanza esaustive dell'intero plugin.\newline
+CPGDTF-Importer è un progetto sviluppato dalla \say{Clay Paky}, azienda italiana leader mondiale nella progettazione e realizzazione di luci per concerti, architettura e teatri, per cui ho svolto il tirocinio curricolare. Lo sviluppo ha avuto inizio nel Maggio 2022 da un altro tirocinante che ha fatto un fork del plugin originale sviluppato dalla Epic Games ed ha iniziato ad aggiungere funzioni che, nonostante fossero basilari, mancavano totalmente. Il plugin originale leggeva solamente quali fossero i componenti di una fixture, i suoi canali e poche altre informazioni. Utilizzava sempre modelli 3D e ruote gobo predefinite, non importava i valori di fade e accelerazione per l'interpolazione, mancavano moltissime features delle fixture, quelle esistenti funzionavano male, e molto altro ancora. Il tirocinante precedente, dopo aver speso quasi tutto il periodo del suo tirocinio a fare ricerca su come funzionasse il plugin originale, ha gettato delle ottime basi per iniziare ad estenderlo e per completare l'importazione di tutti i dati e file da un GDTF. Ha infine scritto delle documentazioni abbastanza esaustive dell'intero plugin.\newline
 
 Al mio arrivo in ClayPaky mi è stato affidato il progetto con l'obiettivo di implementare nuove funzionalità delle fixtures in modo da poter arrivare a simulare completamente tutti i fari dell'azienda.
 
@@ -182,9 +182,9 @@ L'elaborato è articolato come segue. Ogni capitolo rappresenta una milestone de
     \item \textbf{Capitolo \ref{sec:Intro}, Introduzione}. %We like recurion
     \item \textbf{Capitolo \ref{sec:RenderingPipeline}, Design di una pipeline di rendering}: In questo capitolo verrà analizzata l'implementazione originale con la quale veniva effettuato il rendering dell'illuminazione di ogni singola fixture. Verranno evidenziati i problemi e mostrate idee per risolverli. Infine verrà anche esposta l'implementazione per la generazione di una pipeline vera e propria per il rendering dei vari moduli di una luce. 
     \item \textbf{Capitolo \ref{sec:FixtureComponentHierachy}, Redesign gerarchia dei FixtureComponent}: Tratta l'analisi della vecchia gerarchia dei FixtureComponent, ovvero quelle classi responsabili di controllare ogni singola feature che compone una fixture. Vengono proposte nuove idee di implementazione e mostrati quali dati e metodi servirebbe mettere a disposizione alle classi che implementano la singola feature.
-    \item \textbf{Capitolo \ref{sec:Interpolation}, Nuovo approccio all'interpolazione}: All'interno di questo capitolo vengono velocemente esposti i problemi dell'attuale classe che controlla l'interpolazione, ovvero il controllo del movimento dei motori virtuali. Successivamente viene mostrata la nuova implementazione della classe, spiegando i vari problemi che si sono verificati durante la scrittura del codice e come sono stati risolti.
-    \item \textbf{Capitolo \ref{sec:NewFeatures}, Implementazione di nuove funzionalità alle fixtures}: Una volta sistemata la struttura del plugin e reso comodo e meno error-prone l'implementazione di nuove feature, viene descritta come sono state pensate e implementate le due funzionalità che sono state aggiunte a CPGDTF-Importer.
-    \item \textbf{Capitolo \ref{sec:End}, Conclusioni}: In questo capitolo conclusivo vengono sintetizzati i problemi generali emersi durante lo sviluppo con GDTF ed Unreal Engine. Inoltre, vengono valutati futuri sviluppi con l'azienda che ha acquisito ClayPaky lo scorso Marzo (Arri), durante il mio periodo di tirocinio, e con Epic Games stessa.
+    \item \textbf{Capitolo \ref{sec:Interpolation}, Nuovo approccio all'interpolazione}: All'interno di questo capitolo vengono velocemente esposti i problemi dell'attuale classe che controlla l'interpolazione, ovvero la simulazione del movimento dei motori. Successivamente viene mostrata la nuova implementazione della classe, spiegando i vari problemi che si sono verificati durante la scrittura del codice e come sono stati risolti.
+    \item \textbf{Capitolo \ref{sec:NewFeatures}, Implementazione di nuove funzionalità alle fixtures}: Una volta sistemata la struttura del plugin e reso comodo e meno error-prone l'implementazione di nuove feature, viene descritto come sono state pensate e implementate le due funzionalità che sono state aggiunte a CPGDTF-Importer.
+    \item \textbf{Capitolo \ref{sec:End}, Conclusioni}: In questo capitolo conclusivo vengono sintetizzati i problemi generali emersi durante lo sviluppo con GDTF ed Unreal Engine. Inoltre, vengono valutati futuri sviluppi con l'azienda che ha acquisito ClayPaky lo scorso Marzo (Arri) durante il mio periodo di tirocinio, e con Epic Games stessa.
 \end{itemize}
 
 
