@@ -102,7 +102,7 @@ I vari modelli che vengono importati vengono poi usati all'interno del nodo \lst
 Le varie funzionalità di una fixture sono implementate all'interno di una particolare geometria, o meglio, \textit{riguardano} una geometria.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\linewidth]{img/introduzione/GDTFgeometriesExample.jpg}
+    \includegraphics[width=0.9725\linewidth]{img/introduzione/GDTFgeometriesExample.jpg}
     \caption{Esempio di nodi \lstinline{Models} e \lstinline{Geometries} in un file GDTF.}
     \label{fig:1_gdtfGeometriesExample}
 \end{figure}
@@ -114,7 +114,7 @@ Il nodo \lstinline{DMXMode} raccoglie tutte le modalità di funzionamento di un 
             \item \lstinline{Offset}: Offset del canale fisico rispetto all'indirizzo di partenza di una fixture.
             \item \lstinline{Highlight}: Valore dmx applicato al canale quando la fixture viene messa in modalità \say{Highlight}, ovvero una modalità usata per evidenziare e trovare una determinato faro tra i tanti montati su un palcoscenico.
             \item \lstinline{Geometry}: Nome della geometria controllata da questo canale.
-            \item \lstinline{InitialFunction}: Nome della \lstinline{ChannelFunction} da eseguire come valore default del canale, espresso nella forma: \lstinline{NomeGeometria_AttributoLogicalChannel.AttributoChannelFunction.NomeChannelFunction}
+            \item \lstinline{InitialFunction}: Nome della \lstinline{ChannelFunction} da eseguire come valore default del canale, espresso nella forma: \newline \lstinline{NomeGeometria_AttributoLogicalChannel.AttributoChannelFunction.NomeChannelFunction}
         \end{itemize}
     \item I figli di un DMXChannel sono i nodi \lstinline{LogicalChannel}. Su alcune fixture un canale dmx fisico può controllare funzionalità differenti, per questo motivo esiste una distinzione tra LogicalChannel e DMXChannel rappresentante il canale fisico. I LogicalChannel all'interno dello stesso DMXChannel sono mutualmente esclusivi. Gli attributi principali di un LogicalChannel sono: \begin{itemize}
             \item \lstinline{Snap}: Se lo snap è abilitato vuol dire che questo attributo non deve essere interpolato quando andiamo a fare la preview del faro, ma deve saltare direttamente a quel valore, poiché, fisicamente su una fixture vera, la feature non è controllata da un motore. Un esempio è il controllo della luminosità di un LED, che è istantaneo.

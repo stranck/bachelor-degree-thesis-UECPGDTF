@@ -265,7 +265,7 @@ for (UCPGDTFShaperFixtureComponent *shaper : shapers) {
 \end{lstlisting}
 Dove \lstinline{getBladeABRotParamName()} e \lstinline{getInputBladeABRotName()} prendono \lstinline{true} se stiamo generando il parametro A o \lstinline{false} se stiamo generando il parametro B o Rot. Questi ultimi due valori sono raggruppati insieme poiché condividono lo stesso parametro. \newline
 
-La lambda citata sopra si occupa come prima cosa di generare la MaterialFunctionParameter.
+La lambda citata sopra si occupa come prima cosa di generare la MaterialExpressionParameter.
 %\begin{lstlisting}
 %//Generazione del parametro
 %UMaterialExpressionScalarParameter* param =
@@ -373,7 +373,7 @@ Di seguito, degli screenshot della classe per mostrare quanto sia semplice imple
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/newFeatures/ShaperComponentCode2.jpg}
-    \caption{Seconda parte dell'implementazione della classe ShpaerFixtureComponent.}
+    \caption{Seconda parte dell'implementazione della classe ShaperFixtureComponent.}
     \label{fig:5_ShaperComponentCode2}
 \end{figure}
 
