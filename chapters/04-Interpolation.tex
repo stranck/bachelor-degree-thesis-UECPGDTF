@@ -35,7 +35,7 @@ Internamente la nostra velocità è salvata come \lstinline{float currentSpeed;}
 \begin{itemize}
     \item L'interpolazione funziona in entrambe le direzioni, ma noi, all'interno della spiegazione, consideriamo solamente il caso in cui andiamo avanti (\say{FORWARD}). Se \lstinline{float currentAcceleration;} è positiva vuol dire che stiamo accelerando, altrimenti stiamo decelerando. Se la nostra direzione fosse opposta, \lstinline{currentAcceleration} e \lstinline{currentSpeed} avrebbero i segni invertiti.
     \item $timeToFullyAccelerate$ (\say{TTFA}): È il tempo richiesto per raggiungere maxSpeed a partire da fermi e viceversa, e si calcola come:
-    $TODO$
+    \[TTFA = \frac{1}{acceleration}\]
     Per ottenere quanto tempo ci mettiamo a raggiungere velocità massima o minima a partire da una velocità intermediaria, basta moltiplicare tale velocità per TTFA, poiché tutti i nostri calcoli sono nel range [0, 1].
     \[TimeToAccelerate = \frac{TTFA * (1 - currentSpeed)}{1} = TTFA * (1 - currentSpeed)\]
     \[TimeToStop = \frac{TTFA * currentSpeed}{1} = TTFA * currentSpeed\]
@@ -128,22 +128,28 @@ Per calcolare il momento esatto in cui avremmo dovuto iniziare a decelerare avre
         \begin{figure}[H]
             \centering
             \includegraphics[scale=0.2]{img/interpolazione/compensateLateCallAccel1.png}
+            \captionsetup{justification=centering,margin=.3cm}
             \caption{CompensateLateCall quando stiamo accelerando.}
             \label{fig:4_compensateLateCallAccel1}
         \end{figure}
     \end{minipage}
 
     \begin{minipage}{.475\textwidth}
-        \[B = x\]
-        \[H_t = \frac{a}{2}B\]
-        \[A_t = \frac{BH_t}{2} = \frac{a}{4}x^2\]
-        \[H_r = y\]
-        \[A_r = BH_r = xy\]
+        \[
+            \begin{dcases}
+                B = x\\
+                H_t = \frac{a}{2}B\\
+                A_t = \frac{BH_t}{2} = \frac{a}{4}x^2\\
+                H_r = y\\
+                A_r = BH_r = xy
+            \end{dcases}
+        \]
     \end{minipage}
     \begin{minipage}{.475\textwidth}
         \begin{figure}[H]
             \centering
             \includegraphics[width=1\linewidth]{img/interpolazione/compensateLateCallAccel2.png}
+            \captionsetup{justification=centering,margin=.3cm}
             \caption{Scomposizione del poligono quando stiamo accelerando.}
             \label{fig:4_compensateLateCallAccel2}
         \end{figure}
@@ -209,7 +215,7 @@ Per realizzare questa funzionalità si è quindi deciso di imporre uno \say{Spee
     \label{fig:4_speedCapIntro}
 \end{figure}
 
-\begin{wrapfigure}{r}{0.6\textwidth}
+\begin{wrapfigure}{r}{0.64\textwidth}
     \centering
     \captionsetup{justification=centering}
     \includegraphics[scale=0.25]{img/interpolazione/movementThreeParts.png}
@@ -243,8 +249,12 @@ E lo spazio percorso fino a raggiungere currentSpeed come l'area di un triangolo
 \end{figure}
 
 \textbf{Se l'area di $T_1 + T_2$ è maggiore o uguale di distanceDifference} allora vuol dire che \textbf{non} serve arrivare a velocità costante per compiere l'intero movimento. Dobbiamo quindi trovare la base (corrispondente al tempo dell'interpolazione) di un triangolo di cui sappiamo l'area ($A$, corrispondente alla distanceDifference) e il rapporto ($a$, corrispondente all'accelerazione) tra la base ($B$, notiamo come l'accelerazione si riferisce alla base di solo uno dei due triangoli) e l'altezza ($H$).
-\[H = aB\]
-\[A = \frac{2BH}{2}\]
+\[
+    \begin{dcases}
+        H = aB\\
+        A = \frac{2BH}{2}
+    \end{dcases}
+\]
 Risolvendo per $B$ arriviamo quindi a:
 \[B = \sqrt{\frac{A}{a}}\]
 \clearpage
@@ -326,16 +336,16 @@ Una volta mostrato come lo speedCap viene calcolato ed impostato, la funzione \l
 \subsubsection{Conversioni da RealFade e RealAcceleration}\label{subsubsec:4_2_Conversions}
 Questa funzione si occupa di convertire i parametri GDTF \lstinline{RealFade} e \lstinline{RealAcceleration} verso i valori \lstinline{maxSpeed} e \lstinline{acceleration} utilizzati all'interno dell'oggetto interpolazione. Per calcolare \lstinline{maxPhysicalSpeed} c'è bisogno della dimensione del range in cui opererà l'interpolazione, definito come $MaxValue - MinValue$.\newline
 
-\begin{wrapfigure}{r}{0.55\textwidth}
+\begin{wrapfigure}{r}{0.6075\textwidth}
     \centering
     \captionsetup{justification=centering}
     \includegraphics[scale=0.3]{img/interpolazione/RealAccelerationVSacceleration.png}
-    \caption{Differenza tra \textit{acceleration} e \textit{RealAcceleration}.}
+    \caption{Differenza tra \textit{acceleration}\newline e \textit{RealAcceleration}.}
     \label{fig:4_RealAccelerationVSacceleration}
 \end{wrapfigure}
-Il parametro \lstinline{RealAcceleration} rappresenta il tempo in secondi utilizzati per passare da 0 a maxSpeed, mentre \lstinline{acceleration} rappresenta quanta velocità guadagniamo ogni secondo. Poiché \lstinline{acceleration} è il reciproco di \lstinline{RealAcceleration}, possiamo ottenerlo semplicemente facendo:
-\[acceleration = \frac{1}{RealAcceleration}\] \newline
-%\clearpage %TODO CHECK IF STILL NEEDED
+\noindent Il parametro \lstinline{RealAcceleration} rappresenta il tempo in secondi utilizzati per passare da 0 a maxSpeed, mentre \lstinline{acceleration} rappresenta quanta velocità guadagniamo ogni secondo. Poiché \lstinline{acceleration} è il reciproco di \lstinline{RealAcceleration}, possiamo ottenerlo semplicemente facendo:
+\[acceleration = \frac{1}{RealAcceleration}\] %\newline
+\clearpage %TODO CHECK IF STILL NEEDED
 
 Il parametro \lstinline{RealFade} considera anche i tempi di accelerazione e decelerazione di un movimento, per cui non possiamo usarlo direttamente come valore di \lstinline{maxPhysicalSpeed} che, ricordiamo, rappresenta quanto movimento facciamo ogni secondo quando siamo a maxSpeed. Per ottenere questo valore dobbiamo quindi fare una proporzione (RealAcceleration è abbreviato in $a$ e RealFade è abbreviato in $f$):
 \begin{itemize}
