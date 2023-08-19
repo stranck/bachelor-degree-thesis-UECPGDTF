@@ -153,7 +153,7 @@ Questo materiale si occupa della proiezione della luce su altri materiali.
 \[x_{UV} * \frac{1}{GoboNumMask} + \frac{GoboIndex}{GoboNumMask}\]
 Notiamo come questo calcolo sia lo stesso utilizzato per fare il sample delle gobo dentro il materiale Beam (\ref{subsec:2_1_beam}). Infatti il risultato viene poi utilizzato come input per due nodi Texture \say{DMX Gobo Disk} e \say{DMX Gobo Disk Frosted}, uno contiene la texture originale, l'altro una versione sfocata della stessa, per effettuare il sample della ruota gobo. Successivamente i due sample vengono interpolati in base al valore del frost (sfocatura) ed infine viene restituito in output.
 
-Da notare come il nome dei parametri all'interno di questa MaterialFunction facciano riferimento solo alle ruote gobo, e come all'interno del Materiale originale sia presente solamente una MaterialFunctionCall a DMXGobo. Questo implica l'impossibilità di renderizzare sia ruote differenti da quelle gobo e l'impossibilità di avere più ruote gobo nella stessa fixture.
+Da notare come il nome dei parametri all'interno di questa MaterialFunction facciano riferimento solo alle ruote gobo, e come all'interno del Materiale originale sia presente solamente una MaterialFunctionCall a DMXGobo. Questo implica l'impossibilità di renderizzare ruote differenti da quelle gobo e l'impossibilità di avere più ruote gobo nella stessa fixture.
 
 %\clearpage %TODO CHECK IF STILL NEEDED
 \subsubsection{Lens}\label{subsec:2_1_lens}
@@ -187,7 +187,7 @@ Questa MaterialFunction contenente la nuova pipeline verrà quindi piazzata al p
 %E per il rendering del Beam?
 
 \subsubsection{Problemi con le MaterialExpressionCustom e le MaterialFunction}\label{subsec:2_2_CM-MFproblems}
-Come esposto nella sezione \ref{subsec:2_1_beam}, il rendering del Beam di luce viene effettuato con una funzione di RayMarching scritta in HLSL dentro una CustomExpression. Purtroppo Unreal Engine non mette a disposizione un modo \say{pulito} per eseguire una MaterialFunction all'interno del codice di una CustomExpression \cite{customExpressionMaterialFunction}. L'unica scelta rimane quindi di riscrivere l'implementazione dei vari moduli come funzioni in HLSL. Possiamo però dichiarare una funzione nel codice di una MaterialExpressionCustom? La risposta è no.
+Come esposto nella sezione \ref{subsec:2_1_beam}, il rendering del Beam di luce viene effettuato con una funzione di RayMarching scritta in HLSL dentro una CustomExpression. Purtroppo Unreal Engine non mette a disposizione un modo \say{pulito} per eseguire una MaterialFunction all'interno del codice di una CustomExpression \cite{customExpressionMaterialFunction}. L'unica scelta rimane quindi di riscrivere l'implementazione dei vari moduli come funzioni in HLSL. Purtroppo però non è possibile dichiarare una funzione nel codice di una MaterialExpressionCustom.
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{img/renderingPipeline/meCustomNoFunc.jpg}
@@ -203,7 +203,7 @@ Come esposto nella sezione \ref{subsec:2_1_beam}, il rendering del Beam di luce 
     \label{fig:2_funcInFunc}
 \end{figure}
 
-\noindent Il motivo dell'impossibilità di compilare il precedente codice è legato al fatto che in C non si può direttamente dichiarare una funzione dentro un'altra. Un modo per farlo è quello di creare ed allocare una struct contenente all'interno le funzioni che vogliamo dichiarare. Utilizzando l'oggetto allocato è poi possibile andare effettivamente a chiamare le funzioni.
+\noindent Il motivo dell'impossibilità di compilare il precedente codice è legato al fatto che in C non si può direttamente dichiarare una funzione dentro un'altra. Un workaround è quello di creare ed allocare una struct contenente all'interno le funzioni che vogliamo dichiarare. Utilizzando l'oggetto allocato è poi possibile andare effettivamente a chiamare le funzioni.
 \begin{lstlisting}
 struct Helper {
     float x(){
@@ -215,7 +215,7 @@ return h.x();
 \end{lstlisting}
 Come ci aspettavamo, questo metodo compila con successo. Possiamo quindi implementare i vari moduli come funzioni di una struct di Helper e poi richiamarli durante il loop del RayMarching. \newline
 
-Si sta preferendo mantenere una doppia implementazione fatta sia come materiali che come codice HLSL dei vari moduli perché, nel momento in cui Unreal Engine va a compilare i materiali in codice HLSL, effettua una prima, grossa, ottimizzazione in cui eventuali valori e calcoli che non cambiano durante il rendering di un materiale vengono automaticamente messi in una cache. La stessa cosa non accade al codice HLSL dentro le MaterialExpressionCustom che viene invece incapsulato senza essere toccato all'interno di una funzione nel sorgente HLSL del materiale di cui fa parte. \cite{hlslNoOptimize}
+Si sta preferendo mantenere una doppia implementazione fatta sia come materiali che come codice HLSL dei vari moduli perché nel momento in cui Unreal Engine va a compilare i materiali in codice HLSL effettua una prima, grossa, ottimizzazione in cui eventuali valori e calcoli che non cambiano durante il rendering di un materiale vengono automaticamente messi in una cache. La stessa cosa non accade al codice HLSL dentro le MaterialExpressionCustom che viene invece incapsulato, senza essere toccato, all'interno di una funzione nel sorgente HLSL del materiale di cui fa parte. \cite{hlslNoOptimize}
 
 \clearpage %TODO CHECK IF THIS IS STILL NEEDED
 \lstset{language=UEcpp}
@@ -315,7 +315,7 @@ CheckType* searchMaterialExpressionByDesc(
         UMaterialExpression* me = mePtr.Get();
         if (me->Desc.Contains(descr)) {
             CheckType* casted = Cast<CheckType>(me);
-            //Cast<T>() restituisce null se l'oggetto non e' castabile a T
+            //Cast<T>() ritorna null se l'oggetto non e' castabile a T
             if (casted) return casted;
         }
     }
@@ -363,7 +363,7 @@ Questa classe ha bisogno di sapere l'asse sul quale ci stiamo muovendo, le coord
 
 Infine vengono create una serie di funzioni inline che generano i nomi dei parametri ed il nome delle variabili del codice HLSL in modo da standardizzare la nomenclatura all'interno dell'itero plugin CPGDTF-Importer. Con \lstinline{get*ParamName()} ci riferiamo a funzioni che generano il nome di parametri all'interno di materiali. Invece, con \lstinline{getInput*Name()} ci riferiamo alla generazione dei nomi per le variabili/input della CustomExpression responsabile di implementare la pipeline di rendering per il materiale Beam.
 
-Nelle successive sezioni andremo a vedere come viene effettivamente generata e linkata la pipeline di rendering, separatamente per il materiale Beam e per i materiali Light e Lens che ricordiamo condividere la stessa pipeline. Viene anche affrontato il problema di come generare nuove MaterialExpressionParameter all'interno di un materiale, attività che comporta una serie di step ripetitivi riassumibili in una funzione. Il materiale Beam differisce nell'aggiunta di nuove MaterialExpressionParameter poiché devono anche essere automaticamente linkate alla CustomExpression responsabile del RayMarching.
+Nelle successive sezioni andremo a vedere come viene effettivamente generata e linkata la pipeline di rendering, separatamente per il materiale Beam e per i materiali Light e Lens che ricordiamo condividerla. Viene anche affrontato il problema di come generare nuove MaterialExpressionParameter all'interno di un materiale, attività che comporta una serie di step ripetitivi riassumibili in una funzione. Il materiale Beam differisce nell'aggiunta di nuove MaterialExpressionParameter poiché devono anche essere automaticamente linkate alla CustomExpression responsabile del RayMarching.
 
 \subsubsection{Custom Material (per Beam)}\label{subsec:2_3_CM}
 Come accennato sopra, generare un nuovo parametro per la pipeline del beam consiste in una serie di operazioni ripetitive:
@@ -478,7 +478,7 @@ FString generateHLSLCode() {
 }
 \end{lstlisting}
 
-Attualmente, solamente le ruote colori e gobo sono implementate, ma in vista di eventuali aggiunte future iteriamo lo stesso sull'enum di tutti i tipi possibili di ruote. Per ciascun tipo, andiamo a generare un numero di ruote pari a quanti componenti di quel tipo esistono nella fixture. Se in una luce non è presente alcuna ruota gobo, andiamo comunque ad aggiungere un sample di una ruota contenente un singolo slot aperto, in modo da applicare comunque una texture circolare realistica al beam.
+Attualmente solamente le ruote colori e gobo sono implementate, ma in vista di eventuali aggiunte future iteriamo lo stesso sull'enum di tutti i tipi possibili di ruote. Per ciascun tipo, andiamo a generare un numero di ruote pari a quanti componenti di quel tipo esistono nella fixture. Se in una luce non è presente alcuna ruota gobo, andiamo comunque ad aggiungere un sample di una ruota contenente un singolo slot aperto, in modo da applicare comunque una texture circolare realistica al beam.
 \begin{lstlisting}
 bool foundGobo = false;
 
@@ -786,7 +786,7 @@ Inoltre tutti i parametri della MaterialFunction della ruota sono stati sostitui
     \label{fig:2_dmxWheel}
 \end{figure}
 
-\noindent Una volta generati tutti i moduli creiamo un nodo di output, operazione che, a differenza di un materiale normale, va effettuata manualmente. Inoltre, va esplicitamente generato lo UUID della stessa, poiché questa operazione non viene effettuata dal suo costruttore. 
+\noindent Una volta generati tutti i moduli creiamo un nodo di output, operazione che, a differenza di un materiale normale, va effettuata manualmente. Inoltre, va esplicitamente generato lo UUID dello stesso, poiché questa operazione non viene effettuata dal suo costruttore. 
 \begin{lstlisting}
 UMaterialExpressionFunctionOutput* output =
     generateMaterialExpression<UMaterialExpressionFunctionOutput>(
