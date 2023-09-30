@@ -112,6 +112,78 @@ In realtà all'algoritmo sono state aggiunte altre piccole correzioni, che per m
 
 # 24
 
-Una volta sistemati i precedenti problemi, finalmente possiamo dedicarci all'implementazione di nuove funzionalità
+Una volta sistemati i precedenti problemi, finalmente possiamo dedicarci all'implementazione di nuove funzionalità...
 
 # 25
+
+...partendo dal framing system, che è un modulo composto da quattro lame dette anche flag o blade che si inseriscono all'interno del fascio di luce per ritagliarla in maniera precisa, come in foto.
+
+# 26
+
+Ogni lama può avere due modalità di controllo:
+- A + B, dove controlliamo i due estremi della lama, oppure
+- A + Rot, dove controlliamo l'inserimento e la rotazione della lama.
+
+Per una computazione più rapida dell'effetto è stato deciso di implementare la singola blade come una equazione matematica, in cui controlliamo se la y del punto che stiamo renderizzando si trova sopra o sotto tale equazione.
+
+# 27
+
+La seconda funzionalità che abbiamo sviluppato è l'iris, che ritaglia l'intero fascio di luce in forma circolare, rendendolo più o meno grande. Fisicamente è costruito come se fosse il diaframma di una fotocamera.
+
+Il calcolo dell'iris è stato anch'esso implementato come formula matematica, ed usiamo la stessa idea per il calcolo del pigreco con il metodo di montecarlo, solo che confrontiamo la distanza di un punto dal centro con il valore dell'iris
+
+# 28
+
+Infine è stato implementato il frost, ovvero una sfocatura, sulle feature precedenti. Piuttosto di usare il gaussian blur che è esoso in termini computazionali, ci basiamo sulle equazioni precedenti.
+
+Come prima cosa calcoliamo una distanza d come valore assoluto tra un punto e le precedenti equazioni
+
+# 29
+
+Definiamo poi una funzione che remappa il valore del frost, per renderlo meno pesante
+
+# 30
+
+Definiamo una seconda funzione per la distanza. Se la distanza è all'interno del valore del frost, all'ora interpolala fino a raggiungere 0.
+
+A questo punto, come vedete nella figura a sinistra, abbiamo creato un effetto che sfoca verso nero, mano mano che ci avviciniamo all'equazione, per poi tornare indietro. Noi invece vogliamo che in una direzione sfochi verso nero, mentre nell'altra sfochi verso bianco
+
+# 31
+
+Dividiamo quindi in due il range di remapDist e se stiamo sotto l'equazione lo prendiamo invertito, andando così a creare l'effetto che desideriamo
+
+# 32
+
+Purtroppo però per un effetto ottico, soprattutto a basse luminosità, la lina dell'equazione sembrerà spostarsi verso il basso, come nella figura centrale. Questo è perché l'occhio distingue più facilmente tonalità diverse di nero piuttosto che di bianco.
+
+L'effetto che vorremmo ottenere è come quello a destra, e per farlo...
+
+# 33
+
+...prendiamo il valore in uscita dai calcoli precedenti e lo passiamo dentro una sigmoide, che "concentra" il passaggio da bianco a nero verso il centro, e lo sposta anche un po' verso destra
+
+# 34
+
+A livello di codice, tutti precedenti remapping sono stati accorpati in un'unica funzione scritta in HLSL, un linguaggio creato dalla microsoft per l'implementazione di shader 3D.
+
+# 35
+
+Concludo questa presentazione parlando di come sia stato purtroppo difficile lavorare con Unreal Engine. Ha un grosso problema di documentazione ed un grosso problema di engeneering a livello strutturale. 
+
+Ad esempio, mi è capitato di avere problemi durante la generazione dei materiali, ovvero che dopo un riavvio di Unreal Engine, i nodi si scollegavano tra di loro. Dopo giorni di reverse engeneering sul codice di Unreal Engine, ho scoperto che ero obbligato a chiamare una funzione non documentata dopo aver chiamato già il costruttore. Che mi andrebbe pure bene, se solo fosse stato scritto da qualche parte
+
+# 36
+
+Questi problemi sono stati una costante durante lo sviluppo del progetto e sommatosi al fatto che ho dovuto riscrivere buona parte del plugin, mi hanno portato purtroppo a non finire il task iniziale dell'implementare tutte le features rimanenti.
+
+Fortunatamente però proprio con questo refactoring che ho fatto, aggiungere queste ultime features che sono avanzate sarà un compito molti semplice
+
+# 37
+
+Giuro che è l'ultimissima slide, scusate. Comunque, nel corso del mio tirocinio la claypaky è stata acquisita dalla Arri, l'azienda più famosa per la produzione di fari, camere e lenti per il mondo del cinema. Poiché nel mondo del cinema si sta spostando dall'uso del greenscreen all'uso di paesaggi realizzati in 3D proprio su unreal engine e proiettati live su dei ledwall nei set cinematografici, tra l'altro con la visuale che segue le telecamere vere, Arri era già in stretto contatto con la Epic Games.
+
+Sono riusciti quindi a darci un contatto diretto con loro, con cui al momento stiamo in trattativa per il merge del nostro codice all'interno di Unreal Engine stesso
+
+# 38 
+
+Grazie mille, e scusate se mi sono eventualmente dilungato
