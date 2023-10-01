@@ -32,8 +32,6 @@ Una vera fixture è composta da, ovviamente, una lampada, a cui, una alla volta,
 
 Ogni feature è quindi una sorta di modulo che prende in input il risultato di quello precedente, lo modifica e lo restituisce al modulo successivo. Ed è esattamente quello che facciamo noi. Il valore del modulo m-iesimo è uguale a quello precedente meno l'inverso, perché la luce funziona sottrattivamente, dell'inverso del valore f della feature corrente.
 
-Questo ha comportato la ricreazione delle feature preesistenti, però non è stato davvero un problema.
-
 # 9 - 03:27
 
 L'idea di implementazione è quindi di analizzare la lista di feature presenti in un file GDTF, utilizzando le API per l'editor di Unreal Engine e andare a generare un materiale che le contiene e le collega tra di loro. Il primo nodo di questa catena sarà collegato ad un colore statico, che viene elaborato all'interno dei fixture component, e l'output della fixture viene collegato all'ultimo nodo di questa catena.
@@ -90,17 +88,17 @@ Il nostro obiettivo è capire quale sia il momento giusto per iniziare a deceler
 
 # 21 - 08:03
 
-Innanzitutto ci serve calcolare la stopDistance, ovvero la distanza percorsa dal momento che iniziamo a decelerare, usando la nostra velocità corrente come punto di partenza. 
+Innanzitutto ci serve calcolare stopDistance, ovvero distanza percorriamo iniziando a decelerare con la velocità corrente, e controlliamo se percorrendo quello spazio superiamo o meno in TargetValue.
 
-Per farlo, prima calcoliamo il tempo che impieghiamo per decelerare, come il tempo che impieghiamo per accelerare moltiplicato alla nostra velocità.
+Per calcolare stopDistance, prima calcoliamo il tempo che impieghiamo per decelerare, come il tempo che impieghiamo per accelerare moltiplicato alla nostra velocità.
 
 Successivamente calcoliamo la stopDistance come l'area di un triangolo che come base ha il tempo che impieghiamo a decelerare e come altezza ha la nostra velocità
 
 # 22 - 08:26
 
-Poiché l'interpolazione non viene aggiornata di continuo, ma ad intervalli di tempo non costanti, il momento in cui dovremmo iniziare a decelerare si trova praticamente sempre tra un tick ed il precedente.
+Praticamente sempre capita che il momento in cui avremmo dovuto iniziare a decelerare si trova tra il tick corrente e quello precedente
 
-Per calcolarci il tempo t in cui iniziamo a decelerare, iniziamo a calcolare la distanza percorsa D, come la differenza tra TargetValue e la distanza che percorriamo iniziando a decelerare esattamente al tick corrente.
+Per calcolarci il tempo t in cui iniziamo a decelerare, iniziamo a calcolare la distanceDifferenceza	\\ D, come la differenza tra TargetValue e la distanza che percorriamo iniziando a decelerare esattamente al tick corrente.
 
 Distinguiamo quindi due casi abbiamo due casi:
 - Se eravamo a velocità costante, quindi se la velocità S al tick iesimo è uguale al tick i - 1, possiamo rappresentare D come un semplice parallelogramma, e quindi t sarà uguale alla formula per ricavarsi la base a partire dall'area, ovvero D, e la velocità al tick corrente
@@ -134,7 +132,7 @@ Il calcolo dell'iris è stato anch'esso implementato come formula matematica, ed
 
 # 28 - 10:44
 
-Infine è stato implementato il frost, ovvero una sfocatura, sulle feature precedenti. Piuttosto di usare il gaussian blur che è esoso in termini computazionali, ci basiamo sulle equazioni precedenti.
+Infine è stato implementato il frost, ovvero una sfocatura, sulle feature precedenti.
 
 Come prima cosa calcoliamo una distanza d come valore assoluto tra un punto e le precedenti equazioni
 
@@ -164,26 +162,20 @@ L'effetto che vorremmo ottenere è come quello a destra, e per farlo...
 
 # 34 - 13:02
 
-A livello di codice, tutti precedenti remapping sono stati accorpati in un'unica funzione scritta in HLSL, un linguaggio creato dalla microsoft per l'implementazione di shader 3D.
-
-# 35 - 13:25
-
 Concludo questa presentazione parlando di come sia stato purtroppo difficile lavorare con Unreal Engine. Ha un grosso problema di documentazione ed un grosso problema di engeneering a livello strutturale. 
 
-Ad esempio, mi è capitato di avere problemi durante la generazione dei materiali, ovvero che dopo un riavvio di Unreal Engine, i nodi si scollegavano tra di loro. Dopo giorni di reverse engeneering sul codice di Unreal Engine, ho scoperto che ero obbligato a chiamare una funzione non documentata dopo aver chiamato già il costruttore. Che mi andrebbe pure bene, se solo fosse stato scritto da qualche parte
-
-# 36 - 13:48
+# 35 - 13:25
 
 Questi problemi sono stati una costante durante lo sviluppo del progetto e sommatosi al fatto che ho dovuto riscrivere buona parte del plugin, mi hanno portato purtroppo a non finire il task iniziale dell'implementare tutte le features rimanenti.
 
 Fortunatamente però proprio con questo refactoring che ho fatto, aggiungere queste ultime features che sono avanzate sarà un compito molti semplice
 
-# 37 - 14:11
+# 36 - 13:48
 
 Giuro che è l'ultimissima slide, scusate. Comunque, nel corso del mio tirocinio la claypaky è stata acquisita dalla Arri, l'azienda più famosa per la produzione di fari, camere e lenti per il mondo del cinema. Poiché nel mondo del cinema si sta spostando dall'uso del greenscreen all'uso di paesaggi realizzati in 3D proprio su unreal engine e proiettati live su dei ledwall nei set cinematografici, tra l'altro con la visuale che segue le telecamere vere, Arri era già in stretto contatto con la Epic Games.
 
 Sono riusciti quindi a darci un contatto diretto con loro, con cui al momento stiamo in trattativa per il merge del nostro codice all'interno di Unreal Engine stesso
 
-# 38 - 14:34
+# 37 - 14:11
 
 Grazie mille, e scusate se mi sono eventualmente dilungato
