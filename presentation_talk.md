@@ -146,26 +146,26 @@ A questo punto, come vedete nella figura a sinistra, abbiamo creato un effetto c
 
 Dividiamo quindi in due il range di remapDist e se stiamo sotto l'equazione lo invertiamo, andando così a creare l'effetto che desideriamo.
 
-# 32 -
+# 32 - 10:40
 
 Purtroppo però siccome l'occhio umano è più bravo a distinguere tonalità diverse di nero piuttosto che di bianco, l'equazione sembra spostarsi verso il basso, come nella figura centrale
 
 L'effetto che vorremmo ottenere è come quello a destra, e per farlo...
 
-# 33 - 
+# 33 - 11:00
 
 ...semplicemente prendiamo il risultato dei calcoli precedenti e lo passiamo dentro una sigmoide.
 
-# 32 - 10:40
+# 32 - 11:20
 
 Concludo questa presentazione parlando di come sia stato purtroppo difficile lavorare con Unreal Engine. Ha un grosso problema di documentazione ed un grosso problema di engeneering a livello strutturale. 
 
 _Se avanza tempo parlare nel dettaglio dei problemi_
 
-# 33 - 11:00
+# 33 - 11:40
 
 Nel mondo del cinema ci si sta spostando dall'uso dei greenscreen all'uso di ledwall su cui vengono proiettati scenari realizzati su unreal engine, con la visuale che segue il movimento delle camere dal vivo. Durante il mio tirocinio la ClayPaky è stata acquisita dalla Arri, azienda leader per la produzione di fari camere e lenti per il cinema, che ha interesse e sta prendendo parte lei stessa in questi progetti assieme alla Epic Games. Grazie a loro sono riuscito ad ottenere un contatto diretto con la Epic e stiamo lavorando per effettuare un merge del mio plugin con il codice sorgente di Unreal Engine.
 
-# 34 - 11:20
+# 34 - 12:00
 
 Grazie mille, e scusate di nuovo se mi sono dilungato troppo. Come ho detto all'inizio il tirocinio è durato più di 6 mesi, ed è stata dura condensare tutto ciò di cui mi sono occupato in queste poche slide.
