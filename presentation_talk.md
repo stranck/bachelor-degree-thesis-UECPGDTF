@@ -146,6 +146,16 @@ A questo punto, come vedete nella figura a sinistra, abbiamo creato un effetto c
 
 Dividiamo quindi in due il range di remapDist e se stiamo sotto l'equazione lo invertiamo, andando così a creare l'effetto che desideriamo.
 
+# 32 -
+
+Purtroppo però siccome l'occhio umano è più bravo a distinguere tonalità diverse di nero piuttosto che di bianco, l'equazione sembra spostarsi verso il basso, come nella figura centrale
+
+L'effetto che vorremmo ottenere è come quello a destra, e per farlo...
+
+# 33 - 
+
+...semplicemente prendiamo il risultato dei calcoli precedenti e lo passiamo dentro una sigmoide.
+
 # 32 - 10:40
 
 Concludo questa presentazione parlando di come sia stato purtroppo difficile lavorare con Unreal Engine. Ha un grosso problema di documentazione ed un grosso problema di engeneering a livello strutturale. 
