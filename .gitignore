@@ -7,9 +7,12 @@ overleafLogin.*
 ~*.docx
 ~*.doc
 ~*.tmp
+~*.pptx
 
 *.bkp
 *.dtmp
 img/Signature_AngeloMonti.png
 img/Signature_LucaSorace.png
 img/Signature_MassimoCallegari.png
+demo.mp4
+img/loghi_sapienza.zip
