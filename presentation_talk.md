@@ -1,6 +1,6 @@
 # 1 - 00:20
 
-Ciao, sono Luca e ho svolto il mio tirocinio esterno presso ClayPaky, azienda italiana leader mondiale nella creazione e produzione di luci per lo spettacolo. Il mio tirocinio è durato 6 mesi, quindi ho molte cose da dire e poco tempo, purtroppo alcuni concetti li ho dovuti escludere.
+Ciao, sono Luca e ho svolto il mio tirocinio esterno presso ClayPack, azienda italiana leader mondiale nella creazione e produzione di luci per lo spettacolo. Il mio tirocinio è durato 6 mesi, quindi ho molte cose da dire e poco tempo, purtroppo alcuni concetti li ho dovuti escludere.
 
 # 2 - 00:40
 
@@ -164,7 +164,7 @@ _Se avanza tempo parlare nel dettaglio dei problemi_
 
 # 33 - 11:40
 
-Nel mondo del cinema ci si sta spostando dall'uso dei greenscreen all'uso di ledwall su cui vengono proiettati scenari realizzati su unreal engine, con la visuale che segue il movimento delle camere dal vivo. Durante il mio tirocinio la ClayPaky è stata acquisita dalla Arri, azienda leader per la produzione di fari camere e lenti per il cinema, che ha interesse e sta prendendo parte lei stessa in questi progetti assieme alla Epic Games. Grazie a loro sono riuscito ad ottenere un contatto diretto con la Epic e stiamo lavorando per effettuare un merge del mio plugin con il codice sorgente di Unreal Engine.
+Nel mondo del cinema ci si sta spostando dall'uso dei greenscreen all'uso di ledwall su cui vengono proiettati scenari realizzati su unreal engine, con la visuale che segue il movimento delle camere dal vivo. Durante il mio tirocinio la ClayPack è stata acquisita dalla Arri, azienda leader per la produzione di fari camere e lenti per il cinema, che ha interesse e sta prendendo parte lei stessa in questi progetti assieme alla Epic Games. Grazie a loro sono riuscito ad ottenere un contatto diretto con la Epic e stiamo lavorando per effettuare un merge del mio plugin con il codice sorgente di Unreal Engine.
 
 # 34 - 12:00
 
